@@ -1,6 +1,14 @@
 from requests import put, get,post
 import uuid
 
+def start_system():
+  start = post('http://192.168.59.103:4000/system', data={'command':'start'}).json()
+
+def reset_system():
+  reset = post('http://192.168.59.103:4000/system', data={'command':'reset'}).json()
+
+def stop_system():
+  reset = post('http://192.168.59.103:4000/system', data={'command':'stop'}).json()
 
 def initialize_general_journal():
   unique = uuid.uuid4()
@@ -99,5 +107,6 @@ def initialize_general_ledger():
 
 
 if __name__ == '__main__':
+  reset_system()
   initialize_general_journal()
   initialize_general_ledger()
