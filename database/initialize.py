@@ -1,4 +1,4 @@
-from requests import put, get,post
+from requests import put, get, post
 import uuid
 
 def start_system():
@@ -18,10 +18,10 @@ def initialize_general_journal():
     'entry_space':'spacemap',
     'nameofspace':'GeneralJournal',
     'keyname':'unique',
-    'partitioncount':8L,
-    'failurecount':2L}
+    'partitioncount':'8',
+    'failurecount':'2'}
   spacemap_entry = post('http://192.168.59.103:4000/entries', data=spacemap_data).json()
-  print spacemap_entry
+  print(spacemap_entry)
 
   spaceattributes_data = [\
     {'entry_space':'spaceattributes',
@@ -48,7 +48,7 @@ def initialize_general_journal():
 
 
   space_create = post('http://192.168.59.103:4000/space', data={'entry_space':'GeneralJournal'}).json()
-  print space_create
+  print(space_create)
 
 def initialize_general_ledger():
   unique = uuid.uuid4()
@@ -58,10 +58,10 @@ def initialize_general_ledger():
     'entry_space':'spacemap',
     'nameofspace':'GeneralLedger',
     'keyname':'unique',
-    'partitioncount':8L,
-    'failurecount':2L}
+    'partitioncount':'8',
+    'failurecount':'2'}
   spacemap_entry = post('http://192.168.59.103:4000/entries', data=spacemap_data).json()
-  print spacemap_entry
+  print(spacemap_entry)
 
 
   spaceattributes_data = [\
@@ -103,7 +103,7 @@ def initialize_general_ledger():
     spaceattributes_entry = post('http://192.168.59.103:4000/entries', data=attribute).json()
 
   space_create = post('http://192.168.59.103:4000/space', data={'entry_space':'GeneralLedger'}).json()
-  print space_create
+  print(space_create)
 
 
 if __name__ == '__main__':
