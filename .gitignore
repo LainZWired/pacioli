@@ -1,5 +1,6 @@
 data/*
 venv/*
+work/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -54,4 +55,3 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-

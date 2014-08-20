@@ -16,6 +16,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
+from requests import put, get, post
+from config import *
 
-DATABASE_ADDRESS = "http://192.168.59.103"
-DATABASE_PORT = 4000
+address = DATABASE_ADDRESS + ":" + str(DATABASE_PORT) + "/"
+
+def start_system():
+  return post(address + 'system', data={'command':'start'}).json()
+
+def reset_system():
+  return post(address + 'system', data={'command':'reset'}).json()
+
+def stop_system():
+  return post(address + 'system', data={'command':'stop'}).json()
+
+def add_space(name):
+  return post(address + 'space', data={'entry_space':name}).json()
+
+def add_record(record):
+  return post(address + 'entries', data=record).json()

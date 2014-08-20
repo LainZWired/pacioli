@@ -16,33 +16,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from requests import put, get, post
 import uuid
-
-def start_system():
-  start = post('http://192.168.59.103:4000/system', data={'command':'start'}).json()
-
-def reset_system():
-  reset = post('http://192.168.59.103:4000/system', data={'command':'reset'}).json()
-
-def stop_system():
-  reset = post('http://192.168.59.103:4000/system', data={'command':'stop'}).json()
+import api
 
 def initialize_general_journal():
+  space_name = "GeneralJournal"
   unique = uuid.uuid4()
   unique = str(unique)
-  spacemap_data = {\
+  space_configuration = {\
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'GeneralJournal',
     'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
-  spacemap_entry = post('http://192.168.59.103:4000/entries', data=spacemap_data).json()
-  print(spacemap_entry)
+  print(api.add_record(space_configuration))
 
-  spaceattributes_data = [\
+  space_attributes = [\
     {'entry_space':'spaceattributes',
     'nameofspace': 'GeneralJournal',
     'nameofattribute': 'Date',
@@ -59,32 +49,28 @@ def initialize_general_journal():
     'typeofattribute': 'list(string)',
     'insubspace': False}]
 
-  for attribute in spaceattributes_data:
+  for attribute in space_attributes:
     unique = uuid.uuid4()
     unique = str(unique)
     attribute['unique']=unique
-    spaceattributes_entry = post('http://192.168.59.103:4000/entries', data=attribute).json()
-    print(spaceattributes_entry)
+    print(api.add_record(attribute))
 
-
-  space_create = post('http://192.168.59.103:4000/space', data={'entry_space':'GeneralJournal'}).json()
-  print(space_create)
+  print(api.add_space(space_name))
 
 def initialize_general_ledger():
+  space_name = "GeneralLedger"
   unique = uuid.uuid4()
   unique = str(unique)
-  spacemap_data = {\
+  space_configuration = {\
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'GeneralLedger',
     'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
-  spacemap_entry = post('http://192.168.59.103:4000/entries', data=spacemap_data).json()
-  print(spacemap_entry)
+  print(api.add_record(space_configuration))
 
-
-  spaceattributes_data = [\
+  space_attributes = [\
     {'entry_space':'spaceattributes',
     'nameofspace': 'GeneralLedger',
     'nameofattribute': 'Date',
@@ -116,17 +102,17 @@ def initialize_general_ledger():
     'typeofattribute': 'string',
     'insubspace': True}]
 
-  for attribute in spaceattributes_data:
+  for attribute in space_attributes:
     unique = uuid.uuid4()
     unique = str(unique)
     attribute['unique']=unique
-    spaceattributes_entry = post('http://192.168.59.103:4000/entries', data=attribute).json()
-    print(spaceattributes_entry)
-  space_create = post('http://192.168.59.103:4000/space', data={'entry_space':'GeneralLedger'}).json()
-  print(space_create)
+    print(api.add_record(attribute))
+
+  print(api.add_space(space_name))
+
 
 
 if __name__ == '__main__':
-  reset_system()
+  api.reset_system()
   initialize_general_journal()
   initialize_general_ledger()
