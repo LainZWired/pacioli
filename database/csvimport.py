@@ -60,18 +60,18 @@ def multibit_import(csvfile):
             debit_ledger_entry['Type'] = "Debit"
             debit_ledger_entry['Amount'] = int(abs(float(record['Amount']))*100000000)
             debit_ledger_entry['Unit'] = "satoshis"
-            debit_ledger_entry['gjUUID'] = "Debit"
+            debit_ledger_entry['gjUUID'] = journal_entry['unique']
 
             credit_ledger_entry = {}
             credit_ledger_entry['entry_space'] = 'GeneralLedger'
             credit_ledger_entry['unique'] = str(uuid.uuid4())
             journal_entry['Credits'].append(debit_ledger_entry['unique'])
-            print(journal_entry['Credits'])
+            journal_entry['Credits']
             credit_ledger_entry['Date'] = record['Date']
             credit_ledger_entry['Type'] = "Credit"
             credit_ledger_entry['Amount'] = int(abs(float(record['Amount']))*100000000)
             credit_ledger_entry['Unit'] = "satoshis"
-            credit_ledger_entry['gjUUID'] = "Credit"
+            credit_ledger_entry['gjUUID'] = journal_entry['unique']
 
             if int(abs(float(record['Amount']))*100000000) > 0:
               debit_ledger_entry['Account'] = "Bitcoins"
@@ -81,9 +81,9 @@ def multibit_import(csvfile):
               credit_ledger_entry['Account'] = "Bitcoins"
             journal_entry['Debits']= set(journal_entry['Debits'])
             journal_entry['Credits']= set(journal_entry['Credits'])
-            print(api.add_record(journal_entry))
-            print(api.add_record(debit_ledger_entry))
-            print(api.add_record(credit_ledger_entry))
+            api.add_record(journal_entry)
+            api.add_record(debit_ledger_entry)
+            api.add_record(credit_ledger_entry)
 
 
 def main():
