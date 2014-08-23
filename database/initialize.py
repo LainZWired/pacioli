@@ -41,12 +41,12 @@ def initialize_general_journal():
     {'entry_space':'spaceattributes',
     'nameofspace': 'GeneralJournal',
     'nameofattribute': 'Debits',
-    'typeofattribute': 'list(string)',
+    'typeofattribute': 'set(string)',
     'insubspace': False},
     {'entry_space':'spaceattributes',
     'nameofspace': 'GeneralJournal',
     'nameofattribute': 'Credits',
-    'typeofattribute': 'list(string)',
+    'typeofattribute': 'set(string)',
     'insubspace': False}]
 
   for attribute in space_attributes:

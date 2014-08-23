@@ -22,7 +22,7 @@ import sys
 import csv
 import json
 import uuid
-import database.api
+import api
 
 def multibit_import(csvfile):
     with open(csvfile, 'rt') as csvfile:
@@ -81,9 +81,9 @@ def multibit_import(csvfile):
               credit_ledger_entry['Account'] = "Bitcoins"
             journal_entry['Debits']= set(journal_entry['Debits'])
             journal_entry['Credits']= set(journal_entry['Credits'])
-            print(database.api.add_record(journal_entry))
-            print(database.api.add_record(debit_ledger_entry))
-            print(database.api.add_record(credit_ledger_entry))
+            print(api.add_record(journal_entry))
+            print(api.add_record(debit_ledger_entry))
+            print(api.add_record(credit_ledger_entry))
 
 
 def main():
