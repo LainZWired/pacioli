@@ -50,11 +50,6 @@ def initialize_memoranda():
     'insubspace': False},
     {'entry_space':'spaceattributes',
     'nameofspace': 'Memoranda',
-    'nameofattribute': 'Filetype',
-    'typeofattribute': 'string',
-    'insubspace': False},
-    {'entry_space':'spaceattributes',
-    'nameofspace': 'Memoranda',
     'nameofattribute': 'Filesize',
     'typeofattribute': 'string',
     'insubspace': False},
@@ -67,6 +62,11 @@ def initialize_memoranda():
     'nameofspace': 'Memoranda',
     'nameofattribute': 'FilemapUUID',
     'typeofattribute': 'string',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Transactions',
+    'typeofattribute': 'set(string)',
     'insubspace': False}]
 
   for attribute in space_attributes:
@@ -75,7 +75,7 @@ def initialize_memoranda():
     attribute['unique']=unique
     api.add_record(attribute)
 
-  api.add_space(space_name)
+  print(api.add_space(space_name))
 
 
 def initialize_memoranda_transactions():
@@ -101,7 +101,7 @@ def initialize_memoranda_transactions():
     'nameofspace': 'MemorandaTransactions',
     'nameofattribute': 'Details',
     'typeofattribute': 'map(string, string)',
-    'insubspace': True},
+    'insubspace': False},
     {'entry_space':'spaceattributes',
     'nameofspace': 'MemorandaTransactions',
     'nameofattribute': 'TransactionMapUUID',
@@ -141,7 +141,7 @@ def initialize_filemaps():
     'nameofspace': 'FileMaps',
     'nameofattribute': 'FileMappings',
     'typeofattribute': 'set(string)',
-    'insubspace': True}]
+    'insubspace': False}]
 
   for attribute in space_attributes:
     unique = uuid.uuid4()
@@ -240,17 +240,17 @@ def initialize_transactionmappings():
 
   space_attributes = [\
     {'entry_space':'spaceattributes',
-    'nameofspace': 'Transactionmappings',
+    'nameofspace': 'TransactionMappings',
     'nameofattribute': 'MapType',
     'typeofattribute': 'string',
     'insubspace': True},
     {'entry_space':'spaceattributes',
-    'nameofspace': 'Transactionmappings',
+    'nameofspace': 'TransactionMappings',
     'nameofattribute': 'Map',
     'typeofattribute': 'map(string, string)',
     'insubspace': False},
     {'entry_space':'spaceattributes',
-    'nameofspace': 'Transactionmappings',
+    'nameofspace': 'TransactionMappings',
     'nameofattribute': 'LedgerKey',
     'typeofattribute': 'string',
     'insubspace': True}]
@@ -359,5 +359,11 @@ def initialize_general_ledger():
 
 if __name__ == '__main__':
   api.reset_system()
+  initialize_memoranda()
+  initialize_memoranda_transactions()
+  initialize_filemaps()
+  initialize_filemappings()
+  initialize_transactionmaps()
+  initialize_transactionmappings()
   initialize_general_journal()
   initialize_general_ledger()

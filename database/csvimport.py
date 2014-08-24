@@ -18,6 +18,8 @@
 
 import os
 import fnmatch
+import io
+import time
 import sys
 import csv
 import json
@@ -26,7 +28,22 @@ import api
 
 def multibit_import(csvfile):
     with open(csvfile, 'rt') as csvfile:
-        filename = csvfile.name
+        memorandum = {}
+        memorandum['entry_space'] = 'Memoranda'
+        memorandum['unique'] = str(uuid.uuid4())
+        memorandum['Date'] = time.strftime("%Y%m%d-%H%M%S")
+        memorandum['Filename'] = csvfile.name
+        memorandum['Filetype'] = 'csv'
+        old_file_position = csvfile.tell()
+        csvfile.seek(0, os.SEEK_END)
+        memorandum['Filesize'] = csvfile.tell()
+        csvfile.seek(old_file_position, os.SEEK_SET)
+        csvbinary = io.StringIO(csvfile.read())
+        csvbinary = csvbinary.getvalue()
+        memorandum['File'] = csvbinary
+        print(memorandum['File'])
+        api.add_record(memorandum)
+
         reader = csv.reader(csvfile)
         # Numbering each row
         reader = enumerate(reader)
