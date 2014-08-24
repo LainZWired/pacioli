@@ -19,6 +19,251 @@
 import uuid
 import api
 
+def initialize_memoranda():
+  space_name = "Memoranda"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'Memoranda',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Date',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Filename',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Filetype',
+    'typeofattribute': 'string',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Filetype',
+    'typeofattribute': 'string',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'Filesize',
+    'typeofattribute': 'string',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'File',
+    'typeofattribute': 'string',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Memoranda',
+    'nameofattribute': 'FilemapUUID',
+    'typeofattribute': 'string',
+    'insubspace': False}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+
+def initialize_memoranda_transactions():
+  space_name = "MemorandaTransactions"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'MemorandaTransactions',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'MemorandaTransactions',
+    'nameofattribute': 'FileUUID',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'MemorandaTransactions',
+    'nameofattribute': 'Details',
+    'typeofattribute': 'map(string, string)',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'MemorandaTransactions',
+    'nameofattribute': 'TransactionMapUUID',
+    'typeofattribute': 'string',
+    'insubspace': False}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+
+
+def initialize_filemaps():
+  space_name = "FileMaps"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'FileMaps',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'FileMaps',
+    'nameofattribute': 'FileMapName',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'FileMaps',
+    'nameofattribute': 'FileMappings',
+    'typeofattribute': 'set(string)',
+    'insubspace': True}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+def initialize_filemappings():
+  space_name = "FileMappings"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'FileMappings',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'FileMappings',
+    'nameofattribute': 'MapType',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'FileMappings',
+    'nameofattribute': 'Map',
+    'typeofattribute': 'map(string, string)',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'FileMappings',
+    'nameofattribute': 'TransactionKey',
+    'typeofattribute': 'string',
+    'insubspace': True}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+
+
+def initialize_transactionmaps():
+  space_name = "TransactionMaps"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'TransactionMaps',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'TransactionMaps',
+    'nameofattribute': 'TransactionMapName',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'TransactionMaps',
+    'nameofattribute': 'TransactionMappings',
+    'typeofattribute': 'set(string)',
+    'insubspace': False}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+def initialize_transactionmappings():
+  space_name = "TransactionMappings"
+  unique = uuid.uuid4()
+  unique = str(unique)
+  space_configuration = {\
+    'unique':unique,
+    'entry_space':'spacemap',
+    'nameofspace':'TransactionMappings',
+    'keyname':'unique'
+    'partitioncount':'8',
+    'failurecount':'2'}
+  api.add_record(space_configuration)
+
+  space_attributes = [\
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Transactionmappings',
+    'nameofattribute': 'MapType',
+    'typeofattribute': 'string',
+    'insubspace': True},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Transactionmappings',
+    'nameofattribute': 'Map',
+    'typeofattribute': 'map(string, string)',
+    'insubspace': False},
+    {'entry_space':'spaceattributes',
+    'nameofspace': 'Transactionmappings',
+    'nameofattribute': 'LedgerKey',
+    'typeofattribute': 'string',
+    'insubspace': True}]
+
+  for attribute in space_attributes:
+    unique = uuid.uuid4()
+    unique = str(unique)
+    attribute['unique']=unique
+    api.add_record(attribute)
+
+  api.add_space(space_name)
+
+
 def initialize_general_journal():
   space_name = "GeneralJournal"
   unique = uuid.uuid4()
@@ -30,7 +275,7 @@ def initialize_general_journal():
     'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
-  print(api.add_record(space_configuration))
+  api.add_record(space_configuration)
 
   space_attributes = [\
     {'entry_space':'spaceattributes',
@@ -53,9 +298,9 @@ def initialize_general_journal():
     unique = uuid.uuid4()
     unique = str(unique)
     attribute['unique']=unique
-    print(api.add_record(attribute))
+    api.add_record(attribute)
 
-  print(api.add_space(space_name))
+  api.add_space(space_name)
 
 def initialize_general_ledger():
   space_name = "GeneralLedger"
@@ -68,7 +313,7 @@ def initialize_general_ledger():
     'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
-  print(api.add_record(space_configuration))
+  api.add_record(space_configuration)
 
   space_attributes = [\
     {'entry_space':'spaceattributes',
@@ -98,7 +343,7 @@ def initialize_general_ledger():
     'insubspace': True},
     {'entry_space':'spaceattributes',
     'nameofspace': 'GeneralLedger',
-    'nameofattribute': 'gjUUID',
+    'nameofattribute': 'gjUnique',
     'typeofattribute': 'string',
     'insubspace': True}]
 
@@ -106,9 +351,9 @@ def initialize_general_ledger():
     unique = uuid.uuid4()
     unique = str(unique)
     attribute['unique']=unique
-    print(api.add_record(attribute))
+    api.add_record(attribute)
 
-  print(api.add_space(space_name))
+  api.add_space(space_name)
 
 
 
