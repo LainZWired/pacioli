@@ -104,7 +104,7 @@ def initialize_memoranda_transactions():
     'insubspace': False},
     {'entry_space':'spaceattributes',
     'nameofspace': 'MemorandaTransactions',
-    'nameofattribute': 'TransactionMapUUID',
+    'nameofattribute': 'TransactionMapName',
     'typeofattribute': 'string',
     'insubspace': False}]
 
