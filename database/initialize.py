@@ -75,7 +75,7 @@ def initialize_memoranda():
     attribute['unique']=unique
     api.add_record(attribute)
 
-  print(api.add_space(space_name))
+  api.add_space(space_name)
 
 
 def initialize_memoranda_transactions():
