@@ -26,7 +26,7 @@ import json
 import uuid
 import api
 
-def multibit_import(csvfile):
+def csv_import(csvfile):
     with open(csvfile, 'rt') as csvfile:
         # Adding the metadata and the binary file to Memoranda
         memorandum = {}
@@ -119,7 +119,7 @@ def main():
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root,filename))
     for csvfile in matches:
-        result = multibit_import(csvfile)
+        result = csv_import(csvfile)
         if not result:
             sys.exit(1)
     return 0
