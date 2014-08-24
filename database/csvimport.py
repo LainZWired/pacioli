@@ -28,22 +28,23 @@ import api
 
 def multibit_import(csvfile):
     with open(csvfile, 'rt') as csvfile:
+        # Adding the metadata and the binary file to Memoranda
         memorandum = {}
         memorandum['entry_space'] = 'Memoranda'
         memorandum['unique'] = str(uuid.uuid4())
         memorandum['Date'] = time.strftime("%Y%m%d-%H%M%S")
         memorandum['Filename'] = csvfile.name
         memorandum['Filetype'] = 'csv'
-        old_file_position = csvfile.tell()
         csvfile.seek(0, os.SEEK_END)
         memorandum['Filesize'] = csvfile.tell()
-        csvfile.seek(old_file_position, os.SEEK_SET)
         csvbinary = io.StringIO(csvfile.read())
         csvbinary = csvbinary.getvalue()
         memorandum['File'] = csvbinary
         print(memorandum['File'])
         api.add_record(memorandum)
 
+        # Adding individual CSV lines to the GeneralJournal and GeneralLedger
+        csvfile.seek(0)
         reader = csv.reader(csvfile)
         # Numbering each row
         reader = enumerate(reader)
