@@ -120,48 +120,46 @@ def csv_import(csvfile):
       for tx in tx_list:
         record = zip(header[1], tx)
         record = dict(record)
-      record = zip(header[1], tx)
-      record = dict(record)
 
-      journal_entry = {}
-      journal_entry['entry_space'] = 'GeneralJournal'
-      journal_entry['unique'] = str(uuid.uuid4())
-      journal_entry['Date'] = record['Date']
-      journal_entry['Debits'] = []
-      journal_entry['Credits'] = []
+        journal_entry = {}
+        journal_entry['entry_space'] = 'GeneralJournal'
+        journal_entry['unique'] = str(uuid.uuid4())
+        journal_entry['Date'] = record['Date']
+        journal_entry['Debits'] = []
+        journal_entry['Credits'] = []
 
-      debit_ledger_entry = {}
-      debit_ledger_entry['entry_space'] = 'GeneralLedger'
-      debit_ledger_entry['unique'] = str(uuid.uuid4())
-      journal_entry['Debits'].append(debit_ledger_entry['unique'])
-      debit_ledger_entry['Date'] = record['Date']
-      debit_ledger_entry['Type'] = "Debit"
-      debit_ledger_entry['Amount'] = int(abs(float(record['Amount (BTC)']))*100000000)
-      debit_ledger_entry['Unit'] = "satoshis"
-      debit_ledger_entry['gjUnique'] = journal_entry['unique']
+        debit_ledger_entry = {}
+        debit_ledger_entry['entry_space'] = 'GeneralLedger'
+        debit_ledger_entry['unique'] = str(uuid.uuid4())
+        journal_entry['Debits'].append(debit_ledger_entry['unique'])
+        debit_ledger_entry['Date'] = record['Date']
+        debit_ledger_entry['Type'] = "Debit"
+        debit_ledger_entry['Amount'] = int(abs(float(record['Amount (BTC)']))*100000000)
+        debit_ledger_entry['Unit'] = "satoshis"
+        debit_ledger_entry['gjUnique'] = journal_entry['unique']
 
-      credit_ledger_entry = {}
-      credit_ledger_entry['entry_space'] = 'GeneralLedger'
-      credit_ledger_entry['unique'] = str(uuid.uuid4())
-      journal_entry['Credits'].append(debit_ledger_entry['unique'])
-      journal_entry['Credits']
-      credit_ledger_entry['Date'] = record['Date']
-      credit_ledger_entry['Type'] = "Credit"
-      credit_ledger_entry['Amount'] = int(abs(float(record['Amount (BTC)']))*100000000)
-      credit_ledger_entry['Unit'] = "satoshis"
-      credit_ledger_entry['gjUnique'] = journal_entry['unique']
+        credit_ledger_entry = {}
+        credit_ledger_entry['entry_space'] = 'GeneralLedger'
+        credit_ledger_entry['unique'] = str(uuid.uuid4())
+        journal_entry['Credits'].append(debit_ledger_entry['unique'])
+        journal_entry['Credits']
+        credit_ledger_entry['Date'] = record['Date']
+        credit_ledger_entry['Type'] = "Credit"
+        credit_ledger_entry['Amount'] = int(abs(float(record['Amount (BTC)']))*100000000)
+        credit_ledger_entry['Unit'] = "satoshis"
+        credit_ledger_entry['gjUnique'] = journal_entry['unique']
 
-      if int(abs(float(record['Amount (BTC)']))*100000000) > 0:
-        debit_ledger_entry['Account'] = "Bitcoins"
-        credit_ledger_entry['Account'] = "Revenue"
-      elif int(abs(float(record['Amount (BTC)']))*100000000) < 0:
-        debit_ledger_entry['Account'] = "Expense"
-        credit_ledger_entry['Account'] = "Bitcoins"
-      journal_entry['Debits']= set(journal_entry['Debits'])
-      journal_entry['Credits']= set(journal_entry['Credits'])
-      api.add_record(journal_entry)
-      api.add_record(debit_ledger_entry)
-      api.add_record(credit_ledger_entry)
+        if int(abs(float(record['Amount (BTC)']))*100000000) > 0:
+          debit_ledger_entry['Account'] = "Bitcoins"
+          credit_ledger_entry['Account'] = "Revenue"
+        elif int(abs(float(record['Amount (BTC)']))*100000000) < 0:
+          debit_ledger_entry['Account'] = "Expense"
+          credit_ledger_entry['Account'] = "Bitcoins"
+        journal_entry['Debits']= set(journal_entry['Debits'])
+        journal_entry['Credits']= set(journal_entry['Credits'])
+        api.add_record(journal_entry)
+        api.add_record(debit_ledger_entry)
+        api.add_record(credit_ledger_entry)
     else:
       print("Unrecognized file format")
   return True
