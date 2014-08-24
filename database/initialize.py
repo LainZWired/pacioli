@@ -27,7 +27,7 @@ def initialize_memoranda():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'Memoranda',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
@@ -86,7 +86,7 @@ def initialize_memoranda_transactions():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'MemorandaTransactions',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
@@ -126,7 +126,7 @@ def initialize_filemaps():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'FileMaps',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
@@ -159,7 +159,7 @@ def initialize_filemappings():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'FileMappings',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
@@ -199,7 +199,7 @@ def initialize_transactionmaps():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'TransactionMaps',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
@@ -233,7 +233,7 @@ def initialize_transactionmappings():
     'unique':unique,
     'entry_space':'spacemap',
     'nameofspace':'TransactionMappings',
-    'keyname':'unique'
+    'keyname':'unique',
     'partitioncount':'8',
     'failurecount':'2'}
   api.add_record(space_configuration)
