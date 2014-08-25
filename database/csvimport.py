@@ -112,7 +112,7 @@ def csv_import(csvfile):
           credit_ledger_entry['Account'] = "Bitcoins"
         journal_entry['Debits']= set(journal_entry['Debits'])
         journal_entry['Credits']= set(journal_entry['Credits'])
-        api.add_record(journal_entry)
+        print(api.add_record(journal_entry))
         api.add_record(debit_ledger_entry)
         api.add_record(credit_ledger_entry)
 
