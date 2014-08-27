@@ -28,6 +28,10 @@ import api
 
 def csv_import(csvfile):
   with open(csvfile, 'rt') as csvfile:
+    csvfile.seek(0, os.SEEK_END)
+    csvbinary = io.StringIO(csvfile.read())
+    csvbinary = csvbinary.getvalue()
+
     # Adding the metadata and the binary file to Memoranda
     memorandum = {}
     memorandum['entry_space'] = 'Memoranda'
@@ -35,10 +39,7 @@ def csv_import(csvfile):
     memorandum['Date'] = time.strftime("%Y%m%d-%H%M%S")
     memorandum['Filename'] = csvfile.name
     memorandum['Filetype'] = 'csv'
-    csvfile.seek(0, os.SEEK_END)
     memorandum['Filesize'] = csvfile.tell()
-    csvbinary = io.StringIO(csvfile.read())
-    csvbinary = csvbinary.getvalue()
     memorandum['File'] = csvbinary
     api.add_record(memorandum)
 
@@ -46,144 +47,148 @@ def csv_import(csvfile):
     csvfile.seek(0)
     reader = csv.reader(csvfile)
     # Numbering each row
-    reader = enumerate(reader)
-    # Create a list of lists:
-    rows = [pair for pair in reader]
+    rows = enumerate(reader)
     # Find the first longest list:
-    header = max(rows,key=lambda tup:len(tup[1]))
+    header = max(rows, key=lambda tup:len(tup[1]))
     # print(header)
-    is_BitcoinCore = header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']
-    is_MultiBit = header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']
 
-    if is_BitcoinCore:
-      # Create a list that contains all the rows under the header:
-      tx_list = []
-      for row in rows:
-        is_transaction = row[0] > header[0]
-        if is_transaction:
-          transaction = row[1]
-          tx_list.append(transaction)
-
-      for tx in tx_list:
-        memoranda = zip(header[1], tx)
-        memoranda = dict(memoranda)
-        memoranda_entry = {}
-        memoranda_entry['entry_space'] = 'MemorandaTransactions'
-        memoranda_entry['unique'] = str(uuid.uuid4())
-        memoranda_entry['FileUUID'] = memorandum['unique']
-        memoranda_entry['Details'] = str(memoranda)
-        memoranda_entry['Details']
-        memoranda_entry['TransactionMapName'] = 'BitcoinCoreCSV'
-        api.add_record(memoranda_entry)
-
-        journal_entry = {}
-        journal_entry['entry_space'] = 'GeneralJournal'
-        journal_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Date'] = memoranda['Date']
-        journal_entry['Debits'] = []
-        journal_entry['Credits'] = []
-
-        debit_ledger_entry = {}
-        debit_ledger_entry['entry_space'] = 'GeneralLedger'
-        debit_ledger_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Debits'].append(debit_ledger_entry['unique'])
-        debit_ledger_entry['Date'] = memoranda['Date']
-        debit_ledger_entry['Type'] = "Debit"
-        debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
-        debit_ledger_entry['Unit'] = "satoshis"
-        debit_ledger_entry['gjUnique'] = journal_entry['unique']
-
-        credit_ledger_entry = {}
-        credit_ledger_entry['entry_space'] = 'GeneralLedger'
-        credit_ledger_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Credits'].append(debit_ledger_entry['unique'])
-        journal_entry['Credits']
-        credit_ledger_entry['Date'] = memoranda['Date']
-        credit_ledger_entry['Type'] = "Credit"
-        credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
-        credit_ledger_entry['Unit'] = "satoshis"
-        credit_ledger_entry['gjUnique'] = journal_entry['unique']
-
-        if int(abs(float(memoranda['Amount']))*100000000) > 0:
-          debit_ledger_entry['Account'] = "Bitcoins"
-          credit_ledger_entry['Account'] = "Revenue"
-        elif int(abs(float(memoranda['Amount']))*100000000) < 0:
-          debit_ledger_entry['Account'] = "Expense"
-          credit_ledger_entry['Account'] = "Bitcoins"
-        journal_entry['Debits']= set(journal_entry['Debits'])
-        journal_entry['Credits']= set(journal_entry['Credits'])
-        print(api.add_record(journal_entry))
-        api.add_record(debit_ledger_entry)
-        api.add_record(credit_ledger_entry)
-
-    elif is_MultiBit:
-      # Create a list that contains all the rows under the header:
-      tx_list = []
-      for row in rows:
-        is_transaction = row[0] > header[0]
-        if is_transaction:
-          transaction = row[1]
-          tx_list.append(transaction)
-
-      for tx in tx_list:
-        memoranda = zip(header[1], tx)
-        memoranda = dict(memoranda)
-        memoranda_entry = {}
-        memoranda_entry['entry_space'] = 'MemorandaTransactions'
-        memoranda_entry['unique'] = str(uuid.uuid4())
-        memoranda_entry['FileUUID'] = memorandum['unique']
-        memoranda_entry['Details'] = str(memoranda)
-        memoranda_entry['TransactionMapName'] = 'MultiBitCSV'
-        memoranda_entry
-        api.add_record(memoranda_entry)
-
-        journal_entry = {}
-        journal_entry['entry_space'] = 'GeneralJournal'
-        journal_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Date'] = memoranda['Date']
-        journal_entry['Debits'] = []
-        journal_entry['Credits'] = []
-
-        debit_ledger_entry = {}
-        debit_ledger_entry['entry_space'] = 'GeneralLedger'
-        debit_ledger_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Debits'].append(debit_ledger_entry['unique'])
-        debit_ledger_entry['Date'] = memoranda['Date']
-        debit_ledger_entry['Type'] = "Debit"
-        debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
-        debit_ledger_entry['Unit'] = "satoshis"
-        debit_ledger_entry['gjUnique'] = journal_entry['unique']
-
-        credit_ledger_entry = {}
-        credit_ledger_entry['entry_space'] = 'GeneralLedger'
-        credit_ledger_entry['unique'] = str(uuid.uuid4())
-        journal_entry['Credits'].append(debit_ledger_entry['unique'])
-        journal_entry['Credits']
-        credit_ledger_entry['Date'] = memoranda['Date']
-        credit_ledger_entry['Type'] = "Credit"
-        credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
-        credit_ledger_entry['Unit'] = "satoshis"
-        credit_ledger_entry['gjUnique'] = journal_entry['unique']
-
-        if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
-          debit_ledger_entry['Account'] = "Bitcoins"
-          credit_ledger_entry['Account'] = "Revenue"
-        elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
-          debit_ledger_entry['Account'] = "Expense"
-          credit_ledger_entry['Account'] = "Bitcoins"
-        journal_entry['Debits']= set(journal_entry['Debits'])
-        journal_entry['Credits']= set(journal_entry['Credits'])
-        api.add_record(journal_entry)
-        api.add_record(debit_ledger_entry)
-        api.add_record(credit_ledger_entry)
+    if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+      return _import_bitcoin_core(rows, header, memorandum['unique'])
+    elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+      return _import_multibit(rows, header, memorandum['unique'])
+    elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
+      return _import_electrum(rows, header, memorandum['unique'])
+    elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
+      return _import_armory(rows, header, memorandum['unique'])
     else:
-      print("Unrecognized file format")
+      print("Unrecognized file format") 
+      return False
+  print("Could not open file.") 
+  return False
+
+def _import_bitcoin_core(rows, header, unique):
+  for row in rows:
+    if row[0] > header[0] and len(row[1] == header[1]): 
+      tx = row[1]
+
+      memoranda = zip(header[1], tx)
+      memoranda = dict(memoranda)
+      memoranda_entry = {}
+      memoranda_entry['entry_space'] = 'MemorandaTransactions'
+      memoranda_entry['unique'] = str(uuid.uuid4())
+      memoranda_entry['FileUUID'] = unique
+      memoranda_entry['Details'] = str(memoranda)
+      memoranda_entry['Details']
+      memoranda_entry['TransactionMapName'] = 'BitcoinCoreCSV'
+      api.add_record(memoranda_entry)
+
+      journal_entry = {}
+      journal_entry['entry_space'] = 'GeneralJournal'
+      journal_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Date'] = memoranda['Date']
+      journal_entry['Debits'] = []
+      journal_entry['Credits'] = []
+
+      debit_ledger_entry = {}
+      debit_ledger_entry['entry_space'] = 'GeneralLedger'
+      debit_ledger_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Debits'].append(debit_ledger_entry['unique'])
+      debit_ledger_entry['Date'] = memoranda['Date']
+      debit_ledger_entry['Type'] = "Debit"
+      debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
+      debit_ledger_entry['Unit'] = "satoshis"
+      debit_ledger_entry['gjUnique'] = journal_entry['unique']
+      credit_ledger_entry = {}
+      credit_ledger_entry['entry_space'] = 'GeneralLedger'
+      credit_ledger_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Credits'].append(debit_ledger_entry['unique'])
+      journal_entry['Credits']
+      credit_ledger_entry['Date'] = memoranda['Date']
+      credit_ledger_entry['Type'] = "Credit"
+      credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
+      credit_ledger_entry['Unit'] = "satoshis"
+      credit_ledger_entry['gjUnique'] = journal_entry['unique']
+
+      if int(abs(float(memoranda['Amount']))*100000000) > 0:
+        debit_ledger_entry['Account'] = "Bitcoins"
+        credit_ledger_entry['Account'] = "Revenue"
+      elif int(abs(float(memoranda['Amount']))*100000000) < 0:
+        debit_ledger_entry['Account'] = "Expense"
+        credit_ledger_entry['Account'] = "Bitcoins"
+      journal_entry['Debits']= set(journal_entry['Debits'])
+      journal_entry['Credits']= set(journal_entry['Credits'])
+      print(api.add_record(journal_entry))
+      api.add_record(debit_ledger_entry)
+      api.add_record(credit_ledger_entry)
+  return True
+
+def _import_multibit(rows, header, unique):
+  for row in rows:
+    if row[0] > header[0] and len(row[1] == header[1]): 
+      tx = row[1]
+
+      memoranda = zip(header[1], tx)
+      memoranda = dict(memoranda)
+      memoranda_entry = {}
+      memoranda_entry['entry_space'] = 'MemorandaTransactions'
+      memoranda_entry['unique'] = str(uuid.uuid4())
+      memoranda_entry['FileUUID'] = unique
+      memoranda_entry['Details'] = str(memoranda)
+      memoranda_entry['TransactionMapName'] = 'MultiBitCSV'
+      memoranda_entry
+      api.add_record(memoranda_entry)
+
+      journal_entry = {}
+      journal_entry['entry_space'] = 'GeneralJournal'
+      journal_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Date'] = memoranda['Date']
+      journal_entry['Debits'] = []
+      journal_entry['Credits'] = []
+
+      debit_ledger_entry = {}
+      debit_ledger_entry['entry_space'] = 'GeneralLedger'
+      debit_ledger_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Debits'].append(debit_ledger_entry['unique'])
+      debit_ledger_entry['Date'] = memoranda['Date']
+      debit_ledger_entry['Type'] = "Debit"
+      debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
+      debit_ledger_entry['Unit'] = "satoshis"
+      debit_ledger_entry['gjUnique'] = journal_entry['unique']
+
+      credit_ledger_entry = {}
+      credit_ledger_entry['entry_space'] = 'GeneralLedger'
+      credit_ledger_entry['unique'] = str(uuid.uuid4())
+      journal_entry['Credits'].append(debit_ledger_entry['unique'])
+      journal_entry['Credits']
+      credit_ledger_entry['Date'] = memoranda['Date']
+      credit_ledger_entry['Type'] = "Credit"
+      credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
+      credit_ledger_entry['Unit'] = "satoshis"
+      credit_ledger_entry['gjUnique'] = journal_entry['unique']
+
+      if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
+        debit_ledger_entry['Account'] = "Bitcoins"
+        credit_ledger_entry['Account'] = "Revenue"
+      elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
+        debit_ledger_entry['Account'] = "Expense"
+        credit_ledger_entry['Account'] = "Bitcoins"
+      journal_entry['Debits']= set(journal_entry['Debits'])
+      journal_entry['Credits']= set(journal_entry['Credits'])
+      api.add_record(journal_entry)
+      api.add_record(debit_ledger_entry)
+      api.add_record(credit_ledger_entry)
+  return True
+
+def _import_armory():
+  return True
+
+def _import_electrum():
   return True
 
 def main():
-    api.start_system()
     if len(sys.argv) <2:
         sys.exit('Missing argument: specify the folder of CSV files you want to convert.')
+    api.start_system()
     searchdir = sys.argv[1]
     matches = []
     for root, dirnames, filenames in os.walk('%s' % searchdir):
