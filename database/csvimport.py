@@ -79,9 +79,8 @@ def _import_bitcoin_core(rows, header, unique):
   logging.info(unique)
   for row in rows:
     logging.info(row)
-    if row[0] > header[0]:
-      tx = row[1]
-      memoranda = zip(header[1], tx)
+    if row[0] > header[0] and len(row[1]) == len(header[1]):
+      memoranda = zip(header[1], row[1])
       memoranda = dict(memoranda)
       memoranda_entry = {}
       memoranda_entry['entry_space'] = 'MemorandaTransactions'
@@ -136,10 +135,8 @@ def _import_multibit(rows, header, unique):
   logging.info(rows)
   for row in rows:
     logging.info(row)
-    if row[0] > header[0] and len(row[1] == header[1]):
-      tx = row[1]
-
-      memoranda = zip(header[1], tx)
+    if row[0] > header[0] and len(row[1]) == len(header[1]):
+      memoranda = zip(header[1], row[1])
       memoranda = dict(memoranda)
       memoranda_entry = {}
       memoranda_entry['entry_space'] = 'MemorandaTransactions'
