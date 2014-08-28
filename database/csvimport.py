@@ -20,11 +20,17 @@ import os
 import fnmatch
 import io
 import time
+import logging
 import sys
 import csv
 import json
 import uuid
 import api
+
+logging.basicConfig(filename='CSV_Import_Module_Log.csv', \
+  format='%(asctime)s %(message)s',\
+  datefmt='%m/%d/%Y %I:%M:%S %p', \
+  level=logging.INFO)
 
 def csv_import(csvfile):
   with open(csvfile, 'rt') as csvfile:
@@ -41,36 +47,40 @@ def csv_import(csvfile):
     memorandum['Filetype'] = 'csv'
     memorandum['Filesize'] = csvfile.tell()
     memorandum['File'] = csvbinary
-    api.add_record(memorandum)
+    logging.info(api.add_record(memorandum))
 
     # Adding individual CSV lines to the GeneralJournal and GeneralLedger
     csvfile.seek(0)
     reader = csv.reader(csvfile)
     # Numbering each row
-    rows = enumerate(reader)
+    reader = enumerate(reader)
+    # Turns the enumerate object into a list
+    rows = [pair for pair in reader]
     # Find the first longest list:
     header = max(rows, key=lambda tup:len(tup[1]))
-    # print(header)
-
+    logging.info(header)
     if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+      logging.info("Bitcoin Core File")
       return _import_bitcoin_core(rows, header, memorandum['unique'])
     elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+      logging.info("MultiBit File")
       return _import_multibit(rows, header, memorandum['unique'])
     elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
       return _import_electrum(rows, header, memorandum['unique'])
     elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
       return _import_armory(rows, header, memorandum['unique'])
     else:
-      print("Unrecognized file format") 
+      logging.error(str(csvfile.name) + " Unrecognized file format: " + str(header))
       return False
-  print("Could not open file.") 
+  logging.error("Could not open file.")
   return False
 
 def _import_bitcoin_core(rows, header, unique):
+  logging.info(unique)
   for row in rows:
-    if row[0] > header[0] and len(row[1] == header[1]): 
+    logging.info(row)
+    if row[0] > header[0]:
       tx = row[1]
-
       memoranda = zip(header[1], tx)
       memoranda = dict(memoranda)
       memoranda_entry = {}
@@ -80,7 +90,7 @@ def _import_bitcoin_core(rows, header, unique):
       memoranda_entry['Details'] = str(memoranda)
       memoranda_entry['Details']
       memoranda_entry['TransactionMapName'] = 'BitcoinCoreCSV'
-      api.add_record(memoranda_entry)
+      logging.info(api.add_record(memoranda_entry))
 
       journal_entry = {}
       journal_entry['entry_space'] = 'GeneralJournal'
@@ -117,14 +127,16 @@ def _import_bitcoin_core(rows, header, unique):
         credit_ledger_entry['Account'] = "Bitcoins"
       journal_entry['Debits']= set(journal_entry['Debits'])
       journal_entry['Credits']= set(journal_entry['Credits'])
-      print(api.add_record(journal_entry))
-      api.add_record(debit_ledger_entry)
-      api.add_record(credit_ledger_entry)
+      logging.info(api.add_record(journal_entry))
+      logging.info(api.add_record(debit_ledger_entry))
+      logging.info(api.add_record(credit_ledger_entry))
   return True
 
 def _import_multibit(rows, header, unique):
+  logging.info(rows)
   for row in rows:
-    if row[0] > header[0] and len(row[1] == header[1]): 
+    logging.info(row)
+    if row[0] > header[0] and len(row[1] == header[1]):
       tx = row[1]
 
       memoranda = zip(header[1], tx)
@@ -136,7 +148,7 @@ def _import_multibit(rows, header, unique):
       memoranda_entry['Details'] = str(memoranda)
       memoranda_entry['TransactionMapName'] = 'MultiBitCSV'
       memoranda_entry
-      api.add_record(memoranda_entry)
+      logging.info(api.add_record(memoranda_entry))
 
       journal_entry = {}
       journal_entry['entry_space'] = 'GeneralJournal'
@@ -174,9 +186,9 @@ def _import_multibit(rows, header, unique):
         credit_ledger_entry['Account'] = "Bitcoins"
       journal_entry['Debits']= set(journal_entry['Debits'])
       journal_entry['Credits']= set(journal_entry['Credits'])
-      api.add_record(journal_entry)
-      api.add_record(debit_ledger_entry)
-      api.add_record(credit_ledger_entry)
+      logging.info(api.add_record(journal_entry))
+      logging.info(api.add_record(debit_ledger_entry))
+      logging.info(api.add_record(credit_ledger_entry))
   return True
 
 def _import_armory():
@@ -194,6 +206,7 @@ def main():
     for root, dirnames, filenames in os.walk('%s' % searchdir):
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root,filename))
+    logging.info(matches)
     for csvfile in matches:
         result = csv_import(csvfile)
         if not result:
