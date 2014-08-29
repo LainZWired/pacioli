@@ -85,7 +85,7 @@ def _import_bitcoin_core(rows, header, unique):
       memoranda_entry = {}
       memoranda_entry['entry_space'] = 'MemorandaTransactions'
       memoranda_entry['unique'] = str(uuid.uuid4())
-      memoranda_entry['FileUUID'] = unique
+      memoranda_entry['unique'] = unique
       memoranda_entry['Details'] = str(memoranda)
       memoranda_entry['Details']
       memoranda_entry['TransactionMapName'] = 'BitcoinCoreCSV'
@@ -141,7 +141,7 @@ def _import_multibit(rows, header, unique):
       memoranda_entry = {}
       memoranda_entry['entry_space'] = 'MemorandaTransactions'
       memoranda_entry['unique'] = str(uuid.uuid4())
-      memoranda_entry['FileUUID'] = unique
+      memoranda_entry['unique'] = unique
       memoranda_entry['Details'] = str(memoranda)
       memoranda_entry['TransactionMapName'] = 'MultiBitCSV'
       memoranda_entry
@@ -197,7 +197,7 @@ def _import_electrum():
 def main():
     if len(sys.argv) <2:
         sys.exit('Missing argument: specify the folder of CSV files you want to convert.')
-    api.start_system()
+    logging.info(api.start_system())
     searchdir = sys.argv[1]
     matches = []
     for root, dirnames, filenames in os.walk('%s' % searchdir):
