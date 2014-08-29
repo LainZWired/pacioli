@@ -43,7 +43,8 @@ def csv_import(csvfile):
     memorandum = {}
     memorandum['entry_space'] = 'Memoranda'
     memorandum['unique'] = str(uuid.uuid4())
-    memorandum['Date'] = str(datetime.now(timezone.utc))
+    now     = datetime.now()
+    memorandum['Date'] = now.strftime("%s")
     memorandum['Filename'] = csvfile.name
     memorandum['Filetype'] = 'csv'
     memorandum['Filesize'] = csvfile.tell()
@@ -93,6 +94,7 @@ def _import_bitcoin_core(rows, header, unique):
       journal_entry['entry_space'] = 'GeneralJournal'
       journal_entry['unique'] = str(uuid.uuid4())
       reformat = datetime.strptime(memoranda['Date'], "%Y-%m-%dT%H:%M:%S")
+      reformat = reformat.strftime("%s")
       journal_entry['Date'] = reformat
       journal_entry['Debits'] = []
       journal_entry['Credits'] = []
@@ -149,6 +151,7 @@ def _import_multibit(rows, header, unique):
       journal_entry['entry_space'] = 'GeneralJournal'
       journal_entry['unique'] = str(uuid.uuid4())
       reformat = datetime.strptime(memoranda['Date'], "%d %b %Y %H:%M")
+      reformat = reformat.strftime("%s")
       journal_entry['Date'] = reformat
       journal_entry['Debits'] = []
       journal_entry['Credits'] = []
