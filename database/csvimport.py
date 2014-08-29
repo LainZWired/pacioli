@@ -19,13 +19,14 @@
 import os
 import fnmatch
 import io
-import time
+from datetime import datetime, date, time, timezone
 import logging
 import sys
 import csv
 import json
 import uuid
 import api
+
 
 logging.basicConfig(filename='CSV_Import_Module_Log.csv', \
   format='%(asctime)s %(message)s',\
@@ -42,7 +43,7 @@ def csv_import(csvfile):
     memorandum = {}
     memorandum['entry_space'] = 'Memoranda'
     memorandum['unique'] = str(uuid.uuid4())
-    memorandum['Date'] = time.strftime("%Y%m%d-%H%M%S")
+    memorandum['Date'] = str(datetime.now(timezone.utc))
     memorandum['Filename'] = csvfile.name
     memorandum['Filetype'] = 'csv'
     memorandum['Filesize'] = csvfile.tell()
@@ -91,7 +92,8 @@ def _import_bitcoin_core(rows, header, unique):
       journal_entry = {}
       journal_entry['entry_space'] = 'GeneralJournal'
       journal_entry['unique'] = str(uuid.uuid4())
-      journal_entry['Date'] = memoranda['Date']
+      reformat = datetime.strptime(memoranda['Date'], "%Y-%m-%dT%H:%M:%S")
+      journal_entry['Date'] = reformat
       journal_entry['Debits'] = []
       journal_entry['Credits'] = []
 
@@ -99,7 +101,7 @@ def _import_bitcoin_core(rows, header, unique):
       debit_ledger_entry['entry_space'] = 'GeneralLedger'
       debit_ledger_entry['unique'] = str(uuid.uuid4())
       journal_entry['Debits'].append(debit_ledger_entry['unique'])
-      debit_ledger_entry['Date'] = memoranda['Date']
+      debit_ledger_entry['Date'] = reformat
       debit_ledger_entry['Type'] = "Debit"
       debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
       debit_ledger_entry['Unit'] = "satoshis"
@@ -109,7 +111,7 @@ def _import_bitcoin_core(rows, header, unique):
       credit_ledger_entry['unique'] = str(uuid.uuid4())
       journal_entry['Credits'].append(debit_ledger_entry['unique'])
       journal_entry['Credits']
-      credit_ledger_entry['Date'] = memoranda['Date']
+      credit_ledger_entry['Date'] = reformat
       credit_ledger_entry['Type'] = "Credit"
       credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount']))*100000000)
       credit_ledger_entry['Unit'] = "satoshis"
@@ -146,7 +148,8 @@ def _import_multibit(rows, header, unique):
       journal_entry = {}
       journal_entry['entry_space'] = 'GeneralJournal'
       journal_entry['unique'] = str(uuid.uuid4())
-      journal_entry['Date'] = memoranda['Date']
+      reformat = datetime.strptime(memoranda['Date'], "%d %b %Y %H:%M")
+      journal_entry['Date'] = reformat
       journal_entry['Debits'] = []
       journal_entry['Credits'] = []
 
@@ -154,7 +157,7 @@ def _import_multibit(rows, header, unique):
       debit_ledger_entry['entry_space'] = 'GeneralLedger'
       debit_ledger_entry['unique'] = str(uuid.uuid4())
       journal_entry['Debits'].append(debit_ledger_entry['unique'])
-      debit_ledger_entry['Date'] = memoranda['Date']
+      debit_ledger_entry['Date'] = reformat
       debit_ledger_entry['Type'] = "Debit"
       debit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
       debit_ledger_entry['Unit'] = "satoshis"
@@ -165,7 +168,7 @@ def _import_multibit(rows, header, unique):
       credit_ledger_entry['unique'] = str(uuid.uuid4())
       journal_entry['Credits'].append(debit_ledger_entry['unique'])
       journal_entry['Credits']
-      credit_ledger_entry['Date'] = memoranda['Date']
+      credit_ledger_entry['Date'] = reformat
       credit_ledger_entry['Type'] = "Credit"
       credit_ledger_entry['Amount'] = int(abs(float(memoranda['Amount (BTC)']))*100000000)
       credit_ledger_entry['Unit'] = "satoshis"
