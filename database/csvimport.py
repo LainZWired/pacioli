@@ -211,6 +211,9 @@ def _import_armory(rows, header, unique):
       journal_entry['entry_space'] = 'GeneralJournal'
       journal_entry['unique'] = str(uuid.uuid4())
       journal_entry['Date'] = memoranda['Date']
+      reformat = datetime.strptime(memoranda['Date'], "%Y-%b-%d %I:%M%p")
+      reformat = reformat.strftime("%s")
+      journal_entry['Date'] = reformat
       journal_entry['Debits'] = []
       journal_entry['Credits'] = []
 
@@ -238,7 +241,7 @@ def _import_armory(rows, header, unique):
         credit_ledger_entry['Amount'] = int(abs(float(memoranda['Credit']))*100000000)
         debit_ledger_entry['Account'] = "Bitcoins"
         credit_ledger_entry['Account'] = "Revenue"
-      elif int(abs(float(memoranda['Debit']))*100000000) > 0:
+      elif int(abs(float(memoranda['Debit']))*100000000) < 0:
         debit_ledger_entry['Amount'] = int(abs(float(memoranda['Debit']))*100000000)
         credit_ledger_entry['Amount'] = int(abs(float(memoranda['Debit']))*100000000)
         debit_ledger_entry['Account'] = "Expense"
