@@ -5,7 +5,7 @@ from app.models import Memoranda
 import io
 import uuid
 import os
-from datetime import date
+import datetime
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -25,18 +25,20 @@ def upload():
         for file in uploaded_files:
             if file and allowed_file(file.filename):
                 id = str(uuid.uuid4())
-                upDate = date.today()
+                uploadDate = datetime.datetime.now()
                 fileName = secure_filename(file.filename)
                 fileType = fileName.rsplit('.', 1)[1]
                 file.seek(0, os.SEEK_END)
                 fileSize = file.tell()
                 fileText = file.stream.getvalue()
-                print(fileText)
-                memo = Memoranda(id=id, date=upDate, fileName=fileName, fileType=fileType, file=fileText, fileSize=fileSize, fileMap_id = "")
+                memo = Memoranda(id=id, date=uploadDate, fileName=fileName, fileType=fileType, file=fileText, fileSize=fileSize, fileMap_id = "")
                 db.session.add(memo)
                 db.session.commit()
                 filenames.append(fileName)
-                file.close()
+                file.close()    
+    memos = Memoranda.query.order_by(Memoranda.date.desc()).all()
+    
     return render_template('upload.html',
-        title = 'Upload PDFs',
-        filenames=filenames)
+        title = 'Upload',
+        filenames=filenames,
+        memos=memos)

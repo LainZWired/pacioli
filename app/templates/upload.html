@@ -6,15 +6,51 @@
 <form action="upload" method="post" enctype="multipart/form-data">
   <input type="file" multiple="" name="file[]">
   <br>
+  <br>
   <input type="submit" value="Upload">
 </form>
 
 <br>
-This is a list of the files you just uploaded:
+{% if filenames %}
+<h4>
+  List of the files you just uploaded:
+</h3>
 <ul>
-  {% for file in filenames %}
-    <li>{{file}}</li>
+  {% for filename in filenames %}
+    <li>{{filename}}</li>
   {% endfor %}
 </ul>
+{% endif %}
+<hr>
+<br>
+
+{% if memos %}
+<table border="1">
+  <caption>Files Already Uploaded</caption>
+  <tr>
+    <th>
+      Date Uploaded
+    </th>
+    <th>
+      File Name
+    </th>
+    <th>
+      Bytes
+    </th>
+  {% for memo in memos %}
+  <tr>
+  <td>
+    {{memo.date}}
+  </td>
+  <td>
+    {{memo.fileName}}
+  </td>
+  <td>
+    {{memo.fileSize}}
+  </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
 
 {% endblock %}
