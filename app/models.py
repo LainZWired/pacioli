@@ -17,6 +17,7 @@
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
 from app import db
+from sqlalchemy.dialects.postgresql import JSON
 
 
 # Memoranda are source documents from which accounting information is extracted to form General Journal entries. As a preliminary step, all of the details for each individual transaction are extracted from the source document to a dictionary with a user-created File Mapping. After the raw transactions are extracted, they are transformed into ledger entries according to the rules set out in the Transaction Mappings.
@@ -45,7 +46,7 @@ class Memoranda(db.Model):
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    details = db.Column(db.PickleType)
+    details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
     
     def __init__(self, id, memoranda_id, details, transactionMapName):
@@ -66,35 +67,32 @@ class FileMaps(db.Model):
     id = db.Column(db.Text, primary_key=True)
     fileMapName = db.Column(db.Text, unique=True)
     
-    def __init__(self, id, fileMapName, memoranda):
+    def __init__(self, id, fileMapName):
         self.id = id
         self.fileMapName = fileMapName
-        self.memoranda = memoranda
-        self.fileMappings = fileMappings
         
     def __repr__(self):
         return '<id %r> <name %r>' % (self.id, self.fileMapName)
 
-# File Mappings explain how raw transaction information is extracted from the data source. This is trivial for a CSV with headers but can become complex for HTML, PDFs, e-mails, etc. The Transaction Key indicates what key:value pair will be populated in the memoranda transaction detail by the mapping. 
+# File Mappings explain how raw transaction information is extracted from the data source. This is trivial for a CSV with headers but can become complex for HTML, PDFs, e-mails, etc. (The Transaction Key indicates what key:value pair will be populated in the memoranda transaction detail by the mapping.)
 
 
 class FileMappings(db.Model):
     id = db.Column(db.Text, primary_key=True)
     fileMap_id = db.Column(db.Text, db.ForeignKey('file_maps.id'))
     fileMappingName = db.Column(db.Text, unique=True)
-    fileMapping = db.Column(db.PickleType)
-    transactionKey = db.Column(db.Text)
+    fileMapping = db.Column(JSON)
     
-    def __init__(self, id, fileMap_id, fileMappingName, fileMapping, transactionKey):
+    def __init__(self, id, fileMap_id, fileMappingName, fileMapping):
         self.id = id
         self.fileMap_id = fileMap_id
-        self.MappingName = MappingName
+        self.fileMappingName = fileMappingName
         self.fileMapping = fileMapping
-        self.transactionKey = transactionKey
         
     def __repr__(self):
         return '<id %r> <name %r>' % (self.id, self.MappingName)
 
+# FileMappings.fileMapping {idtype: 'line', argument: '0', value: 'Date,Description,Amount (BTC),Amount ($),Transaction Id'}
 
 # Transaction Mappings explain how Ledger entries are extracted from raw transaction information. Journal entries are automatically created based on the corresponding debit and credit ledger entries.
 
@@ -114,7 +112,7 @@ class TransactionMaps(db.Model):
 class TransactionMappings(db.Model):
     id = db.Column(db.Text, primary_key=True)
     transactionMappingName = db.Column(db.Text)
-    transactionMapping = db.Column(db.PickleType)
+    transactionMapping = db.Column(JSON)
     ledgerKey = db.Column(db.Text)
     transactionMap_id = db.Column(db.Text, db.ForeignKey('transaction_maps.id'))
     

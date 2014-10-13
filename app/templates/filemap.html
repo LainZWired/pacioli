@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{fileMapName}}</h3>
+
+
+{% from "_formhelpers.html" import render_field %}
+<form  method="POST" action="/FileMaps/{{fileMapName}}">
+  {{ form.hidden_tag() }}
+  <table>
+    <caption>New Table Mapping</caption>
+    <tr>
+      <td>
+        {{ form.fileMappingName.label }}
+      </td>
+      <td>
+        {{ form.fileMappingName(size=20) }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        {{ form.fileMappingType.label }}
+      </td>
+      <td>
+        {{ form.fileMappingType(size=20) }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        {{ form.fileMappingArgument.label }}
+      </td>
+      <td>
+        {{ form.fileMappingArgument(size=20) }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        {{ form.fileMappingValue.label }}
+      </td>
+      <td>
+        {{ form.fileMappingValue(size=20) }}
+      </td>
+    </tr>
+  </table>
+<br>
+<br>
+  <input type=submit value="Add File Mapping">
+</form>
+
+{% if fileMappings %}
+<table border="1">
+  <caption>Existing File Mappings</caption>
+  <tr>
+    <th>
+      Name
+    </th>
+    <th>
+      Mapping
+    </th>
+  </tr>
+  {% for fileMapping in fileMappings %}
+  <tr>
+  <td>
+    {{fileMapping.fileMappingName}}
+  </td>
+  <td>
+    {{fileMapping.fileMapping}}
+  </td>
+  <td>
+    <a href="{{ url_for('deletefilemapping', fileMapName = fileMapName, fileMappingName = fileMapping.fileMappingName)}}">Delete</a>
+  </td>
+  </tr>
+  
+  {% endfor %}
+</table>
+{% endif %}
+
+
+
+{% endblock %}
