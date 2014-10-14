@@ -20,7 +20,7 @@ from app import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
-# Memoranda are source documents from which accounting information is extracted to form General Journal entries. As a preliminary step, all of the details for each individual transaction are extracted from the source document to a dictionary with a user-created File Mapping. After the raw transactions are extracted, they are transformed into ledger entries according to the rules set out in the Transaction Mappings.
+# Memoranda are source documents from which accounting information is extracted to form General Journal entries. As a preliminary step, all of the details for each individual transaction are extracted from the source document to a dictionary.
 
 
 class Memoranda(db.Model):
@@ -30,16 +30,14 @@ class Memoranda(db.Model):
     fileType = db.Column(db.Text)
     fileSize = db.Column(db.Integer)
     file = db.Column(db.LargeBinary)
-  #  fileMap_id = db.Column(db.Text, db.ForeignKey('file_maps.id'))
     
-    def __init__(self, id, date, fileName, fileType, fileSize, file, fileMap_id):
+    def __init__(self, id, date, fileName, fileType, fileSize, file):
         self.id = id
         self.date = date
         self.fileName = fileName
         self.fileType = fileType
         self.fileSize = fileSize
         self.file = file
-        self.fileMap_id = fileMap_id
         
     def __repr__(self):
         return '<id %r> <name %r>' % (self.id, self.fileName)
@@ -49,11 +47,10 @@ class MemorandaTransactions(db.Model):
     details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
     
-    def __init__(self, id, memoranda_id, details, transactionMapName):
+    def __init__(self, id, memoranda_id, details):
         self.id = id
         self.memoranda_id = memoranda_id
         self.details = details
-        self.transactionMap_id = transactionMap_id
 
         
     def __repr__(self):
