@@ -25,7 +25,8 @@ import sys
 import csv
 import json
 import uuid
-from app import app, db, models
+from app import db, models
+import config
 
 def allowed_file(filename):
   return '.' in filename and \
@@ -48,7 +49,7 @@ def process(file):
     memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, file=fileText, fileSize=fileSize)
     db.session.add(memo)
     db.session.commit()
-    if fileType = 'CSV':
+    if fileType == 'CSV':
       csv_import(file)
 
 def csv_import(csvfile):
