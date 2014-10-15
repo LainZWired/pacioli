@@ -1,6 +1,6 @@
 #!venv/bin/python
 
-from app import db
+from pacioli import db
 
 db.drop_all()
 db.create_all()
