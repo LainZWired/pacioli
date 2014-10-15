@@ -26,10 +26,10 @@ from sqlalchemy.dialects.postgresql import JSON
 class Memoranda(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime, index=True)
-    fileName = db.Column(db.Text)
+    fileName = db.Column(db.Text, unique=True)
     fileType = db.Column(db.Text)
     fileSize = db.Column(db.Integer)
-    file = db.Column(db.LargeBinary)
+    file = db.Column(db.LargeBinary, unique=True)
     
     def __init__(self, id, date, fileName, fileType, fileSize, file):
         self.id = id
@@ -44,7 +44,7 @@ class Memoranda(db.Model):
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    details = db.Column(JSON)
+    details = db.Column(JSON, unique=True)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
     
     def __init__(self, id, memoranda_id, details):
@@ -52,7 +52,6 @@ class MemorandaTransactions(db.Model):
         self.memoranda_id = memoranda_id
         self.details = details
 
-        
     def __repr__(self):
         return '<id %r> <details %r>' % (self.id, self.details)
 
@@ -63,7 +62,6 @@ class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
     memorandaTransactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
-
 
     def __init__(self, id, date):
         self.id = id
@@ -80,16 +78,16 @@ class LedgerEntries(db.Model):
     account = db.Column(db.Text)
     amount = db.Column(db.Integer)
     unit = db.Column(db.Text)
-    journal_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
+    journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
     
-    def __init__(self, id, date, entryType, account, amount, unit, journal_id):
+    def __init__(self, id, date, entryType, account, amount, unit, journal_entry_id):
         self.id = id
         self.date = date
         self.entryType = entryType
         self.account = account
         self.amount = amount
         self.unit = unit
-        self.journal_id = journal_id
+        self.journal_entry_id = journal_entry_id
         
     def __repr__(self):
         return '<id %r>' % (self.id)

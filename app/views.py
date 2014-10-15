@@ -5,39 +5,30 @@ import io
 import uuid
 import os
 import datetime
+import app.memoranda
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/')
-@app.route('/index')
 def index():
-    return render_template("index.html")
+  return render_template("index.html")
 
 @app.route('/Upload', methods=['POST','GET'])
 def upload():
-    filenames = ''
-    if request.method == 'POST':
-        filenames = []
-        uploaded_files = request.files.getlist("file[]")
-        for file in uploaded_files:
-            if file and allowed_file(file.filename):
-                id = str(uuid.uuid4())
-                uploadDate = datetime.datetime.now()
-                fileName = secure_filename(file.filename)
-                fileType = fileName.rsplit('.', 1)[1]
-                file.seek(0, os.SEEK_END)
-                fileSize = file.tell()
-                fileText = file.stream.getvalue()
-                memo = models.Memoranda(id=id, date=uploadDate, fileName=fileName, fileType=fileType, file=fileText, fileSize=fileSize)
-                db.session.add(memo)
-                db.session.commit()
-                filenames.append(fileName)
-                file.close()    
-    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-    
-    return render_template('upload.html',
-        title = 'Upload',
-        filenames=filenames,
-        memos=memos)
+  filenames = ''
+  if request.method == 'POST':
+    uploaded_files = request.files.getlist("file[]")
+    for file in uploaded_files:
+      memoranda.process(file)
+    return redirect(url_for('upload'))
+  memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+  
+  return render_template('upload.html',
+    title = 'Upload',
+    memos=memos)
+
+@app.route('/Memoranda', methods=['POST','GET'])
+def memoranda():
+  memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+  return render_template('memoranda.html',
+    title = 'Memoranda',
+    memos=memos)

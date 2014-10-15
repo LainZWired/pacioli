@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Memoranda</h1>
+
+{% if memos %}
+<table border="1">
+  <tr>
+    <th>
+      Date
+    </th>
+    <th>
+      Memo Name
+    </th>
+    <th>
+      Transactions
+    </th>
+  {% for memo in memos %}
+  <tr>
+  <td>
+    {{memo.date}}
+  </td>
+  <td>
+    {{memo.fileName}}
+  </td>
+  <td>
+    {{memo.fileSize}}
+  </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}
