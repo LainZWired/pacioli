@@ -1,11 +1,11 @@
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
-from app import app, db, forms, models
+from pacioli import app, db, forms, models
 from werkzeug import secure_filename
 import io
 import uuid
 import os
 import datetime
-import app.memoranda
+import pacioli.memoranda
 
 
 @app.route('/')

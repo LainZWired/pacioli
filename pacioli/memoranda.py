@@ -25,7 +25,7 @@ import sys
 import csv
 import json
 import uuid
-from app import db, models
+from pacioli import db, models
 import config
 
 def allowed_file(filename):

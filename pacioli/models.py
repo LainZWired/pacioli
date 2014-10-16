@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
-from app import db
+from pacioli import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
