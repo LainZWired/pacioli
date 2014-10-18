@@ -1,3 +1,21 @@
+# Copyright (c) 2014, Satoshi Nakamoto Institute
+# All rights reserved.
+#
+# This file is part of Pacioli.
+#
+# Pacioli is free software: you can redistribute it and/or modify
+# it under the terms of the Affero GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pacioli is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
+
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
 import io
@@ -6,6 +24,7 @@ import os
 import datetime
 import pacioli.memoranda
 import ast
+import pacioli.ledgers as ledgers
 
 @app.route('/')
 def index():
@@ -92,24 +111,14 @@ def journal_entry(id):
 @app.route('/GeneralLedger')
 def general_ledger():
   accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
-  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
   accounts = []
   for accountResult in accountsQuery:
-    account = {}
-    account['accountName'] = accountResult[0]
-    account['totalDebit'] = 0
-    account['totalCredit'] = 0
-    account['debitBalance'] = 0
-    account['creditBalance'] = 0
-    for entry in entries:
-      if entry.entryType == 'debit' and entry.account == account['accountName']:
-        account['totalDebit'] += entry.amount
-      elif entry.entryType == 'credit' and entry.account == account['accountName']:
-        account['totalCredit'] += entry.amount
-    if account['totalDebit'] > account['totalCredit']:
-      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
-    elif account['totalDebit'] < account['totalCredit']:
-      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
+    accountName = accountResult[0]
+    ledger_entries = models.LedgerEntries.query.\
+      filter_by(account=accountName).\
+      order_by(models.LedgerEntries.date.desc()).\
+      order_by(models.LedgerEntries.entryType.desc()).all()
+    account = ledgers.foot_account(accountName, ledger_entries)
     accounts.append(account)
   return render_template('generalLedger.html',
     title = 'General Ledger',
@@ -117,26 +126,12 @@ def general_ledger():
 
 @app.route('/Ledger/<accountName>')
 def ledger(accountName):
-  entries = models.LedgerEntries.query.\
+  ledger_entries = models.LedgerEntries.query.\
     filter_by(account=accountName).\
     order_by(models.LedgerEntries.date.desc()).\
     order_by(models.LedgerEntries.entryType.desc()).all()
-  account = {}
-  account['accountName'] = accountName
-  account['totalDebit'] = 0
-  account['totalCredit'] = 0
-  account['debitBalance'] = 0
-  account['creditBalance'] = 0
-  for entry in entries:
-    if entry.entryType == 'debit' and entry.account == account['accountName']:
-      account['totalDebit'] += entry.amount
-    elif entry.entryType == 'credit' and entry.account == account['accountName']:
-      account['totalCredit'] += entry.amount
-  if account['totalDebit'] > account['totalCredit']:
-    account['debitBalance'] = account['totalDebit'] - account['totalCredit']
-  elif account['totalDebit'] < account['totalCredit']:
-    account['creditBalance'] = account['totalCredit'] - account['totalDebit']
-    
+  account = ledgers.foot_account(accountName, ledger_entries)
+
   return render_template('ledger.html',
     title = 'Ledger',
     account=account,
