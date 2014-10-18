@@ -1,3 +1,21 @@
+# Copyright (c) 2014, Satoshi Nakamoto Institute
+# All rights reserved.
+#
+# This file is part of Pacioli.
+#
+# Pacioli is free software: you can redistribute it and/or modify
+# it under the terms of the Affero GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Pacioli is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
+
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
 import io
@@ -6,6 +24,8 @@ import os
 import datetime
 import pacioli.memoranda
 import ast
+import pacioli.ledgers as ledgers
+import csv
 
 @app.route('/')
 def index():
@@ -57,6 +77,19 @@ def delete_memoranda(fileName):
   return redirect(url_for('memoranda'))
 
 @app.route('/Memoranda/<fileName>')
+def memo_file(fileName):
+  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+  fileText = memo.file.decode('UTF-8')
+  document = io.StringIO(fileText)
+  reader = csv.reader(document)
+  rows = [pair for pair in reader]
+  return render_template('memoFile.html',
+    title = 'Memo',
+    rows=rows,
+    fileName=fileName)
+  
+
+@app.route('/Memoranda/<fileName>/Transactions')
 def memo_transactions(fileName):
   memo = models.Memoranda.query.filter_by(fileName=fileName).first()
   transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
@@ -66,7 +99,8 @@ def memo_transactions(fileName):
     transaction.journal_entry_id = journal_entry.id
   return render_template('memoTransactions.html',
     title = 'Memo',
-    transactions=transactions)
+    transactions=transactions,
+    fileName=fileName)
 
 @app.route('/GeneralJournal')
 def general_journal():
@@ -91,10 +125,29 @@ def journal_entry(id):
 
 @app.route('/GeneralLedger')
 def general_ledger():
-  accounts = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
-  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
-  print(accounts)
+  accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+  accounts = []
+  for accountResult in accountsQuery:
+    accountName = accountResult[0]
+    ledger_entries = models.LedgerEntries.query.\
+      filter_by(account=accountName).\
+      order_by(models.LedgerEntries.date.desc()).\
+      order_by(models.LedgerEntries.entryType.desc()).all()
+    account = ledgers.foot_account(accountName, ledger_entries)
+    accounts.append(account)
   return render_template('generalLedger.html',
     title = 'General Ledger',
-    accounts=accounts,
-    entries=entries)
+    accounts=accounts)
+
+@app.route('/Ledger/<accountName>')
+def ledger(accountName):
+  ledger_entries = models.LedgerEntries.query.\
+    filter_by(account=accountName).\
+    order_by(models.LedgerEntries.date.desc()).\
+    order_by(models.LedgerEntries.entryType.desc()).all()
+  account = ledgers.foot_account(accountName, ledger_entries)
+
+  return render_template('ledger.html',
+    title = 'Ledger',
+    account=account,
+    ledger_entries=ledger_entries)

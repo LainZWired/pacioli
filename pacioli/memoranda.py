@@ -33,8 +33,6 @@ def allowed_file(filename):
   return '.' in filename and \
     filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-
-
 # Assumes a Werkzeug File Storage object: http://werkzeug.pocoo.org/docs/0.9/datastructures/#werkzeug.datastructures.FileStorage
 def process(file):
   if allowed_file(file.filename):

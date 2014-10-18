@@ -19,16 +19,12 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
 {% extends "base.html" %}
 {% block content %}
   <h1>
-    General Journal
+    {{account['accountName']}} Ledger
   </h1>
-  {% if entries %}
+  {% if ledger_entries %}
     <table border="1">
       <tr>
         <th>
-          Date
-        </th>
-        <th>
-          Account
         </th>
         <th>
           Debit
@@ -37,16 +33,11 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
           Credit
         </th>
       </tr>
-      {% for entry in entries %}
+      <tbody>
+        {% for entry in ledger_entries %}
         <tr>
           <td>
-            {% if entry.entryType == 'debit' %}
-              {{entry.date}}
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('ledger', accountName=entry.account)}}">
-            {{entry.account}}
+            {{entry.date}}
           </td>
           <td align="right">
             {% if entry.entryType == 'debit' %}
@@ -63,7 +54,40 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
             {% endif %}
           </td>
         </tr>
-      {% endfor %}
+        {% endfor %}
+        <tr>
+          <td>
+            Total
+          </td>
+          <td align="right">
+            {% if account['totalDebit'] %}
+              {{format_satoshis(account['totalDebit'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if account['totalCredit'] %}
+              {{format_satoshis(account['totalCredit'])}}
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+      <tfoot bgcolor="silver">
+        <tr>
+          <td>
+            Balance
+          </td>
+          <td align="right">
+            {% if account['debitBalance'] %}
+              {{format_satoshis(account['debitBalance'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if account['creditBalance'] %}
+              {{format_satoshis(account['creditBalance'])}}
+            {% endif %}
+          </td>
+        </tr>
+      </tfoot>
     </table>
   {% endif %}
 {% endblock %}
