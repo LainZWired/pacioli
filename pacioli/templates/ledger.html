@@ -21,7 +21,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
   <h1>
     {{account['accountName']}} Ledger
   </h1>
-  {% if entries %}
+  {% if ledger_entries %}
     <table border="1">
       <tr>
         <th>
@@ -32,7 +32,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </th>
       </tr>
       <tbody>
-        {% for entry in entries %}
+        {% for entry in ledger_entries %}
         <tr>
           <td align="right">
             {% if entry.entryType == 'debit' %}

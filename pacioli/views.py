@@ -150,4 +150,4 @@ def ledger(accountName):
   return render_template('ledger.html',
     title = 'Ledger',
     account=account,
-    entries=entries)
+    ledger_entries=ledger_entries)
