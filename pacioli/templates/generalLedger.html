@@ -31,6 +31,8 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
       <table border="1">
         <tr>
           <th>
+          </th>
+          <th>
             Debit
           </th>
           <th>
@@ -39,6 +41,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </tr>
         <tbody>
           <tr>
+            <td>
+              Total
+            </td>
             <td>
               {% if account['totalDebit'] %}
               {{format_satoshis(account['totalDebit'])}}
@@ -53,6 +58,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </tbody>
         <tfoot bgcolor="silver">
           <tr>
+            <td>
+              Balance
+            </td>
             <td>
               {% if account['debitBalance'] %}
               {{format_satoshis(account['debitBalance'])}}

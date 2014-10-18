@@ -25,6 +25,8 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
     <table border="1">
       <tr>
         <th>
+        </th>
+        <th>
           Debit
         </th>
         <th>
@@ -34,6 +36,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
       <tbody>
         {% for entry in ledger_entries %}
         <tr>
+          <td>
+            {{entry.date}}
+          </td>
           <td align="right">
             {% if entry.entryType == 'debit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
@@ -51,6 +56,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </tr>
         {% endfor %}
         <tr>
+          <td>
+            Total
+          </td>
           <td align="right">
             {% if account['totalDebit'] %}
               {{format_satoshis(account['totalDebit'])}}
@@ -65,6 +73,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
       </tbody>
       <tfoot bgcolor="silver">
         <tr>
+          <td>
+            Balance
+          </td>
           <td align="right">
             {% if account['debitBalance'] %}
               {{format_satoshis(account['debitBalance'])}}

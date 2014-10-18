@@ -25,9 +25,6 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
     <table border="1">
       <tr>
         <th>
-          ID
-        </th>
-        <th>
           Date
         </th>
         <th>
@@ -44,27 +41,25 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         <tr>
           <td>
             {% if entry.entryType == 'debit' %}
-            <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-              {{entry.journal_entry_id}}
-            </a>
-            {% endif %}
-          </td>
-          <td>
-            {% if entry.entryType == 'debit' %}
               {{entry.date}}
             {% endif %}
           </td>
           <td>
+            <a href="{{ url_for('ledger', accountName=entry.account)}}">
             {{entry.account}}
           </td>
           <td align="right">
             {% if entry.entryType == 'debit' %}
-              {{format_satoshis(entry.amount)}}
+              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
+                {{format_satoshis(entry.amount)}}
+              </a>
             {% endif %}
           </td>
           <td align="right">
             {% if entry.entryType == 'credit' %}
-              {{format_satoshis(entry.amount)}}
+              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
+                {{format_satoshis(entry.amount)}}
+              </a>
             {% endif %}
           </td>
         </tr>
