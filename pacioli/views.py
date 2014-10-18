@@ -91,10 +91,53 @@ def journal_entry(id):
 
 @app.route('/GeneralLedger')
 def general_ledger():
-  accounts = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+  accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
   entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
-  print(accounts)
+  accounts = []
+  for accountResult in accountsQuery:
+    account = {}
+    account['accountName'] = accountResult[0]
+    account['totalDebit'] = 0
+    account['totalCredit'] = 0
+    account['debitBalance'] = ''
+    account['creditBalance'] = ''
+    for entry in entries:
+      if entry.entryType == 'debit' and entry.account == account['accountName']:
+        account['totalDebit'] += entry.amount
+      elif entry.entryType == 'credit' and entry.account == account['accountName']:
+        account['totalCredit'] += entry.amount
+    if account['totalDebit'] > account['totalCredit']:
+      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
+    elif account['totalDebit'] < account['totalCredit']:
+      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
+    accounts.append(account)
   return render_template('generalLedger.html',
     title = 'General Ledger',
-    accounts=accounts,
+    accounts=accounts)
+
+@app.route('/Ledger/<accountName>')
+def ledger(accountName):
+  entries = models.LedgerEntries.query.\
+    filter_by(account=accountName).\
+    order_by(models.LedgerEntries.date.desc()).\
+    order_by(models.LedgerEntries.entryType.desc()).all()
+  account = {}
+  account['accountName'] = accountName
+  account['totalDebit'] = 0
+  account['totalCredit'] = 0
+  account['debitBalance'] = ''
+  account['creditBalance'] = ''
+  for entry in entries:
+    if entry.entryType == 'debit' and entry.account == account['accountName']:
+      account['totalDebit'] += entry.amount
+    elif entry.entryType == 'credit' and entry.account == account['accountName']:
+      account['totalCredit'] += entry.amount
+  if account['totalDebit'] > account['totalCredit']:
+    account['debitBalance'] = account['totalDebit'] - account['totalCredit']
+  elif account['totalDebit'] < account['totalCredit']:
+    account['creditBalance'] = account['totalCredit'] - account['totalDebit']
+    
+  return render_template('ledger.html',
+    title = 'Ledger',
+    account=account,
     entries=entries)

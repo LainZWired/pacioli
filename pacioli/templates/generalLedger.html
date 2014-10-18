@@ -5,7 +5,11 @@
 
 {% if accounts %}
 {% for account in accounts %}
-<h3>{{account[0]}}</h3>
+
+<a href="{{ url_for('ledger', accountName=account['accountName'])}}">
+<h3>{{account['accountName']}}</h3>
+</a>
+
 <table border="1">
   <tr>
     <th>
@@ -14,23 +18,31 @@
     <th>
       Credit
     </th>
-  {% for entry in entries %}
-  {% if entry.account == account[0] %}
   <tr>
+    <tbody>
   <td>
-    {% if entry.entryType == 'debit' %}
-    {{entry.amount}}
+    {% if account['totalDebit'] %}
+    {{account['totalDebit']}}
     {% endif %}
   </td>
   <td>
-    {% if entry.entryType == 'credit' and entry.account == account[0] %}
-    {{entry.amount}}
+    {% if account['totalCredit'] %}
+    {{account['totalCredit']}}
     {% endif %}
+
   </td>
   </tr>
-  {% endif %}
-  {% endfor %}
-  
+</tbody>
+<tfoot bgcolor="silver">
+  <tr>
+  <td>
+    {{account['debitBalance']}}
+  </td>
+  <td>
+    {{account['creditBalance']}}
+  </td>
+  </tr>
+</tfoot>
 </table>
 {% endfor %}
 {% endif %}
