@@ -1,17 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>General Journal</h1>
+<h1>General Ledger</h1>
 
-{% if entries %}
+{% if accounts %}
+{% for account in accounts %}
+<h3>{{account[0]}}</h3>
 <table border="1">
   <tr>
-    <th>
-      Date
-    </th>
-    <th>
-      Account
-    </th>
     <th>
       Debit
     </th>
@@ -19,27 +15,24 @@
       Credit
     </th>
   {% for entry in entries %}
+  {% if entry.account == account[0] %}
   <tr>
-  <td>
-    {{entry.date}}
-  </td>
-  <td>
-    {{entry.account}}
-  </td>
   <td>
     {% if entry.entryType == 'debit' %}
     {{entry.amount}}
     {% endif %}
   </td>
   <td>
-    {% if entry.entryType == 'credit' %}
+    {% if entry.entryType == 'credit' and entry.account == account[0] %}
     {{entry.amount}}
     {% endif %}
   </td>
-
   </tr>
+  {% endif %}
   {% endfor %}
+  
 </table>
+{% endfor %}
 {% endif %}
 
 {% endblock %}

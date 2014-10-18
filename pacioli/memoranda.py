@@ -88,18 +88,18 @@ def _import_bitcoin_core(rows, header, memoranda_id):
 
       debit_ledger_entry_id = str(uuid.uuid4())
       debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
-      if int(abs(float(memoranda['Amount']))*100000000) > 0:
+      if int(float(memoranda['Amount'])*100000000) > 0:
         debit_ledger_account = "Bitcoins"
-      elif int(abs(float(memoranda['Amount']))*100000000) < 0:
+      elif int(float(memoranda['Amount'])*100000000) < 0:
         debit_ledger_account = "Expense"
       debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
       
       credit_ledger_entry_id = str(uuid.uuid4())
       credit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
-      if int(abs(float(memoranda['Amount']))*100000000) > 0:
+      if int(float(memoranda['Amount'])*100000000) > 0:
         credit_ledger_account = "Revenue"
-      elif int(abs(float(memoranda['Amount']))*100000000) < 0:
+      elif int(float(memoranda['Amount'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
@@ -127,18 +127,18 @@ def _import_multibit(rows, header, memoranda_id):
 
       debit_ledger_entry_id = str(uuid.uuid4())
       debit_ledger_amount = int(abs(float(memoranda['Amount (BTC)']))*100000000)
-      if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
+      if int(float(memoranda['Amount (BTC)'])*100000000) > 0:
         debit_ledger_account = "Bitcoins"
-      elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
+      elif int(float(memoranda['Amount (BTC)'])*100000000) < 0:
         debit_ledger_account = "Expense"
       debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
       credit_ledger_amount = int(abs(float(memoranda['Amount (BTC)']))*100000000)
-      if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
+      if int(float(memoranda['Amount (BTC)'])*100000000) > 0:
         credit_ledger_account = "Revenue"
-      elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
+      elif int(float(memoranda['Amount (BTC)'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
@@ -166,20 +166,20 @@ def _import_armory(rows, header, memoranda_id):
       db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
-      if int(abs(float(memoranda['Credit']))*100000000) > 0:
+      if int(float(memoranda['Credit'])*100000000) > 0:
         debit_ledger_amount = int(abs(float(memoranda['Credit']))*100000000)
         debit_ledger_account = "Bitcoins"
-      elif int(abs(float(memoranda['Debit']))*100000000) < 0:
+      elif int(float(memoranda['Debit'])*100000000) < 0:
         debit_ledger_amount = int(abs(float(memoranda['Debit']))*100000000)
         debit_ledger_account = "Expense"
       debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
-      if int(abs(float(memoranda['Credit']))*100000000) > 0:
+      if int(float(memoranda['Credit'])*100000000) > 0:
         credit_ledger_amount = int(abs(float(memoranda['Credit']))*100000000)
         credit_ledger_account = "Revenue"
-      elif int(abs(float(memoranda['Debit']))*100000000) < 0:
+      elif int(float(memoranda['Debit'])*100000000) < 0:
         credit_ledger_amount = int(abs(float(memoranda['Debit']))*100000000)
         credit_ledger_account = "Bitcoins"
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
@@ -210,18 +210,18 @@ def _import_electrum(rows, header, memoranda_id):
 
       debit_ledger_entry_id = str(uuid.uuid4())
       debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
-      if int(abs(float(memoranda['value']))*100000000) > 0:
+      if int(float(memoranda['value'])*100000000) > 0:
         debit_ledger_account = "Bitcoins"
-      elif int(abs(float(memoranda['value']))*100000000) < 0:
+      elif int(float(memoranda['value'])*100000000) < 0:
         debit_ledger_account = "Expense"
       debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
       credit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
-      if int(abs(float(memoranda['value']))*100000000) > 0:
+      if int(float(memoranda['value'])*100000000) > 0:
         credit_ledger_account = "Revenue"
-      elif int(abs(float(memoranda['value']))*100000000) < 0:
+      elif int(float(memoranda['value'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)

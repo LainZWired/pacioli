@@ -89,6 +89,12 @@ def journal_entry(id):
     transaction=transaction,
     memo=memo)
 
-# @app.route('/GeneralLedger')
-# def general_ledger():
-#   
+@app.route('/GeneralLedger')
+def general_ledger():
+  accounts = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+  print(accounts)
+  return render_template('generalLedger.html',
+    title = 'General Ledger',
+    accounts=accounts,
+    entries=entries)
