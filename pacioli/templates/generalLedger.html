@@ -1,50 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h1>General Ledger</h1>
-
-{% if accounts %}
-{% for account in accounts %}
-
-<a href="{{ url_for('ledger', accountName=account['accountName'])}}">
-<h3>{{account['accountName']}}</h3>
-</a>
-
-<table border="1">
-  <tr>
-    <th>
-      Debit
-    </th>
-    <th>
-      Credit
-    </th>
-  <tr>
-    <tbody>
-  <td>
-    {% if account['totalDebit'] %}
-    {{account['totalDebit']}}
-    {% endif %}
-  </td>
-  <td>
-    {% if account['totalCredit'] %}
-    {{account['totalCredit']}}
-    {% endif %}
-
-  </td>
-  </tr>
-</tbody>
-<tfoot bgcolor="silver">
-  <tr>
-  <td>
-    {{account['debitBalance']}}
-  </td>
-  <td>
-    {{account['creditBalance']}}
-  </td>
-  </tr>
-</tfoot>
-</table>
-{% endfor %}
-{% endif %}
-
+  <h1>
+    General Ledger
+  </h1>
+  {% if accounts %}
+    {% for account in accounts %}
+      <a href="{{ url_for('ledger', accountName=account['accountName'])}}">
+        <h3>
+          {{account['accountName']}}
+        </h3>
+      </a>
+      <table border="1">
+        <tr>
+          <th>
+            Debit
+          </th>
+          <th>
+            Credit
+          </th>
+        </tr>
+        <tbody>
+          <tr>
+            <td>
+              {% if account['totalDebit'] %}
+              {{format_satoshis(account['totalDebit'])}}
+              {% endif %}
+            </td>
+            <td>
+              {% if account['totalCredit'] %}
+              {{format_satoshis(account['totalCredit'])}}
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot bgcolor="silver">
+          <tr>
+            <td>
+              {% if account['debitBalance'] %}
+              {{format_satoshis(account['debitBalance'])}}
+              {% endif %}
+            </td>
+            <td>
+              {% if account['creditBalance'] %}
+              {{format_satoshis(account['creditBalance'])}}
+              {% endif %}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    {% endfor %}
+  {% endif %}
 {% endblock %}

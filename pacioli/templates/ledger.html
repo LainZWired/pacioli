@@ -1,61 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h1>{{account['accountName']}} Ledger</h1>
-
-{% if entries %}
-<table border="1">
-  <tr>
-    <th>
-      Debit
-    </th>
-    <th>
-      Credit
-    </th>
-  <tr>
-    <tbody>
-  {% for entry in entries %}
-  <td>
-    {% if entry.entryType == 'debit' %}
-    <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-    {{entry.amount}}
-  </a>
-    {% endif %}
-  </td>
-  <td>
-    {% if entry.entryType == 'credit' %}
-  <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-    {{entry.amount}}
-  </a>
-    {% endif %}
-  </td>
-
-  </tr>
-  {% endfor %}
-<tr>
-<td>
-  {% if account['totalDebit'] %}
-  {{account['totalDebit']}}
+  <h1>
+    {{account['accountName']}} Ledger
+  </h1>
+  {% if entries %}
+    <table border="1">
+      <tr>
+        <th>
+          Debit
+        </th>
+        <th>
+          Credit
+        </th>
+      </tr>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td align="right">
+            {% if entry.entryType == 'debit' %}
+              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
+                {{format_satoshis(entry.amount)}}
+              </a>
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if entry.entryType == 'credit' %}
+              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
+                {{format_satoshis(entry.amount)}}
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td align="right">
+            {% if account['totalDebit'] %}
+              {{format_satoshis(account['totalDebit'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if account['totalCredit'] %}
+              {{format_satoshis(account['totalCredit'])}}
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+      <tfoot bgcolor="silver">
+        <tr>
+          <td align="right">
+            {% if account['debitBalance'] %}
+              {{format_satoshis(account['debitBalance'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if account['creditBalance'] %}
+              {{format_satoshis(account['creditBalance'])}}
+            {% endif %}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
   {% endif %}
-</td>
-<td>
-  {% if account['totalCredit'] %}
-  {{account['totalCredit']}}
-  {% endif %}
-</td>
-</tr>
-</tbody>
-<tfoot bgcolor="silver">
-<tr>
-<td>
-  {{account['debitBalance']}}
-</td>
-<td>
-  {{account['creditBalance']}}
-</td>
-</tr>
-</tfoot>
-</table>
-{% endif %}
-
 {% endblock %}

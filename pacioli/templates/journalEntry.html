@@ -1,64 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h1>Journal Entry</h1>
-
-{% if ledger_entries %}
-<table border="1">
-  <tr>
-    <th>
-      Date
-    </th>
-    <th>
-      Account
-    </th>
-    <th>
-      Debit
-    </th>
-    <th>
-      Credit
-    </th>
-  {% for entry in ledger_entries %}
-  <tr>
-  <td>
-    {{entry.date}}
-  </td>
-  <td>
-    {{entry.account}}
-  </td>
-  <td>
-    {% if entry.entryType == 'debit' %}
-    {{entry.amount}}
-    {% endif %}
-  </td>
-  <td>
-    {% if entry.entryType == 'credit' %}
-    {{entry.amount}}
-    {% endif %}
-  </td>
-
-  </tr>
-  {% endfor %}
-</table>
-{% endif %}
-<br>
-
-{% if transaction %}
   <h1>
-    Transaction Detail
+    Journal Entry
   </h1>
-  {% for key, value in transaction.details.items() %}
-    {{ key }} : {{ value }}
-    <br>
-  {% endfor %}
-{% endif %}
-
-<br>
-{% if memo %}
-Memo:
-  <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
-    {{memo.fileName}}
-  </a>
-{% endif %}
-
+  {% if ledger_entries %}
+    <table border="1">
+      <tr>
+        <th>
+          Date
+        </th>
+        <th>
+          Account
+        </th>
+        <th>
+          Debit
+        </th>
+        <th>
+          Credit
+        </th>
+      </tr>
+      {% for entry in ledger_entries %}
+        <tr>
+          <td>
+            {{entry.date}}
+          </td>
+          <td>
+            {{entry.account}}
+          </td>
+          <td>
+            {% if entry.entryType == 'debit' %}
+              {{format_satoshis(entry.amount)}}
+            {% endif %}
+          </td>
+          <td>
+            {% if entry.entryType == 'credit' %}
+              {{format_satoshis(entry.amount)}}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+  <br>
+  {% if transaction %}
+    <h1>
+      Transaction Detail
+    </h1>
+    {% for key, value in transaction.details.items() %}
+      {{ key }} : {{ value }}
+      <br>
+    {% endfor %}
+  {% endif %}
+  <br>
+  {% if memo %}
+    Memo:
+    <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
+      {{memo.fileName}}
+    </a>
+  {% endif %}
 {% endblock %}

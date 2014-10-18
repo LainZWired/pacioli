@@ -1,41 +1,41 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h1>Memoranda</h1>
-
-{% if memos %}
-<table border="1">
-  <tr>
-    <th>
-      Date Uploaded
-    </th>
-    <th>
-      Memo Name
-    </th>
-    <th>
-      Transactions
-    </th>
-  {% for memo in memos %}
-  <tr>
-  <td>
-    {{memo.date}}
-  </td>
-  <td>
-    {{memo.fileName}}
-  </td>
-  <td>
-    <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
-      {{memo.count}}
-    </a>
-  </td>
-  <td>
-    <a  href="{{ url_for('delete_memoranda', fileName = memo.fileName)}}">
-      Delete
-    </a>
-  </td>
-  </tr>
-  {% endfor %}
-</table>
-{% endif %}
-
+  <h1>
+    Memoranda
+  </h1>
+  {% if memos %}
+    <table border="1">
+      <tr>
+        <th>
+          Date Uploaded
+        </th>
+        <th>
+          Memo Name
+        </th>
+        <th>
+          Transactions
+        </th>
+      </tr>
+      {% for memo in memos %}
+        <tr>
+          <td>
+            {{memo.date}}
+          </td>
+          <td>
+            {{memo.fileName}}
+          </td>
+          <td align="center">
+            <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
+              {{memo.count}}
+            </a>
+          </td>
+          <td>
+            <a  href="{{ url_for('delete_memoranda', fileName = memo.fileName)}}">
+              Delete
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
 {% endblock %}

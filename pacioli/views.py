@@ -99,8 +99,8 @@ def general_ledger():
     account['accountName'] = accountResult[0]
     account['totalDebit'] = 0
     account['totalCredit'] = 0
-    account['debitBalance'] = ''
-    account['creditBalance'] = ''
+    account['debitBalance'] = 0
+    account['creditBalance'] = 0
     for entry in entries:
       if entry.entryType == 'debit' and entry.account == account['accountName']:
         account['totalDebit'] += entry.amount
@@ -125,8 +125,8 @@ def ledger(accountName):
   account['accountName'] = accountName
   account['totalDebit'] = 0
   account['totalCredit'] = 0
-  account['debitBalance'] = ''
-  account['creditBalance'] = ''
+  account['debitBalance'] = 0
+  account['creditBalance'] = 0
   for entry in entries:
     if entry.entryType == 'debit' and entry.account == account['accountName']:
       account['totalDebit'] += entry.amount
