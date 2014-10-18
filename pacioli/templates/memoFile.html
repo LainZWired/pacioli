@@ -19,41 +19,22 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
 {% extends "base.html" %}
 {% block content %}
   <h1>
-    Memo Transactions
+    Memo File
   </h1>
   <p>
-    <a href="{{ url_for('memo_file', fileName = fileName)}}">
-      See Original File
+    <a href="{{ url_for('memo_transactions', fileName = fileName)}}">
+      See Transactions
     </a>
   </p>
-  {% if transactions %}
+  {% if rows %}
     <table border="1">
+      {% for row in rows %}
       <tr>
-        <th>
-          ID
-        </th>
-        <th>
-          Details
-        </th>
-        <th>
-        </th>
-      </tr>
-      {% for transaction in transactions %}
-      <tr>
-        <td valign="top">
-          {{transaction.id}}
-        </td>
-        <td>
-          {% for key, value in transaction.details.items() %}
-            {{ key }} : {{ value }}
-            <br>
-          {% endfor %}
-        </td>
-        <td>
-          <a href="{{ url_for('journal_entry', id = transaction.journal_entry_id)}}">
-            Journal Entry
-          </a>
-        </td>
+        {% for item in row %}
+          <td>
+            {{item}}
+          </td>
+        {% endfor %}
       </tr>
       {% endfor %}
     </table>

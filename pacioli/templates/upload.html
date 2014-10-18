@@ -61,7 +61,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
     {{memo.date}}
   </td>
   <td>
-    {{memo.fileName}}
+    <a href="{{ url_for('memo_file', fileName = memo.fileName)}}">
+      {{memo.fileName}}
+    </a>
   </td>
   <td>
     {{memo.fileSize}}

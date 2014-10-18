@@ -25,6 +25,7 @@ import datetime
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
+import csv
 
 @app.route('/')
 def index():
@@ -76,6 +77,19 @@ def delete_memoranda(fileName):
   return redirect(url_for('memoranda'))
 
 @app.route('/Memoranda/<fileName>')
+def memo_file(fileName):
+  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+  fileText = memo.file.decode('UTF-8')
+  document = io.StringIO(fileText)
+  reader = csv.reader(document)
+  rows = [pair for pair in reader]
+  return render_template('memoFile.html',
+    title = 'Memo',
+    rows=rows,
+    fileName=fileName)
+  
+
+@app.route('/Memoranda/<fileName>/Transactions')
 def memo_transactions(fileName):
   memo = models.Memoranda.query.filter_by(fileName=fileName).first()
   transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
@@ -85,7 +99,8 @@ def memo_transactions(fileName):
     transaction.journal_entry_id = journal_entry.id
   return render_template('memoTransactions.html',
     title = 'Memo',
-    transactions=transactions)
+    transactions=transactions,
+    fileName=fileName)
 
 @app.route('/GeneralJournal')
 def general_journal():
