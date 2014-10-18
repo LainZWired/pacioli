@@ -18,6 +18,7 @@
 
 from pacioli import db
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import BigInteger
 
 
 # Memoranda are source documents from which accounting information is extracted to form General Journal entries. As a preliminary step, all of the details for each individual transaction are extracted from the source document to a dictionary.
@@ -28,8 +29,8 @@ class Memoranda(db.Model):
     date = db.Column(db.DateTime, index=True)
     fileName = db.Column(db.Text, unique=True)
     fileType = db.Column(db.Text)
-    fileSize = db.Column(db.Integer)
-    file = db.Column(db.LargeBinary, unique=True)
+    fileSize = db.Column(BigInteger)
+    file = db.Column(db.LargeBinary)
     
     def __init__(self, id, date, fileName, fileType, fileSize, file):
         self.id = id
@@ -44,7 +45,7 @@ class Memoranda(db.Model):
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    details = db.Column(JSON, unique=True)
+    details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
     
     def __init__(self, id, memoranda_id, details):
@@ -61,11 +62,12 @@ class MemorandaTransactions(db.Model):
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
-    memorandaTransactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
+    memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
-    def __init__(self, id, date):
+    def __init__(self, id, date, memoranda_transactions_id):
         self.id = id
         self.date = date
+        self.memoranda_transactions_id = memoranda_transactions_id
 
         
     def __repr__(self):
@@ -76,7 +78,7 @@ class LedgerEntries(db.Model):
     date = db.Column(db.DateTime)
     entryType = db.Column(db.Text)
     account = db.Column(db.Text)
-    amount = db.Column(db.Integer)
+    amount = db.Column(BigInteger)
     unit = db.Column(db.Text)
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
     

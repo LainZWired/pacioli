@@ -25,71 +25,67 @@ import sys
 import csv
 import json
 import uuid
-from pacioli import db, models
-import config
+from pacioli import app, db, models
+from werkzeug import secure_filename
+
 
 def allowed_file(filename):
   return '.' in filename and \
     filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-memoranda_id = ""
+
 
 # Assumes a Werkzeug File Storage object: http://werkzeug.pocoo.org/docs/0.9/datastructures/#werkzeug.datastructures.FileStorage
 def process(file):
   if allowed_file(file.filename):
     memoranda_id = str(uuid.uuid4())
-    uploadDate = datetime.datetime.now()
+    uploadDate = datetime.now()
     fileName = secure_filename(file.filename)
     fileType = fileName.rsplit('.', 1)[1]
     file.seek(0, os.SEEK_END)
     fileSize = file.tell()
-    fileText = file.stream.getvalue()
-    filenames.append(fileName)
-    file.close()
-    memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, file=fileText, fileSize=fileSize)
+    fileText = file.stream.getvalue().decode('UTF-8')
+    document = io.StringIO(fileText)
+    memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, file=file.stream.getvalue(), fileSize=fileSize)
     db.session.add(memo)
     db.session.commit()
-    if fileType == 'CSV':
-      csv_import(file)
+    if fileType == 'csv':
+      reader = csv.reader(document)
+      # Numbering each row
+      reader = enumerate(reader)
+      # Turns the enumerate object into a list
+      rows = [pair for pair in reader]
+      print(rows)
+      # Find the first longest list:
+      header = max(rows, key=lambda tup:len(tup[1]))
+      if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+        return _import_bitcoin_core(rows, header, memoranda_id)
+      elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+        return _import_multibit(rows, header, memoranda_id)
+      elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
+        return _import_armory(rows, header, memoranda_id)
+      elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
+        return _import_electrum(rows, header, memoranda_id)
+      else:
+        return False
+    return False
 
-def csv_import(csvfile):
-  with open(csvfile, 'rt') as csvfile:
-    csvfile.seek(0)
-    reader = csv.reader(csvfile)
-    # Numbering each row
-    reader = enumerate(reader)
-    # Turns the enumerate object into a list
-    rows = [pair for pair in reader]
-    # Find the first longest list:
-    header = max(rows, key=lambda tup:len(tup[1]))
-    if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
-      return _import_bitcoin_core(rows, header)
-    elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
-      return _import_multibit(rows, header)
-    elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
-      return _import_armory(rows, header)
-    elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
-      return _import_electrum(rows, header)
-    else:
-      logging.error(str(csvfile.name) + " Unrecognized file format: " + str(header))
-      return False
-  return False
-
-def _import_bitcoin_core(rows, header):
+def _import_bitcoin_core(rows, header, memoranda_id):
   for row in rows:
     if row[0] > header[0] and len(row[1]) == len(header[1]):
-      transaction = zip(header[1], row[1])
-      transaction = dict(memoranda)
+      memoranda = zip(header[1], row[1])
+      memoranda = dict(memoranda)
       memoranda_transactions_id = str(uuid.uuid4())
       tx_details = str(memoranda)
       memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
       db.session.add(memoranda_transaction)
+      db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      reformat = datetime.strptime(memoranda['Date'], "%Y-%m-%dT%H:%M:%S")
-      date = reformat.strftime("%s")
+      date = datetime.strptime(memoranda['Date'], "%Y-%m-%dT%H:%M:%S")
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
+      db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
       debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
@@ -112,25 +108,26 @@ def _import_bitcoin_core(rows, header):
       db.session.commit()
   return True
 
-def _import_multibit(rows, header):
+def _import_multibit(rows, header, memoranda_id):
   logging.info(rows)
   for row in rows:
     if row[0] > header[0] and len(row[1]) == len(header[1]):
-      transaction = zip(header[1], row[1])
-      transaction = dict(memoranda)
+      memoranda = zip(header[1], row[1])
+      memoranda = dict(memoranda)
       memoranda_transactions_id = str(uuid.uuid4())
       tx_details = str(memoranda)
       memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
       db.session.add(memoranda_transaction)
+      db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      reformat = datetime.strptime(memoranda['Date'], "%d %b %Y %H:%M")
-      date = reformat.strftime("%s")
+      date = datetime.strptime(memoranda['Date'], "%d %b %Y %H:%M")
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
+      db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
-      debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
+      debit_ledger_amount = int(abs(float(memoranda['Amount (BTC)']))*100000000)
       if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
         debit_ledger_account = "Bitcoins"
       elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
@@ -139,7 +136,7 @@ def _import_multibit(rows, header):
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
-      credit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
+      credit_ledger_amount = int(abs(float(memoranda['Amount (BTC)']))*100000000)
       if int(abs(float(memoranda['Amount (BTC)']))*100000000) > 0:
         credit_ledger_account = "Revenue"
       elif int(abs(float(memoranda['Amount (BTC)']))*100000000) < 0:
@@ -152,21 +149,22 @@ def _import_multibit(rows, header):
 
 # header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
 
-def _import_armory(rows, header):
+def _import_armory(rows, header, memoranda_id):
   for row in rows:
     if row[0] > header[0] and len(row[1]) == len(header[1]):
-      transaction = zip(header[1], row[1])
-      transaction = dict(memoranda)
+      memoranda = zip(header[1], row[1])
+      memoranda = dict(memoranda)
       memoranda_transactions_id = str(uuid.uuid4())
       tx_details = str(memoranda)
       memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
       db.session.add(memoranda_transaction)
+      db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      reformat = datetime.strptime(memoranda['Date'], "%Y-%b-%d %I:%M%p")
-      date = reformat.strftime("%s")
+      date = datetime.strptime(memoranda['Date'], "%Y-%b-%d %I:%M%p")
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
+      db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
       if int(abs(float(memoranda['Credit']))*100000000) > 0:
@@ -194,20 +192,22 @@ def _import_armory(rows, header):
 # elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
 
 
-def _import_electrum(rows, header):
+def _import_electrum(rows, header, memoranda_id):
   for row in rows:
     if row[0] > header[0] and len(row[1]) == len(header[1]):
-      transaction = zip(header[1], row[1])
-      transaction = dict(memoranda)
+      memoranda = zip(header[1], row[1])
+      memoranda = dict(memoranda)
       memoranda_transactions_id = str(uuid.uuid4())
       tx_details = str(memoranda)
       memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
       db.session.add(memoranda_transaction)
+      db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
       date = memoranda['timestamp']
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
+      db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
       debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)

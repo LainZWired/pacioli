@@ -1,6 +1,5 @@
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
-from werkzeug import secure_filename
 import io
 import uuid
 import os
@@ -18,7 +17,7 @@ def upload():
   if request.method == 'POST':
     uploaded_files = request.files.getlist("file[]")
     for file in uploaded_files:
-      memoranda.process(file)
+      pacioli.memoranda.process(file)
     return redirect(url_for('upload'))
   memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
   
@@ -32,3 +31,10 @@ def memoranda():
   return render_template('memoranda.html',
     title = 'Memoranda',
     memos=memos)
+    
+@app.route('/Memoranda/Delete/<fileName>')
+def delete_memoranda(fileName):
+  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+  db.session.delete(memo)
+  db.session.commit()
+  return redirect(url_for('memoranda'))
