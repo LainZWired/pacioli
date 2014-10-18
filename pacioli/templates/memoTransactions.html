@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Memo Transactions</h1>
+
+{% if transactions %}
+<table border="1">
+  <tr>
+    <th>
+      ID
+    </th>
+    <th>
+      Details
+    </th>
+    <th>
+    </th>
+  {% for transaction in transactions %}
+  <tr>
+  <td>
+    {{transaction.id}}
+  </td>
+  <td>
+    {% for key, value in transaction.details.items() %}
+      {{ key }} : {{ value }}
+      <br>
+    {% endfor %}
+  </td>
+  <td>
+    <a href="{{ url_for('journal_entry', id = transaction.journal_entry_id)}}">
+      Journal Entry
+    </a>
+    
+  </td>
+
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}
