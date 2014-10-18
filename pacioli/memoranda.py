@@ -55,7 +55,6 @@ def process(file):
       reader = enumerate(reader)
       # Turns the enumerate object into a list
       rows = [pair for pair in reader]
-      print(rows)
       # Find the first longest list:
       header = max(rows, key=lambda tup:len(tup[1]))
       if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:

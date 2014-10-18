@@ -5,7 +5,7 @@ import uuid
 import os
 import datetime
 import pacioli.memoranda
-
+import ast
 
 @app.route('/')
 def index():
@@ -28,6 +28,10 @@ def upload():
 @app.route('/Memoranda', methods=['POST','GET'])
 def memoranda():
   memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+  for memo in memos:
+    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+    memo.count = len(transactions)
+
   return render_template('memoranda.html',
     title = 'Memoranda',
     memos=memos)
@@ -38,3 +42,20 @@ def delete_memoranda(fileName):
   db.session.delete(memo)
   db.session.commit()
   return redirect(url_for('memoranda'))
+
+@app.route('/Memoranda/<fileName>')
+def memo_transactions(fileName):
+  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+  transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+  for transaction in transactions:
+    transaction.details = ast.literal_eval(transaction.details)
+  return render_template('memoTransactions.html',
+    title = 'Memo',
+    transactions=transactions)
+
+@app.route('/GeneralJournal')
+def general_journal():
+  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+  return render_template('generalJournal.html',
+    title = 'General Journal',
+    entries=entries)

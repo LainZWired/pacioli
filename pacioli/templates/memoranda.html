@@ -7,7 +7,7 @@
 <table border="1">
   <tr>
     <th>
-      Date
+      Date Uploaded
     </th>
     <th>
       Memo Name
@@ -24,7 +24,9 @@
     {{memo.fileName}}
   </td>
   <td>
-    {{memo.fileSize}}
+    <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
+      {{memo.count}}
+    </a>
   </td>
   <td>
     <a  href="{{ url_for('delete_memoranda', fileName = memo.fileName)}}">

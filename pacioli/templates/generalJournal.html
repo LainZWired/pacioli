@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>General Journal</h1>
+
+{% if entries %}
+<table border="1">
+  <tr>
+    <th>
+      Date
+    </th>
+    <th>
+      Account
+    </th>
+    <th>
+      Debit
+    </th>
+    <th>
+      Credit
+    </th>
+  {% for entry in entries %}
+  <tr>
+  <td>
+    {{entry.date}}
+  </td>
+  <td>
+    {{entry.account}}
+  </td>
+  <td>
+    {% if entry.entryType == 'debit' %}
+    {{entry.amount}}
+    {% endif %}
+  </td>
+  <td>
+    {% if entry.entryType == 'credit' %}
+    {{entry.amount}}
+    {% endif %}
+  </td>
+
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}
