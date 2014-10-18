@@ -1,14 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>General Journal</h1>
+<h1>Journal Entry</h1>
 
-{% if entries %}
+{% if ledger_entries %}
 <table border="1">
   <tr>
-    <th>
-      ID
-    </th>
     <th>
       Date
     </th>
@@ -21,19 +18,10 @@
     <th>
       Credit
     </th>
-  {% for entry in entries %}
+  {% for entry in ledger_entries %}
   <tr>
   <td>
-    {% if entry.entryType == 'debit' %}
-    <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-      {{entry.journal_entry_id}}
-    </a>
-    {% endif %}
-  </td>
-  <td>
-    {% if entry.entryType == 'debit' %}
     {{entry.date}}
-    {% endif %}
   </td>
   <td>
     {{entry.account}}
@@ -52,6 +40,25 @@
   </tr>
   {% endfor %}
 </table>
+{% endif %}
+<br>
+
+{% if transaction %}
+  <h1>
+    Transaction Detail
+  </h1>
+  {% for key, value in transaction.details.items() %}
+    {{ key }} : {{ value }}
+    <br>
+  {% endfor %}
+{% endif %}
+
+<br>
+{% if memo %}
+Memo:
+  <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
+    {{memo.fileName}}
+  </a>
 {% endif %}
 
 {% endblock %}
