@@ -22,9 +22,11 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
     Memo Transactions
   </h1>
   <p>
+    {% if fileName %}
     <a href="{{ url_for('memo_file', fileName = fileName)}}">
       See Original File
     </a>
+    {% endif %}
   </p>
   {% if transactions %}
     <table border="1">
