@@ -16,20 +16,32 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
-def foot_account(accountName, entries):
+def foot_account(accountName, entries, interval):
   account = {}
   account['accountName'] = accountName
   account['totalDebit'] = 0
   account['totalCredit'] = 0
   account['debitBalance'] = 0
   account['creditBalance'] = 0
-  for entry in entries:
-    if entry.entryType == 'debit' and entry.account == account['accountName']:
-      account['totalDebit'] += entry.amount
-    elif entry.entryType == 'credit' and entry.account == account['accountName']:
-      account['totalCredit'] += entry.amount
-  if account['totalDebit'] > account['totalCredit']:
-    account['debitBalance'] = account['totalDebit'] - account['totalCredit']
-  elif account['totalDebit'] < account['totalCredit']:
-    account['creditBalance'] = account['totalCredit'] - account['totalDebit']
-  return account
+  if interval == 'all':
+    for entry in entries:
+      if entry.entryType == 'debit' and entry.account == account['accountName']:
+        account['totalDebit'] += entry.amount
+      elif entry.entryType == 'credit' and entry.account == account['accountName']:
+        account['totalCredit'] += entry.amount
+    if account['totalDebit'] > account['totalCredit']:
+      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
+    elif account['totalDebit'] < account['totalCredit']:
+      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
+    return account
+  elif interval == 'summary':
+    for entry in entries:
+      if 'debit' in entries[entry]:
+        account['totalDebit'] += entries[entry]['debit']
+      if 'credit' in entries[entry]:
+        account['totalCredit'] += entries[entry]['credit']
+    if account['totalDebit'] > account['totalCredit']:
+      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
+    elif account['totalDebit'] < account['totalCredit']:
+      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
+    return account

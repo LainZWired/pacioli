@@ -23,7 +23,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
   </h1>
   {% if accounts %}
     {% for account in accounts %}
-      <a href="{{ url_for('ledger', accountName=account['accountName'])}}">
+      <a href="{{ url_for('ledger', accountName=account['accountName'], groupby='All')}}">
         <h3>
           {{account['accountName']}}
         </h3>
