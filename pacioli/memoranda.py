@@ -63,6 +63,8 @@ def process(file):
         return _import_armory(rows, header, memoranda_id)
       elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
         return _import_electrum(rows, header, memoranda_id)
+      elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
+        return _import_coinbase(rows, header, memoranda_id)
       else:
         return False
     return False
@@ -220,6 +222,45 @@ def _import_electrum(rows, header, memoranda_id):
       if int(float(memoranda['value'])*100000000) > 0:
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['value'])*100000000) < 0:
+        credit_ledger_account = "Bitcoins"
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      db.session.add(credit_ledger_entry)
+
+      db.session.commit()
+
+  return True
+  
+def _import_coinbase(rows, header, memoranda_id):
+  for row in rows:
+    if row[0] > header[0] and len(row[1]) == len(header[1]):
+      memoranda = zip(header[1], row[1])
+      memoranda = dict(memoranda)
+      memoranda_transactions_id = str(uuid.uuid4())
+      tx_details = str(memoranda)
+      memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
+      db.session.add(memoranda_transaction)
+      db.session.commit()
+
+      journal_entry_id = str(uuid.uuid4())
+      date = memoranda['Timestamp']
+      journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
+      db.session.add(journal_entry)
+      db.session.commit()
+
+      debit_ledger_entry_id = str(uuid.uuid4())
+      debit_ledger_amount = int(abs(float(memoranda['BTC Amount']))*100000000)
+      if int(float(memoranda['BTC Amount'])*100000000) > 0:
+        debit_ledger_account = "Bitcoins"
+      elif int(float(memoranda['BTC Amount'])*100000000) < 0:
+        debit_ledger_account = "Expense"
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      db.session.add(debit_ledger_entry)
+
+      credit_ledger_entry_id = str(uuid.uuid4())
+      credit_ledger_amount = int(abs(float(memoranda['BTC Amount']))*100000000)
+      if int(float(memoranda['BTC Amount'])*100000000) > 0:
+        credit_ledger_account = "Revenue"
+      elif int(float(memoranda['BTC Amount'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
