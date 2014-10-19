@@ -41,7 +41,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         <tr>
           <td>
             {% if entry.entryType == 'debit' %}
-              {{entry.date}}
+              {{entry.date.strftime("%m-%d-%Y %H:%M")}}
             {% endif %}
           </td>
           <td>

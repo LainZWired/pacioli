@@ -16,19 +16,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Pacioli.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
 import io
 import uuid
 import os
-import datetime
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
 import csv
-from sqlalchemy.sql import func
 import sqlalchemy
+from sqlalchemy.sql import func
+from datetime import datetime
 
 @app.route('/')
 def index():
@@ -107,7 +106,9 @@ def memo_transactions(fileName):
 
 @app.route('/GeneralJournal')
 def general_journal():
-  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+  entries = models.LedgerEntries.query.\
+  order_by(models.LedgerEntries.date.desc()).\
+  order_by(models.LedgerEntries.entryType.desc()).all()
   return render_template('generalJournal.html',
     title = 'General Journal',
     entries=entries)
@@ -132,71 +133,48 @@ def general_ledger():
   accounts = []
   for accountResult in accountsQuery:
     accountName = accountResult[0]
-    ledger_entries = models.LedgerEntries.query.\
-      filter_by(account=accountName).\
-      order_by(models.LedgerEntries.date.desc()).\
-      order_by(models.LedgerEntries.entryType.desc()).all()
-    account = ledgers.foot_account(accountName, ledger_entries, 'all')
-    accounts.append(account)
+    query = ledgers.query_entries(accountName, 'Monthly')
+    accounts.append(query)
   return render_template('generalLedger.html',
     title = 'General Ledger',
     accounts=accounts)
 
 @app.route('/Ledger/<accountName>/<groupby>')
 def ledger(accountName, groupby):
-  if groupby == "All":
-    ledger_entries = models.LedgerEntries.query.\
-      filter_by(account=accountName).\
-      order_by(models.LedgerEntries.date.desc()).\
-      order_by(models.LedgerEntries.entryType.desc()).all()
-    account = ledgers.foot_account(accountName, ledger_entries, 'all')
-  elif groupby == "Daily":
-    debit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.date_part('day', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
-      filter_by(account=accountName).\
-      filter_by(entryType='debit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.date_part('day', models.LedgerEntries.date)).all()
-    credit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.date_part('day', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
-      filter_by(account=accountName).\
-      filter_by(entryType='credit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.date_part('day', models.LedgerEntries.date)).all()
-    ledger_entries = {}
-    for entry in debit_ledger_entries:
-      day = datetime.date(int(entry[0]), int(entry[1]), int(entry[2]))
-      if not day in ledger_entries:
-        ledger_entries[day] = {}
-      ledger_entries[day]['debit'] = int(entry[3])
-    for entry in credit_ledger_entries:
-      day = datetime.date(int(entry[0]), int(entry[1]), int(entry[2]))
-      if not day in ledger_entries:
-        ledger_entries[day] = {}
-      ledger_entries[day]['credit'] = int(entry[3])
-    ledger_entries = OrderedDict(sorted(ledger_entries.items()))
-    account = ledgers.foot_account(accountName, ledger_entries, 'summary')
-  elif groupby == "Monthly":
-    debit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
-      filter_by(account=accountName).\
-      filter_by(entryType='debit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date)).all()
-    credit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
-      filter_by(account=accountName).\
-      filter_by(entryType='credit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date)).all()
-    ledger_entries = {}
-    for entry in debit_ledger_entries:
-      month = datetime.date(int(entry[0]), int(entry[1]), 1)
-      if not month in ledger_entries:
-        ledger_entries[month] = {}
-      ledger_entries[month]['debit'] = int(entry[2])
-    for entry in credit_ledger_entries:
-      month = datetime.date(int(entry[0]), int(entry[1]), 1)
-      if not month in ledger_entries:
-        ledger_entries[month] = {}
-      ledger_entries[month]['credit'] = int(entry[2])
-    ledger_entries = OrderedDict(sorted(ledger_entries.items()))
-    account = ledgers.foot_account(accountName, ledger_entries, 'summary')
-
+  query = ledgers.query_entries(accountName, groupby)
   return render_template('ledger.html',
     title = 'Ledger',
-    account=account,
-    ledger_entries=ledger_entries,
-    groupby = groupby)
+    account=query[0],
+    ledger_entries=query[1],
+    groupby = groupby,
+    accountName=accountName)
+
+@app.route('/Ledger/<accountName>/<groupby>/<interval>')
+def ledger_page(accountName, groupby, interval):
+    if groupby == "Daily":
+        day = datetime.strptime(interval, "%m-%d-%Y")
+        year = day.year
+        month = day.month
+        day = day.day
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month, func.date_part('day', models.LedgerEntries.date)==day).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.asc()).all()
+        account = ledgers.foot_account(accountName, ledger_entries, 'All')
+    if groupby == "Monthly":
+        day = datetime.strptime(interval, "%m-%Y")
+        year = day.year
+        month = day.month
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.desc()).all()
+        account = ledgers.foot_account(accountName, ledger_entries, 'All')
+    return render_template('ledger.html',
+      title = 'Ledger',
+      account=account,
+      ledger_entries=ledger_entries,
+      groupby = 'All',
+      accountName=accountName)
