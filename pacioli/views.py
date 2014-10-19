@@ -60,7 +60,6 @@ def memoranda():
     
 @app.route('/Memoranda/Delete/<fileName>')
 def delete_memoranda(fileName):
-  
   memo = models.Memoranda.query.filter_by(fileName=fileName).first()
   transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
   for transaction in transactions:
@@ -90,6 +89,17 @@ def memo_file(fileName):
     rows=rows,
     fileName=fileName)
   
+@app.route('/Memoranda/Transactions')
+def transactions():
+  transactions = models.MemorandaTransactions.query.all()
+  for transaction in transactions:
+    transaction.details = ast.literal_eval(transaction.details)
+    journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+    transaction.journal_entry_id = journal_entry.id
+  return render_template('memoTransactions.html',
+    title = 'Memo',
+    transactions=transactions)
+
 
 @app.route('/Memoranda/<fileName>/Transactions')
 def memo_transactions(fileName):
