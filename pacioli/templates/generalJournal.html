@@ -41,11 +41,11 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         <tr>
           <td>
             {% if entry.entryType == 'debit' %}
-              {{entry.date}}
+              {{entry.date.strftime("%m-%d-%Y %H:%M")}}
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.account)}}">
+            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
             {{entry.account}}
           </td>
           <td align="right">

@@ -19,8 +19,19 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
 {% extends "base.html" %}
 {% block content %}
   <h1>
-    {{account['accountName']}} Ledger
+    {{accountName}} Ledger
   </h1>
+  <p>
+    <a href="{{ url_for('ledger', accountName=accountName, groupby='All')}}">
+      All
+    </a> - 
+    <a href="{{ url_for('ledger', accountName=accountName, groupby='Daily')}}">
+      Daily
+    </a> - 
+    <a href="{{ url_for('ledger', accountName=accountName, groupby='Monthly')}}">
+      Monthly
+    </a>
+  </p>
   {% if ledger_entries %}
     <table border="1">
       <tr>
@@ -34,10 +45,11 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </th>
       </tr>
       <tbody>
+        {% if groupby == "All" %}
         {% for entry in ledger_entries %}
         <tr>
           <td>
-            {{entry.date}}
+            {{entry.date.strftime("%m-%d-%Y %H:%M")}}
           </td>
           <td align="right">
             {% if entry.entryType == 'debit' %}
@@ -55,6 +67,50 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
           </td>
         </tr>
         {% endfor %}
+        {% endif %}
+        {% if (groupby == "Daily") %}
+        {% for entry in ledger_entries %}
+        <tr>
+          <td>
+            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, interval=entry.strftime('%m-%d-%Y'))}}">
+              {{entry.strftime("%m-%d-%Y")}}
+            </a>
+          </td>
+          <td align="right">
+            {% if 'debit' in ledger_entries[entry] %}
+                {{format_satoshis(ledger_entries[entry]['debit'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if 'credit' in ledger_entries[entry] %}
+                {{format_satoshis(ledger_entries[entry]['credit'])}}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        {% if (groupby == "Monthly") %}
+        {% for entry in ledger_entries %}
+        <tr>
+          <td>
+            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, interval=entry.strftime('%m-%Y'))}}">
+              {{entry.strftime("%m-%Y")}}
+            </a>
+          </td>
+          <td align="right">
+            {% if 'debit' in ledger_entries[entry] %}
+                {{format_satoshis(ledger_entries[entry]['debit'])}}
+            {% endif %}
+          </td>
+          <td align="right">
+            {% if 'credit' in ledger_entries[entry] %}
+                {{format_satoshis(ledger_entries[entry]['credit'])}}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        
         <tr>
           <td>
             Total

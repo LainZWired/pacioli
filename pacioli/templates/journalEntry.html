@@ -43,7 +43,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
             {{entry.date}}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.account)}}">
+            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
               {{entry.account}}
             </a>
           </td>

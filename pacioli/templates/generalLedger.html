@@ -23,9 +23,9 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
   </h1>
   {% if accounts %}
     {% for account in accounts %}
-      <a href="{{ url_for('ledger', accountName=account['accountName'])}}">
+      <a href="{{ url_for('ledger', accountName=account[0]['accountName'], groupby='All')}}">
         <h3>
-          {{account['accountName']}}
+          {{account[0]['accountName']}}
         </h3>
       </a>
       <table border="1">
@@ -40,18 +40,51 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
           </th>
         </tr>
         <tbody>
+          {% for entry in account[1] %}
+          <tr>
+            <td>
+              <a href="{{ url_for('ledger_page', accountName=account[0]['accountName'], groupby='Monthly', interval=entry.strftime('%m-%Y'))}}">
+                {{entry.strftime("%m-%Y")}}
+              </a>
+            </td>
+              {% if 'debit' in account[1][entry] %}
+              <td align="right">
+                {{format_satoshis(account[1][entry]['debit'])}}
+              </td>
+              {% else %}
+                <td align="center">
+                  -
+                </td>
+              {% endif %}
+            {% if 'credit' in account[1][entry] %}
+              <td align="right">
+                {{format_satoshis(account[1][entry]['credit'])}}
+              </td>
+            {% else %}
+              <td align="center">
+                -
+              </td>
+            {% endif %}
+            
+          </tr>
+          {% endfor %}
+            
           <tr>
             <td>
               Total
             </td>
-            <td>
-              {% if account['totalDebit'] %}
-              {{format_satoshis(account['totalDebit'])}}
+            <td align="center">
+              {% if account[0]['totalDebit'] %}
+              {{format_satoshis(account[0]['totalDebit'])}}
+              {% else %}
+              -
               {% endif %}
             </td>
-            <td>
-              {% if account['totalCredit'] %}
-              {{format_satoshis(account['totalCredit'])}}
+            <td align="center">
+              {% if account[0]['totalCredit'] %}
+              {{format_satoshis(account[0]['totalCredit'])}}
+              {% else %}
+              -
               {% endif %}
             </td>
           </tr>
@@ -61,14 +94,18 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
             <td>
               Balance
             </td>
-            <td>
-              {% if account['debitBalance'] %}
-              {{format_satoshis(account['debitBalance'])}}
+            <td align="center">
+              {% if account[0]['debitBalance'] %}
+              {{format_satoshis(account[0]['debitBalance'])}}
+              {% else %}
+              -
               {% endif %}
             </td>
-            <td>
-              {% if account['creditBalance'] %}
-              {{format_satoshis(account['creditBalance'])}}
+            <td align="center">
+              {% if account[0]['creditBalance'] %}
+              {{format_satoshis(account[0]['creditBalance'])}}
+              {% else %}
+              -
               {% endif %}
             </td>
           </tr>

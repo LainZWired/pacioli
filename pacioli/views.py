@@ -21,11 +21,13 @@ from pacioli import app, db, forms, models
 import io
 import uuid
 import os
-import datetime
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
 import csv
+import sqlalchemy
+from sqlalchemy.sql import func
+from datetime import datetime
 
 @app.route('/')
 def index():
@@ -104,7 +106,9 @@ def memo_transactions(fileName):
 
 @app.route('/GeneralJournal')
 def general_journal():
-  entries = models.LedgerEntries.query.order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+  entries = models.LedgerEntries.query.\
+  order_by(models.LedgerEntries.date.desc()).\
+  order_by(models.LedgerEntries.entryType.desc()).all()
   return render_template('generalJournal.html',
     title = 'General Journal',
     entries=entries)
@@ -129,25 +133,48 @@ def general_ledger():
   accounts = []
   for accountResult in accountsQuery:
     accountName = accountResult[0]
-    ledger_entries = models.LedgerEntries.query.\
-      filter_by(account=accountName).\
-      order_by(models.LedgerEntries.date.desc()).\
-      order_by(models.LedgerEntries.entryType.desc()).all()
-    account = ledgers.foot_account(accountName, ledger_entries)
-    accounts.append(account)
+    query = ledgers.query_entries(accountName, 'Monthly')
+    accounts.append(query)
   return render_template('generalLedger.html',
     title = 'General Ledger',
     accounts=accounts)
 
-@app.route('/Ledger/<accountName>')
-def ledger(accountName):
-  ledger_entries = models.LedgerEntries.query.\
-    filter_by(account=accountName).\
-    order_by(models.LedgerEntries.date.desc()).\
-    order_by(models.LedgerEntries.entryType.desc()).all()
-  account = ledgers.foot_account(accountName, ledger_entries)
-
+@app.route('/Ledger/<accountName>/<groupby>')
+def ledger(accountName, groupby):
+  query = ledgers.query_entries(accountName, groupby)
   return render_template('ledger.html',
     title = 'Ledger',
-    account=account,
-    ledger_entries=ledger_entries)
+    account=query[0],
+    ledger_entries=query[1],
+    groupby = groupby,
+    accountName=accountName)
+
+@app.route('/Ledger/<accountName>/<groupby>/<interval>')
+def ledger_page(accountName, groupby, interval):
+    if groupby == "Daily":
+        day = datetime.strptime(interval, "%m-%d-%Y")
+        year = day.year
+        month = day.month
+        day = day.day
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month, func.date_part('day', models.LedgerEntries.date)==day).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.asc()).all()
+        account = ledgers.foot_account(accountName, ledger_entries, 'All')
+    if groupby == "Monthly":
+        day = datetime.strptime(interval, "%m-%Y")
+        year = day.year
+        month = day.month
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.desc()).all()
+        account = ledgers.foot_account(accountName, ledger_entries, 'All')
+    return render_template('ledger.html',
+      title = 'Ledger',
+      account=account,
+      ledger_entries=ledger_entries,
+      groupby = 'All',
+      accountName=accountName)
