@@ -31,6 +31,13 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
     <a href="{{ url_for('ledger', accountName=accountName, groupby='Monthly')}}">
       Monthly
     </a>
+    {% if groupby2 == 'Daily' and interval %}
+    <br>
+    <br>
+    <a href="{{ url_for('ledger_page', accountName=accountName, groupby='Monthly', interval=interval.strftime('%m-%Y'))}}">
+      {{interval.strftime("%m-%Y")}} Ledger
+    </a>
+    {% endif %}
   </p>
   {% if ledger_entries %}
     <table border="1">
@@ -68,7 +75,7 @@ along with Pacioli.  If not, see <http://www.gnu.org/licenses/>. -->
         </tr>
         {% endfor %}
         {% endif %}
-        {% if (groupby == "Daily") %}
+        {% if groupby == "Daily" %}
         {% for entry in ledger_entries %}
         <tr>
           <td>

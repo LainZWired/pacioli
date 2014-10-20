@@ -162,10 +162,10 @@ def ledger(accountName, groupby):
 @app.route('/Ledger/<accountName>/<groupby>/<interval>')
 def ledger_page(accountName, groupby, interval):
     if groupby == "Daily":
-        day = datetime.strptime(interval, "%m-%d-%Y")
-        year = day.year
-        month = day.month
-        day = day.day
+        interval = datetime.strptime(interval, "%m-%d-%Y")
+        year = interval.year
+        month = interval.month
+        day = interval.day
         ledger_entries = models.LedgerEntries.query.\
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month, func.date_part('day', models.LedgerEntries.date)==day).\
@@ -173,18 +173,21 @@ def ledger_page(accountName, groupby, interval):
           order_by(models.LedgerEntries.entryType.asc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
     if groupby == "Monthly":
-        day = datetime.strptime(interval, "%m-%Y")
-        year = day.year
-        month = day.month
+        interval = datetime.strptime(interval, "%m-%Y")
+        year = interval.year
+        month = interval.month
         ledger_entries = models.LedgerEntries.query.\
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
           order_by(models.LedgerEntries.entryType.desc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
+    print(interval)
     return render_template('ledger.html',
       title = 'Ledger',
       account=account,
       ledger_entries=ledger_entries,
+      groupby2 = groupby,
       groupby = 'All',
-      accountName=accountName)
+      accountName=accountName,
+      interval=interval)
