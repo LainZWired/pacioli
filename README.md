@@ -4,6 +4,7 @@ Pacioli
 Pacioli is Bitcoin accounting software implemented with a Python/Flask/PostgreSQL stack.
 
 Currently supported CSV exports:
+
 * Bitcoin-QT
 * Electrum
 * Armory
