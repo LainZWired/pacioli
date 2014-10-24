@@ -34,12 +34,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   {% endfor %}
 </ul>
 {% endif %}
-<hr>
-<br>
+
 
 <a href="{{ url_for('import_prices')}}">
   Import Prices
 </a>
+
+<hr>
+<br>
 
 {% if memos %}
 <table border="1">
@@ -70,6 +72,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   </tr>
   {% endfor %}
 </table>
+{% else %}
+No files have been uploaded.
 {% endif %}
 
 {% endblock %}

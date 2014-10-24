@@ -53,7 +53,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           <td align="right">
             {% if entry.entryType == 'credit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-                {{format_satoshis(entry.amount)}}
+                {{format_satoshis(entry.amount)}} - {{format_usd(entry.fiat)}}
               </a>
             {% endif %}
           </td>

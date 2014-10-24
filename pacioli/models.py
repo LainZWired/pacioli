@@ -94,7 +94,7 @@ class LedgerEntries(db.Model):
         return '<id %r>' % (self.id)
 
 
-class Price(db.Model):
+class Prices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     source = db.Column(db.Text)
     date = db.Column(db.DateTime, index=True, unique=True)

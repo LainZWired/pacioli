@@ -52,7 +52,6 @@ def csv_import(csvfile):
       else:
         return False
       return False
-
   
 def _import_price_bitstamp(rows, header):
   for row in rows:
@@ -66,8 +65,13 @@ def _import_price_bitstamp(rows, header):
       volume = int(abs(float(memoranda[' quantity']))*100000000000)
       source = "bitstamp"
       price_entry = models.Price(id=price_id, source=source, date=date, currency=currency, rate=rate, volume=volume)
-      db.session.add(price_entry)
-      db.session.commit()
+      try:
+        db.session.add(price_entry)
+        db.session.commit()
+      except sqlalchemy.exc.IntegrityError:
+        reason = exc.message
+        if reason.endswith('is not unique'):
+          db.session.rollback()
   return True
 
 def getRate(date):
