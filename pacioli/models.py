@@ -97,18 +97,16 @@ class LedgerEntries(db.Model):
 class Prices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     source = db.Column(db.Text)
-    date = db.Column(db.DateTime)
+    date = db.Column(db.DateTime, unique=True, index=True)
     currency = db.Column(db.Text)
-    rate = db.Column(db.BigInteger)
-    volume = db.Column(db.BigInteger)
+    rate = db.Column(db.Integer)
     
-    def __init__(self, id, source, date, currency, rate, volume):
+    def __init__(self, id, source, date, currency, rate):
         self.id = id
         self.source = source
         self.date = date
         self.currency = currency
         self.rate = rate
-        self.volume = volume
         
     def __repr__(self):
         return '<id %r>' % (self.id)

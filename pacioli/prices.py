@@ -35,6 +35,7 @@ def import_data():
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root,filename))
     for csvfile in matches:
+        print(csvfile)
         result = csv_import(csvfile)
     return True
 
@@ -47,7 +48,7 @@ def csv_import(csvfile):
       rows = [pair for pair in reader]
       # Find the first longest list:
       header = max(rows, key=lambda tup:len(tup[1]))
-      if header[1] == ["timestamp"," price", " quantity"]:
+      if header[1] == ["timestamp","vwap"]:
         return _import_price_bitstamp(rows, header)
       else:
         return False
@@ -61,12 +62,12 @@ def _import_price_bitstamp(rows, header):
       price_id = str(uuid.uuid4())
       date = datetime.fromtimestamp(int(memoranda['timestamp']))
       currency = "USD"
-      rate = int(abs(float(memoranda[' price']))*100000000000)
-      volume = int(abs(float(memoranda[' quantity']))*100000000000)
-      source = "bitstamp"
-      price_entry = models.Prices(id=price_id, source=source, date=date, currency=currency, rate=rate, volume=volume)
-      db.session.add(price_entry)
-      db.session.commit()
+      if memoranda['vwap']:
+          rate = int(abs(float(memoranda['vwap']))*100)
+          source = "bitstamp"
+          price_entry = models.Prices(id=price_id, source=source, date=date, currency=currency, rate=rate)
+          db.session.add(price_entry)
+          db.session.commit()
   return True
 
 def getRate(date):
