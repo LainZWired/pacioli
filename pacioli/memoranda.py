@@ -14,7 +14,7 @@
 import os
 import fnmatch
 import io
-from datetime import datetime, date, time, timezone
+from datetime import datetime
 import logging
 import sys
 import csv
@@ -80,7 +80,7 @@ def _import_bitcoin_core(rows, header, memoranda_id):
       db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      date = datetime.strptime(memoranda['Date'], "%Y-%m-%dT%H:%M:%S")
+      date = parser.parse(memoranda['Date'])
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
       db.session.commit()
@@ -123,7 +123,7 @@ def _import_multibit(rows, header, memoranda_id):
       db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      date = datetime.strptime(memoranda['Date'], "%d %b %Y %H:%M")
+      date = parser.parse(memoranda['Date'])
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
       db.session.commit()
@@ -167,7 +167,7 @@ def _import_armory(rows, header, memoranda_id):
       db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      date = datetime.strptime(memoranda['Date'], "%Y-%b-%d %I:%M%p")
+      date = parser.parse(memoranda['Date'])
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
       db.session.commit()
