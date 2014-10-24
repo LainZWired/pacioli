@@ -214,7 +214,7 @@ def _import_electrum(rows, header, memoranda_id):
       db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      date = memoranda['timestamp']
+      date = parser.parse(memoranda['timestamp'])
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
       db.session.commit()
