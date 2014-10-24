@@ -60,7 +60,9 @@ def process(file):
         return _import_electrum(rows, header, memoranda_id)
       elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
         return _import_coinbase(rows, header, memoranda_id)
-      else:
+    elif header[1] == ["timestamp","price", "quantity"]:
+        return _import_price_bitstamp(rows, header, memoranda_id)
+    else:
         return False
     return False
 
@@ -87,7 +89,9 @@ def _import_bitcoin_core(rows, header, memoranda_id):
         debit_ledger_account = "Bitcoins"
       elif int(float(memoranda['Amount'])*100000000) < 0:
         debit_ledger_account = "Expense"
-      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
       
       credit_ledger_entry_id = str(uuid.uuid4())
@@ -96,7 +100,9 @@ def _import_bitcoin_core(rows, header, memoranda_id):
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['Amount'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
-      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
 
       db.session.commit()
@@ -126,7 +132,9 @@ def _import_multibit(rows, header, memoranda_id):
         debit_ledger_account = "Bitcoins"
       elif int(float(memoranda['Amount (BTC)'])*100000000) < 0:
         debit_ledger_account = "Expense"
-      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
@@ -135,7 +143,9 @@ def _import_multibit(rows, header, memoranda_id):
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['Amount (BTC)'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
-      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
 
       db.session.commit()
@@ -167,7 +177,9 @@ def _import_armory(rows, header, memoranda_id):
       elif int(float(memoranda['Debit'])*100000000) < 0:
         debit_ledger_amount = int(abs(float(memoranda['Debit']))*100000000)
         debit_ledger_account = "Expense"
-      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
@@ -177,7 +189,9 @@ def _import_armory(rows, header, memoranda_id):
       elif int(float(memoranda['Debit'])*100000000) < 0:
         credit_ledger_amount = int(abs(float(memoranda['Debit']))*100000000)
         credit_ledger_account = "Bitcoins"
-      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
 
       db.session.commit()
@@ -209,7 +223,9 @@ def _import_electrum(rows, header, memoranda_id):
         debit_ledger_account = "Bitcoins"
       elif int(float(memoranda['value'])*100000000) < 0:
         debit_ledger_account = "Expense"
-      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
@@ -218,7 +234,9 @@ def _import_electrum(rows, header, memoranda_id):
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['value'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
-      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
 
       db.session.commit()
@@ -248,7 +266,9 @@ def _import_coinbase(rows, header, memoranda_id):
         debit_ledger_account = "Bitcoins"
       elif int(float(memoranda['BTC Amount'])*100000000) < 0:
         debit_ledger_account = "Expense"
-      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis",journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
@@ -257,9 +277,9 @@ def _import_coinbase(rows, header, memoranda_id):
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['BTC Amount'])*100000000) < 0:
         credit_ledger_account = "Bitcoins"
-      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", journal_entry_id=journal_entry_id)
+      rate = prices.getRate(date)
+      fiat = debit_ledger_amount/100000000*rate
+      credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
-
       db.session.commit()
-
   return True

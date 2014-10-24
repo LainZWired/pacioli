@@ -75,16 +75,40 @@ class LedgerEntries(db.Model):
     account = db.Column(db.Text)
     amount = db.Column(BigInteger)
     unit = db.Column(db.Text)
+    rate = db.Column(db.Float)
+    fiat = db.Column(db.Float)
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
     
-    def __init__(self, id, date, entryType, account, amount, unit, journal_entry_id):
+    def __init__(self, id, date, entryType, account, amount, unit, rate, fiat, journal_entry_id):
         self.id = id
         self.date = date
         self.entryType = entryType
         self.account = account
         self.amount = amount
         self.unit = unit
+        self.rate = rate
+        self.fiat = fiat
         self.journal_entry_id = journal_entry_id
+        
+    def __repr__(self):
+        return '<id %r>' % (self.id)
+
+
+class Price(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    source = db.Column(db.Text)
+    date = db.Column(db.DateTime)
+    currency = db.Column(db.Text)
+    rate = db.Column(db.BigInteger)
+    volume = db.Column(db.BigInteger)
+    
+    def __init__(self, id, source, date, currency, rate, volume):
+        self.id = id
+        self.source = source
+        self.date = date
+        self.currency = currency
+        self.rate = rate
+        self.volume = volume
         
     def __repr__(self):
         return '<id %r>' % (self.id)

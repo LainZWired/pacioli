@@ -19,6 +19,7 @@ import os
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
+import pacioli.prices as prices
 import csv
 import sqlalchemy
 from sqlalchemy.sql import func
@@ -37,10 +38,15 @@ def upload():
       pacioli.memoranda.process(file)
     return redirect(url_for('upload'))
   memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-  
+
   return render_template('upload.html',
     title = 'Upload',
     memos=memos)
+
+@app.route('/Import/Prices')
+def import_prices():
+    prices.import_data()
+    return redirect(url_for('upload'))
 
 @app.route('/Memoranda', methods=['POST','GET'])
 def memoranda():
@@ -177,7 +183,6 @@ def ledger_page(accountName, groupby, interval):
           order_by(models.LedgerEntries.date).\
           order_by(models.LedgerEntries.entryType.desc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
-    print(interval)
     return render_template('ledger.html',
       title = 'Ledger',
       account=account,

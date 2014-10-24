@@ -57,3 +57,5 @@ coverage.xml
 docs/_build/
 
 CSV_Import_Module_Log.csv
+
+pacioli/price_data/*.csv

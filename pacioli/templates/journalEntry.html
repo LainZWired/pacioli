@@ -31,6 +31,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         <th>
           Credit
         </th>
+        <th>
+          USD
+        </th>
       </tr>
       {% for entry in ledger_entries %}
         <tr>
@@ -51,6 +54,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             {% if entry.entryType == 'credit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
+          </td>
+          <td>
+            {{format_usd(entry.fiat)}}
           </td>
         </tr>
       {% endfor %}
