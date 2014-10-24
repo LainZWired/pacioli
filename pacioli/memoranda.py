@@ -21,7 +21,9 @@ import csv
 import json
 import uuid
 from pacioli import app, db, models
+import pacioli.prices as prices
 from werkzeug import secure_filename
+from dateutil import parser
 
 
 def allowed_file(filename):
@@ -255,7 +257,8 @@ def _import_coinbase(rows, header, memoranda_id):
       db.session.commit()
 
       journal_entry_id = str(uuid.uuid4())
-      date = memoranda['Timestamp']
+      date = parser.parse(memoranda['Timestamp'])
+
       journal_entry = models.JournalEntries(id=journal_entry_id, date=date, memoranda_transactions_id=memoranda_transactions_id)
       db.session.add(journal_entry)
       db.session.commit()
