@@ -23,7 +23,7 @@ import json
 import uuid
 from pacioli import app, db, models
 from sqlalchemy.sql import func, extract
-
+from sqlalchemy import exc
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -64,19 +64,14 @@ def _import_price_bitstamp(rows, header):
       rate = int(abs(float(memoranda[' price']))*100000000000)
       volume = int(abs(float(memoranda[' quantity']))*100000000000)
       source = "bitstamp"
-      price_entry = models.Price(id=price_id, source=source, date=date, currency=currency, rate=rate, volume=volume)
-      try:
-        db.session.add(price_entry)
-        db.session.commit()
-      except sqlalchemy.exc.IntegrityError:
-        reason = exc.message
-        if reason.endswith('is not unique'):
-          db.session.rollback()
+      price_entry = models.Prices(id=price_id, source=source, date=date, currency=currency, rate=rate, volume=volume)
+      db.session.add(price_entry)
+      db.session.commit()
   return True
 
 def getRate(date):
     date = int(date.strftime('%s'))
-    closest_price = db.session.query(models.Price.rate).order_by(func.abs( date -  extract('epoch', models.Price.date))).first()
+    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  extract('epoch', models.Prices.date))).first()
     return int(closest_price[0]/100000000000)
 
 # select id, passed_ts - ts_column difference

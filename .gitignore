@@ -1,6 +1,6 @@
 data/*
 venv/*
-work/*
+test_files/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -59,3 +59,5 @@ docs/_build/
 CSV_Import_Module_Log.csv
 
 pacioli/price_data/*.csv
+
+migrations/*

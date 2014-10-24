@@ -31,10 +31,34 @@ class TestCase(unittest.TestCase):
         pacioli.db.drop_all()
         print("Tear down complete.")
     
-    def test_empty_memoranda(self):
+    def test_empty_uploads(self):
         rv = self.app.get('/Upload')
         page = rv.data.decode("utf-8")
         assert "No files have been uploaded." in page
+        
+    def test_empty_memoranda(self):
+        rv = self.app.get('/Memoranda')
+        page = rv.data.decode("utf-8")
+        assert "No memoranda have been recorded." in page
+        
+    def test_empty_memoranda_transactions(self):
+        rv = self.app.get('/Memoranda/Transactions')
+        page = rv.data.decode("utf-8")
+        assert "No memorandum transactions have been recorded." in page
+        
+    def test_empty_general_journal(self):
+        rv = self.app.get('/GeneralJournal')
+        page = rv.data.decode("utf-8")
+        assert "No journal entries have been recorded." in page
+        
+    def test_empty_general_ledger(self):
+        rv = self.app.get('/GeneralLedger')
+        page = rv.data.decode("utf-8")
+        assert "No ledger entries have been recorded." in page
+    
+    def test_upload(self):
+        rv = self.app.post('/Upload', data)
+
 
 if __name__ == '__main__':
     unittest.main()

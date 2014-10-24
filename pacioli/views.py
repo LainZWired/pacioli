@@ -34,6 +34,7 @@ def upload():
   filenames = ''
   if request.method == 'POST':
     uploaded_files = request.files.getlist("file[]")
+    print(request)
     for file in uploaded_files:
       pacioli.memoranda.process(file)
     return redirect(url_for('upload'))

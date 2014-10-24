@@ -44,6 +44,7 @@ def process(file):
     memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, file=file.stream.getvalue(), fileSize=fileSize)
     db.session.add(memo)
     db.session.commit()
+    
     if fileType == 'csv':
       reader = csv.reader(document)
       # Numbering each row

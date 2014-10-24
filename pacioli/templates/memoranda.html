@@ -16,12 +16,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   <h1>
     Memoranda
   </h1>
+
+  {% if memos %}
   <p>
     <a href="{{ url_for('transactions')}}">
       All Transactions
     </a>
   </p>
-  {% if memos %}
     <table border="1">
       <tr>
         <th>
@@ -57,5 +58,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         </tr>
       {% endfor %}
     </table>
+  {% else %}
+  No memoranda have been recorded.
   {% endif %}
 {% endblock %}
