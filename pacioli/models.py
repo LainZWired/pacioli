@@ -95,9 +95,8 @@ class LedgerEntries(db.Model):
 
 
 class Prices(db.Model):
-    id = db.Column(db.Text, primary_key=True)
+    date = db.Column(db.DateTime, primary_key=True)
     source = db.Column(db.Text)
-    date = db.Column(db.DateTime, unique=True, index=True)
     currency = db.Column(db.Text)
     rate = db.Column(db.Integer)
     

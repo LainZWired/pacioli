@@ -73,7 +73,7 @@ def _import_price_bitstamp(rows, header):
 def getRate(date):
     date = int(date.strftime('%s'))
     closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  extract('epoch', models.Prices.date))).first()
-    return int(closest_price[0]/100000000000)
+    return int(closest_price[0]/100)
 
 # select id, passed_ts - ts_column difference
 # from t

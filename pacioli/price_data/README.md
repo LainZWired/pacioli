@@ -2,7 +2,10 @@ http://api.bitcoincharts.com/v1/csv/
 
 Download bitstampUSD.csv.gz 
 
-querycsv.py -i bitstampUSD.csv -o bitstampUSD-summarized.csv "SELECT timestamp, (sum(price*quantity) / sum(quantity)) AS vwap FROM bitstampUSD GROUP BY timestamp;"
+Command line:
 
+<code> querycsv.py -i bitstampUSD.csv -o bitstampUSD-summarized.csv "SELECT datetime(timestamp, 'unixepoch') AS timestamp,  'bitstamp' AS source, 'USD' as currency, cast(((sum(price*(quantity+1)) / sum(quantity+1)*100)) as int) AS rate FROM bitstampUSD GROUP BY timestamp;" </code>
 
-Save the summarized file to the price_data directory, move the raw file elsewhere.
+<code>psql pacioli</code>
+
+<code> COPY prices FROM '/Users/Rochard/sni-src/pacioli/test_files/_data/bitstampUSD-summarized.csv' DELIMITER ',' HEADER CSV;</code>
