@@ -24,6 +24,7 @@ import csv
 import sqlalchemy
 from sqlalchemy.sql import func
 from datetime import datetime
+import requests
 
 @app.route('/')
 def index():

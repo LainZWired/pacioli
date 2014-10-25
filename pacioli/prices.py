@@ -40,12 +40,21 @@ def import_data():
         filename = filename[-1]
         p = subprocess.call([
         'psql', 'pacioli', '-U', 'pacioli',
+        '-c', "DELETE FROM prices",'--set=ON_ERROR_STOP=true'
+        ])
+        p = subprocess.call([
+        'psql', 'pacioli', '-U', 'pacioli',
+        '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
+        ])
+        
+        p = subprocess.call([
+        'psql', 'pacioli', '-U', 'pacioli',
         '-c', "\COPY price_feeds(timestamp, price, volume) FROM %s HEADER CSV" % csvfile,
         '--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', 'pacioli', '-U', 'pacioli',
-        '-c', "INSERT INTO prices SELECT to_timestamp(timestamp) AS timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*(volume+1)) / sum(volume+1)*100)) as int) AS rate FROM price_feeds GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
+        '-c', "INSERT INTO prices SELECT to_timestamp(timestamp) AS timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*volume) / sum(volume))*100) as int) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', 'pacioli', '-U', 'pacioli',

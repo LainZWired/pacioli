@@ -47,13 +47,16 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           </td>
           <td>
             {% if entry.entryType == 'debit' %}
-              {{format_satoshis(entry.amount)}} - {{format_usd(entry.fiat)}}
+              {{format_satoshis(entry.amount)}}
             {% endif %}
           </td>
           <td>
             {% if entry.entryType == 'credit' %}
-              {{format_satoshis(entry.amount)}} - {{format_usd(entry.fiat)}}
+              {{format_satoshis(entry.amount)}}
             {% endif %}
+          </td>
+          <td>
+            {{format_usd(entry.fiat)}}
           </td>
         </tr>
       {% endfor %}
