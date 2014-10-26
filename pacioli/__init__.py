@@ -23,7 +23,9 @@ db = SQLAlchemy(app)
 @app.context_processor
 def utility_processor():
     def format_satoshis(amount):
-        return u'{:,}'.format(amount)
-    return dict(format_satoshis=format_satoshis)
+        return u'{:,}'.format(amount/100000000)
+    def format_usd(amount):
+        return u"${:,.2f}".format(amount)
+    return dict(format_usd=format_usd, format_satoshis=format_satoshis)
 
 from pacioli import views, models, forms

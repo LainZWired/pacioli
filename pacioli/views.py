@@ -19,10 +19,12 @@ import os
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
+import pacioli.prices as prices
 import csv
 import sqlalchemy
 from sqlalchemy.sql import func
 from datetime import datetime
+import inspect
 
 @app.route('/')
 def index():
@@ -34,13 +36,18 @@ def upload():
   if request.method == 'POST':
     uploaded_files = request.files.getlist("file[]")
     for file in uploaded_files:
-      pacioli.memoranda.process(file)
+      pacioli.memoranda.process_filestorage(file)
     return redirect(url_for('upload'))
   memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-  
+
   return render_template('upload.html',
     title = 'Upload',
     memos=memos)
+
+@app.route('/Import/Prices')
+def import_prices():
+    prices.import_data("pacioli")
+    return redirect(url_for('upload'))
 
 @app.route('/Memoranda', methods=['POST','GET'])
 def memoranda():
@@ -70,12 +77,12 @@ def delete_memoranda(fileName):
 
   db.session.delete(memo)
   db.session.commit()
-  return redirect(url_for('memoranda'))
+  return redirect(url_for('upload'))
 
 @app.route('/Memoranda/<fileName>')
 def memo_file(fileName):
   memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-  fileText = memo.file.decode('UTF-8')
+  fileText = memo.fileText
   document = io.StringIO(fileText)
   reader = csv.reader(document)
   rows = [pair for pair in reader]
@@ -112,7 +119,8 @@ def memo_transactions(fileName):
 @app.route('/GeneralJournal')
 def general_journal():
   entries = models.LedgerEntries.query.\
-  order_by(models.LedgerEntries.date.desc()).\
+  order_by(models.LedgerEntries.date).\
+  order_by(models.LedgerEntries.journal_entry_id.desc()).\
   order_by(models.LedgerEntries.entryType.desc()).all()
   return render_template('generalJournal.html',
     title = 'General Journal',
@@ -177,7 +185,6 @@ def ledger_page(accountName, groupby, interval):
           order_by(models.LedgerEntries.date).\
           order_by(models.LedgerEntries.entryType.desc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
-    print(interval)
     return render_template('ledger.html',
       title = 'Ledger',
       account=account,

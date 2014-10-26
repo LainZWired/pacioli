@@ -25,15 +25,15 @@ class Memoranda(db.Model):
     fileName = db.Column(db.Text, unique=True)
     fileType = db.Column(db.Text)
     fileSize = db.Column(BigInteger)
-    file = db.Column(db.LargeBinary)
+    fileText = db.Column(db.Text)
     
-    def __init__(self, id, date, fileName, fileType, fileSize, file):
+    def __init__(self, id, date, fileName, fileType, fileSize, fileText):
         self.id = id
         self.date = date
         self.fileName = fileName
         self.fileType = fileType
         self.fileSize = fileSize
-        self.file = file
+        self.fileText = fileText
         
     def __repr__(self):
         return '<id %r> <name %r>' % (self.id, self.fileName)
@@ -56,12 +56,10 @@ class MemorandaTransactions(db.Model):
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    date = db.Column(db.DateTime)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
-    def __init__(self, id, date, memoranda_transactions_id):
+    def __init__(self, id, memoranda_transactions_id):
         self.id = id
-        self.date = date
         self.memoranda_transactions_id = memoranda_transactions_id
 
         
@@ -75,16 +73,41 @@ class LedgerEntries(db.Model):
     account = db.Column(db.Text)
     amount = db.Column(BigInteger)
     unit = db.Column(db.Text)
+    rate = db.Column(db.Float)
+    fiat = db.Column(db.Float)
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
     
-    def __init__(self, id, date, entryType, account, amount, unit, journal_entry_id):
+    def __init__(self, id, date, entryType, account, amount, unit, rate, fiat, journal_entry_id):
         self.id = id
         self.date = date
         self.entryType = entryType
         self.account = account
         self.amount = amount
         self.unit = unit
+        self.rate = rate
+        self.fiat = fiat
         self.journal_entry_id = journal_entry_id
+        
+    def __repr__(self):
+        return '<id %r>' % (self.id)
+
+class PriceFeeds(db.Model):
+    price_id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.BigInteger)
+    price = db.Column(db.Float)
+    volume = db.Column(db.Float)
+
+class Prices(db.Model):
+    date = db.Column(db.BigInteger, primary_key=True)
+    source = db.Column(db.Text)
+    currency = db.Column(db.Text)
+    rate = db.Column(db.Integer)
+    
+    def __init__(self, date, source, currency, rate):
+        self.date = date
+        self.source = source
+        self.currency = currency
+        self.rate = rate
         
     def __repr__(self):
         return '<id %r>' % (self.id)
