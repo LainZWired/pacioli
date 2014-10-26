@@ -27,6 +27,7 @@ class TestCase(unittest.TestCase):
         pacioli.app.config['WTF_CSRF_ENABLED'] = False
         pacioli.app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://pacioli@localhost/pacioli-test"
         self.app = pacioli.app.test_client()
+        # pacioli.db.drop_all()
         pacioli.db.create_all()
         rows = pacioli.db.session.query(pacioli.models.Prices).count()
         if rows == 0:
@@ -99,6 +100,7 @@ class TestCase(unittest.TestCase):
         assert '<a href="/Memoranda/Coinbase' in page
         assert '<a href="/Memoranda/Bitcoin' in page
         assert '<a href="/Memoranda/Electrum' in page
+        assert '<a href="/Memoranda/Armory' in page
         
         rv = self.app.get('/Memoranda/Transactions')
         page = rv.data.decode("utf-8")
@@ -115,13 +117,13 @@ class TestCase(unittest.TestCase):
         rv = self.app.get('/GeneralLedger')
         page = rv.data.decode("utf-8")
         assert '<a href="/Ledger/Bitcoins/Monthly/01-2013">' in page
-        assert '200.0' in page
+        assert '250.0' in page
         assert '<a href="/Ledger/Expense/All">' in page
         
         rv = self.app.get('/Ledger/Bitcoins/Monthly/01-2013')
         page = rv.data.decode("utf-8")
         assert '<a href="/Ledger/Bitcoins/Daily">' in page
-        assert '200.0' in page
+        assert '250.0' in page
         assert '<a href="/GeneralJournal/' in page
         
 
