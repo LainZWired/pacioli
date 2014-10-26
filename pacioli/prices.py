@@ -52,7 +52,11 @@ def import_data(database):
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
-        '-c', "INSERT INTO prices SELECT to_timestamp(timestamp) AS timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*volume) / sum(volume))*100) as int) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
+        '-c', "UPDATE price_feeds SET timestamp = cast(timestamp/100 as int)*100",'--set=ON_ERROR_STOP=true'
+        ])
+        p = subprocess.call([
+        'psql', database, '-U', 'pacioli',
+        '-c', "INSERT INTO prices SELECT timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*volume) / sum(volume))*100) as int) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
@@ -63,5 +67,5 @@ def import_data(database):
 
 def getRate(date):
     date = int(date.strftime('%s'))
-    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  extract('epoch', models.Prices.date))).first()
+    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  models.Prices.date)).first()
     return int(closest_price[0]/100)

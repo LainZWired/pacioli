@@ -98,7 +98,7 @@ class PriceFeeds(db.Model):
     volume = db.Column(db.Float)
 
 class Prices(db.Model):
-    date = db.Column(db.DateTime, primary_key=True)
+    date = db.Column(db.BigInteger, primary_key=True)
     source = db.Column(db.Text)
     currency = db.Column(db.Text)
     rate = db.Column(db.Integer)
