@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase):
         searchdir = os.path.join(APP_ROOT,'pacioli/data_wallets/')
         matches = []
         for root, dirnames, filenames in os.walk('%s' % searchdir):
-            for filename in fnmatch.filter(filenames, '*.csv'):
+            for filename in fnmatch.filter(filenames, '*Test.csv'):
                 matches.append(os.path.join(root,filename))
         for csvfile in matches:
             memoranda_id = str(uuid.uuid4())
