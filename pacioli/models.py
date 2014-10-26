@@ -56,12 +56,10 @@ class MemorandaTransactions(db.Model):
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    date = db.Column(db.DateTime)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
-    def __init__(self, id, date, memoranda_transactions_id):
+    def __init__(self, id, memoranda_transactions_id):
         self.id = id
-        self.date = date
         self.memoranda_transactions_id = memoranda_transactions_id
 
         
