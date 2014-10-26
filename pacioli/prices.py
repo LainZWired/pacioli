@@ -50,9 +50,10 @@ def import_data(database):
         '-c', "\COPY price_feeds(timestamp, price, volume) FROM %s HEADER CSV" % csvfile,
         '--set=ON_ERROR_STOP=true'
         ])
+        # This rounds the time stamps, you can change it to have fewer price marks and improve performance
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
-        '-c', "UPDATE price_feeds SET timestamp = cast(timestamp/100 as int)*100",'--set=ON_ERROR_STOP=true'
+        '-c', "UPDATE price_feeds SET timestamp = cast(timestamp/10 as int)*10",'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',

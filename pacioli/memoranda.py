@@ -72,7 +72,6 @@ def process_csv(document, memoranda_id):
         
         debit_ledger_entry_id = str(uuid.uuid4())
         credit_ledger_entry_id = str(uuid.uuid4())
-        print(row)
         # Bitcoin Core
         if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
             date = parser.parse(memoranda['Date'])
@@ -101,7 +100,6 @@ def process_csv(document, memoranda_id):
         
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
-            print(memoranda)
             date = parser.parse(memoranda['Date'])
             if memoranda['Credit'] == '':
                 memoranda['Credit'] = 0

@@ -23,8 +23,8 @@ import pacioli.prices as prices
 import csv
 import sqlalchemy
 from sqlalchemy.sql import func
-from datetime import datetime
-import inspect
+from datetime import datetime,date
+import collections
 
 @app.route('/')
 def index():
@@ -119,7 +119,7 @@ def memo_transactions(fileName):
 @app.route('/GeneralJournal')
 def general_journal():
   entries = models.LedgerEntries.query.\
-  order_by(models.LedgerEntries.date).\
+  order_by(models.LedgerEntries.date.desc()).\
   order_by(models.LedgerEntries.journal_entry_id.desc()).\
   order_by(models.LedgerEntries.entryType.desc()).all()
   return render_template('generalJournal.html',
@@ -193,3 +193,46 @@ def ledger_page(accountName, groupby, interval):
       groupby = 'All',
       accountName=accountName,
       interval=interval)
+
+@app.route('/BalanceSheet')
+def balance_sheet():
+    return render_template('balanceSheet.html')
+    
+@app.route('/IncomeStatement')
+def income_statement():
+    periods = db.session.query(\
+      func.date_part('year', models.LedgerEntries.date),\
+      func.date_part('month', models.LedgerEntries.date)).\
+      group_by(func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)\
+      ).all()
+    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+    account_names = ['Revenue', 'Expense']
+    accounts = []
+    for account_name in account_names:
+        account = []
+        account.append(account_name)
+        account.append([])
+        for period in periods:
+            query = db.session.query(\
+              func.date_part('year', models.LedgerEntries.date),
+              func.date_part('month', models.LedgerEntries.date),
+              func.sum(models.LedgerEntries.amount)).\
+              filter_by(
+                account=account[0]).\
+              group_by(\
+                func.date_part('year', models.LedgerEntries.date),
+                func.date_part('month', models.LedgerEntries.date)).\
+              having(func.date_part('year', models.LedgerEntries.date)==period.year).\
+              having(func.date_part('month', models.LedgerEntries.date)==period.month).\
+                all()
+            if query == []:
+                query = [(period.year, period.month, 0)]
+            account[1].append(query)
+        accounts.append(account)
+    accounts = sorted(accounts, reverse=True)
+    return render_template('incomeStatement.html',
+      title = 'Income Statemnt',
+      periods = periods,
+      accounts = accounts)
+    

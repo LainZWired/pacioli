@@ -46,10 +46,15 @@ def query_entries(accountName, groupby):
     ledger_entries = OrderedDict(sorted(ledger_entries.items()))
     account = foot_account(accountName, ledger_entries, 'Summary')
   elif groupby == "Monthly":
-    debit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
+    debit_ledger_entries = db.session.query(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date),\
+        func.sum(models.LedgerEntries.amount)).\
       filter_by(account=accountName).\
       filter_by(entryType='debit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date)).all()
+      group_by(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)).all()
     credit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
       filter_by(account=accountName).\
       filter_by(entryType='credit').\
