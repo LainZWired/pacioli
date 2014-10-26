@@ -28,36 +28,34 @@ import subprocess
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-def import_data():
-    searchdir = os.path.join(APP_ROOT,'price_data/')
+def import_data(database):
+    searchdir = os.path.join(APP_ROOT,'data_prices/')
     matches = []
+    p = subprocess.call([
+    'psql', database, '-U', 'pacioli',
+    '-c', "DELETE FROM prices",'--set=ON_ERROR_STOP=true'
+    ])
+    p = subprocess.call([
+    'psql', database, '-U', 'pacioli',
+    '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
+    ])
     for root, dirnames, filenames in os.walk('%s' % searchdir):
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root,filename))
     for csvfile in matches:
-        print(csvfile)
         filename = csvfile.split("/")
         filename = filename[-1]
         p = subprocess.call([
-        'psql', 'pacioli', '-U', 'pacioli',
-        '-c', "DELETE FROM prices",'--set=ON_ERROR_STOP=true'
-        ])
-        p = subprocess.call([
-        'psql', 'pacioli', '-U', 'pacioli',
-        '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
-        ])
-        
-        p = subprocess.call([
-        'psql', 'pacioli', '-U', 'pacioli',
+        'psql', database, '-U', 'pacioli',
         '-c', "\COPY price_feeds(timestamp, price, volume) FROM %s HEADER CSV" % csvfile,
         '--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
-        'psql', 'pacioli', '-U', 'pacioli',
+        'psql', database, '-U', 'pacioli',
         '-c', "INSERT INTO prices SELECT to_timestamp(timestamp) AS timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*volume) / sum(volume))*100) as int) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
-        'psql', 'pacioli', '-U', 'pacioli',
+        'psql', database, '-U', 'pacioli',
         '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
         ])
         

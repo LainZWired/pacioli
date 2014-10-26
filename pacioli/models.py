@@ -25,15 +25,15 @@ class Memoranda(db.Model):
     fileName = db.Column(db.Text, unique=True)
     fileType = db.Column(db.Text)
     fileSize = db.Column(BigInteger)
-    file = db.Column(db.LargeBinary)
+    fileText = db.Column(db.Text)
     
-    def __init__(self, id, date, fileName, fileType, fileSize, file):
+    def __init__(self, id, date, fileName, fileType, fileSize, fileText):
         self.id = id
         self.date = date
         self.fileName = fileName
         self.fileType = fileType
         self.fileSize = fileSize
-        self.file = file
+        self.fileText = fileText
         
     def __repr__(self):
         return '<id %r> <name %r>' % (self.id, self.fileName)

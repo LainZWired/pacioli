@@ -31,37 +31,41 @@ def allowed_file(filename):
     filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
 # Assumes a Werkzeug File Storage object: http://werkzeug.pocoo.org/docs/0.9/datastructures/#werkzeug.datastructures.FileStorage
-def process(file):
+def process_filestorage(file):
   if allowed_file(file.filename):
-    memoranda_id = str(uuid.uuid4())
-    uploadDate = datetime.now()
     fileName = secure_filename(file.filename)
     fileType = fileName.rsplit('.', 1)[1]
     file.seek(0, os.SEEK_END)
     fileSize = file.tell()
     fileText = file.stream.getvalue().decode('UTF-8')
-    document = io.StringIO(fileText)
-    memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, file=file.stream.getvalue(), fileSize=fileSize)
+    process_memoranda(fileName, fileType, fileSize, fileText)
+    
+def process_memoranda(fileName, fileType, fileSize, fileText):
+    uploadDate = datetime.now()
+    memoranda_id = str(uuid.uuid4())
+    memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, fileText=fileText, fileSize=fileSize)
     db.session.add(memo)
     db.session.commit()
-    
+    document = io.StringIO(fileText)
     if fileType == 'csv':
-      reader = csv.reader(document)
-      # Numbering each row
-      reader = enumerate(reader)
-      # Turns the enumerate object into a list
-      rows = [pair for pair in reader]
-      # Find the first longest list:
-      header = max(rows, key=lambda tup:len(tup[1]))
-      if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+        process_csv(document, memoranda_id)
+        
+def process_csv(document, memoranda_id):
+    reader = csv.reader(document)
+    reader = enumerate(reader)
+    # Turns the enumerate object into a list
+    rows = [pair for pair in reader]
+    # Find the first longest list:
+    header = max(rows, key=lambda tup:len(tup[1]))
+    if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
         return _import_bitcoin_core(rows, header, memoranda_id)
-      elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+    elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
         return _import_multibit(rows, header, memoranda_id)
-      elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
+    elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
         return _import_armory(rows, header, memoranda_id)
-      elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
+    elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
         return _import_electrum(rows, header, memoranda_id)
-      elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
+    elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
         return _import_coinbase(rows, header, memoranda_id)
     elif header[1] == ["timestamp","price", "quantity"]:
         return _import_price_bitstamp(rows, header, memoranda_id)
@@ -221,10 +225,13 @@ def _import_electrum(rows, header, memoranda_id):
       db.session.commit()
 
       debit_ledger_entry_id = str(uuid.uuid4())
-      debit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
-      if int(float(memoranda['value'])*100000000) > 0:
+      value = int(float(memoranda['value'])*100000000)
+      fee = int(float(memoranda['fee'])*100000000)
+      if value > 0:
+        debit_ledger_amount = abs(value)
         debit_ledger_account = "Bitcoins"
-      elif int(float(memoranda['value'])*100000000) < 0:
+      elif value < 0:
+        debit_ledger_amount = abs(value) - abs(fee)
         debit_ledger_account = "Expense"
       rate = prices.getRate(date)
       fiat = debit_ledger_amount/100000000*rate
@@ -232,18 +239,17 @@ def _import_electrum(rows, header, memoranda_id):
       db.session.add(debit_ledger_entry)
 
       credit_ledger_entry_id = str(uuid.uuid4())
-      credit_ledger_amount = int(abs(float(memoranda['Amount']))*100000000)
       if int(float(memoranda['value'])*100000000) > 0:
+        credit_ledger_amount = abs(value)
         credit_ledger_account = "Revenue"
       elif int(float(memoranda['value'])*100000000) < 0:
+        debit_ledger_amount = abs(value) - abs(fee)
         credit_ledger_account = "Bitcoins"
       rate = prices.getRate(date)
       fiat = debit_ledger_amount/100000000*rate
       credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
       db.session.add(credit_ledger_entry)
-
       db.session.commit()
-
   return True
   
 def _import_coinbase(rows, header, memoranda_id):
