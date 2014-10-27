@@ -140,16 +140,22 @@ class TestCase(unittest.TestCase):
         assert balance == 0
         
         fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '12/31/2013 11:59:59.00PM')
-        assert fifo_costbasis == 0.0
+        assert fifo_costbasis == [0, 0, 0]
         
         fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '11/30/2013 11:59:59.00PM')
-        assert fifo_costbasis == 3250
+        assert fifo_costbasis[2] == 3250
         
         fifo_unrealized_gain = pacioli.ledgers.get_fifo_unrealized_gain('Bitcoins', '12/31/2013 11:59:59.00PM')
         assert fifo_unrealized_gain == 0.0
         
         fifo_unrealized_gain = pacioli.ledgers.get_fifo_unrealized_gain('Bitcoins', '11/30/2013 11:59:59.00PM')
         assert fifo_unrealized_gain == 265750.0
+        
+        fifo_realized_gain = pacioli.ledgers.get_fifo_realized_gain('Bitcoins', '12/1/2013', '12/31/2013 11:59:59.00PM')
+        assert fifo_realized_gain == 141400.0
+        
+        fifo_realized_gain = pacioli.ledgers.get_fifo_realized_gain('Bitcoins', '11/1/2013',  '11/30/2013 11:59:59.00PM')
+        assert fifo_realized_gain == 0.0
 
 if __name__ == '__main__':
     unittest.main()
