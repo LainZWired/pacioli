@@ -25,6 +25,8 @@ from pacioli import app, db, models
 from sqlalchemy.sql import func, extract
 from sqlalchemy import exc
 import subprocess
+from dateutil import parser
+
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,9 +52,10 @@ def import_data(database):
         '-c', "\COPY price_feeds(timestamp, price, volume) FROM %s HEADER CSV" % csvfile,
         '--set=ON_ERROR_STOP=true'
         ])
+        # This rounds the time stamps, you can change it to have fewer price marks and improve performance
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
-        '-c', "UPDATE price_feeds SET timestamp = cast(timestamp/100 as int)*100",'--set=ON_ERROR_STOP=true'
+        '-c', "UPDATE price_feeds SET timestamp = cast(timestamp/10 as int)*10",'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
@@ -65,7 +68,7 @@ def import_data(database):
         
     return True
 
-def getRate(date):
-    date = int(date.strftime('%s'))
-    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  models.Prices.date)).first()
+def getRate(querydate):
+    querydate = int(querydate.strftime('%s'))
+    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( querydate -  models.Prices.date)).first()
     return int(closest_price[0]/100)

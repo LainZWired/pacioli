@@ -23,8 +23,8 @@ import pacioli.prices as prices
 import csv
 import sqlalchemy
 from sqlalchemy.sql import func
-from datetime import datetime
-import inspect
+from datetime import datetime,date
+from collections import OrderedDict
 
 @app.route('/')
 def index():
@@ -119,7 +119,7 @@ def memo_transactions(fileName):
 @app.route('/GeneralJournal')
 def general_journal():
   entries = models.LedgerEntries.query.\
-  order_by(models.LedgerEntries.date).\
+  order_by(models.LedgerEntries.date.desc()).\
   order_by(models.LedgerEntries.journal_entry_id.desc()).\
   order_by(models.LedgerEntries.entryType.desc()).all()
   return render_template('generalJournal.html',
@@ -193,3 +193,46 @@ def ledger_page(accountName, groupby, interval):
       groupby = 'All',
       accountName=accountName,
       interval=interval)
+
+@app.route('/BalanceSheet')
+def balance_sheet():
+    return render_template('balanceSheet.html')
+    
+@app.route('/IncomeStatement')
+def income_statement():
+    periods = db.session.query(\
+      func.date_part('year', models.LedgerEntries.date),\
+      func.date_part('month', models.LedgerEntries.date)).\
+      group_by(func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)\
+      ).all()
+    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+    account_names = ['Revenue', 'Expense']
+    accounts = (('Revenue', {}), ('Expense',{}),( 'Net Income', {}))
+    accounts = OrderedDict(accounts)
+    for account_name in account_names:
+        for period in periods:
+            query = db.session.query(\
+              func.sum(models.LedgerEntries.amount)).\
+              filter_by(
+                account=account_name).\
+              group_by(\
+                func.date_part('year', models.LedgerEntries.date),
+                func.date_part('month', models.LedgerEntries.date)).\
+              having(func.date_part('year', models.LedgerEntries.date)==period.year).\
+              having(func.date_part('month', models.LedgerEntries.date)==period.month).\
+                all()
+            if query == []:
+                query = [[(0)]]
+            accounts[account_name][period] = int(query[0][0])
+        accounts[account_name] = OrderedDict(sorted(accounts[account_name].items()))
+    for period in periods:
+        net = accounts['Revenue'][period] - accounts['Expense'][period]
+        accounts['Net Income'][period] = net
+        accounts['Net Income'] = OrderedDict(sorted(accounts['Net Income'].items()))
+        
+    return render_template('incomeStatement.html',
+      title = 'Income Statement',
+      periods = periods,
+      accounts = accounts)
+    

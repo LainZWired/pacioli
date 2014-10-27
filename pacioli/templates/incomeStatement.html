@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>
+    Income Statement
+  </h1>
+    <table border="1">
+      <tr>
+        <th>
+          Account
+        </th>
+        {% for period in periods %}
+        <th>
+          {{ period.strftime('%m-%Y') }}
+        </th>
+        {% endfor %}
+      </tr>
+      <tbody>
+        {% for account, periods in accounts.items() %}
+        <tr>
+          <td>
+            {{account}}
+          </td>
+          {% for period, amount in periods.items() %}
+          <td>
+              {{format_satoshis(amount)}}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endblock %}

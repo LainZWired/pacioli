@@ -72,7 +72,6 @@ def process_csv(document, memoranda_id):
         
         debit_ledger_entry_id = str(uuid.uuid4())
         credit_ledger_entry_id = str(uuid.uuid4())
-        
         # Bitcoin Core
         if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
             date = parser.parse(memoranda['Date'])
@@ -98,10 +97,19 @@ def process_csv(document, memoranda_id):
             elif amount < 0:
                 debit_ledger_account = "Expense"
                 credit_ledger_account = "Bitcoins"
-                
+        
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
             date = parser.parse(memoranda['Date'])
+            fee = memoranda['Fee (paid by this wallet)']
+            if fee == '':
+                fee = 0
+            else:
+                fee = int(float(fee)*100000000)
+            if memoranda['Credit'] == '':
+                memoranda['Credit'] = 0
+            if memoranda['Debit'] == '':
+                memoranda['Debit'] = 0
             credit = int(float(memoranda['Credit'])*100000000)
             debit = int(float(memoranda['Debit'])*100000000)
             if credit > 0:
@@ -109,10 +117,10 @@ def process_csv(document, memoranda_id):
                 debit_ledger_account = "Bitcoins"
                 credit_ledger_amount = abs(credit)
                 credit_ledger_account = "Revenue"
-            elif dbit < 0:
-                debit_ledger_amount = abs(debit)
+            elif debit > 0:
+                debit_ledger_amount = abs(debit) - abs(fee)
                 debit_ledger_account = "Expense"
-                credit_ledger_amount = abs(debit)
+                credit_ledger_amount = abs(debit) - abs(fee)
                 credit_ledger_account = "Bitcoins"
 
         # Electrum

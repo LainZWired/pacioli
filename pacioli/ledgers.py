@@ -14,7 +14,8 @@
 import datetime
 from collections import OrderedDict
 from sqlalchemy.sql import func
-from pacioli import db, models
+from pacioli import db, models, prices
+from dateutil import parser
 
 def query_entries(accountName, groupby):
   if groupby == "All":
@@ -46,10 +47,15 @@ def query_entries(accountName, groupby):
     ledger_entries = OrderedDict(sorted(ledger_entries.items()))
     account = foot_account(accountName, ledger_entries, 'Summary')
   elif groupby == "Monthly":
-    debit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
+    debit_ledger_entries = db.session.query(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date),\
+        func.sum(models.LedgerEntries.amount)).\
       filter_by(account=accountName).\
       filter_by(entryType='debit').\
-      group_by( func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date)).all()
+      group_by(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)).all()
     credit_ledger_entries = db.session.query(func.date_part('year', models.LedgerEntries.date), func.date_part('month', models.LedgerEntries.date), func.sum(models.LedgerEntries.amount)).\
       filter_by(account=accountName).\
       filter_by(entryType='credit').\
@@ -98,3 +104,125 @@ def foot_account(accountName, entries, interval):
     elif account['totalDebit'] < account['totalCredit']:
       account['creditBalance'] = account['totalCredit'] - account['totalDebit']
     return account
+    
+def get_balance(accountName, querydate):
+    querydate = parser.parse(querydate)
+    transactions = query = db.session.query(\
+      models.LedgerEntries.amount,\
+      models.LedgerEntries.date,\
+      models.LedgerEntries.entryType).\
+      filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= querydate).\
+      all()
+    balance = 0
+    for transaction in transactions:
+        if transaction[2] == 'debit':
+            balance += transaction[0]
+        elif transaction[2] == 'credit':
+            balance -= transaction[0]
+    return balance
+
+def get_fifo_costbasis(accountName, querydate):
+    querydate = parser.parse(querydate)
+    transactions = query = db.session.query(\
+      models.LedgerEntries.amount,\
+      models.LedgerEntries.rate,\
+      models.LedgerEntries.fiat,\
+      models.LedgerEntries.entryType,\
+      models.LedgerEntries.date).\
+      filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= querydate).\
+      all()
+    inventory = []
+    costbasis = 0
+    amount = 0
+    transactions = [list(tx) for tx in transactions]
+    for transaction in transactions:
+        if transaction[3] == 'debit':
+            inventory.insert(0, transaction)
+        elif transaction[3] == 'credit':
+            while inventory[-1][0] < transaction[0]:
+                layer = inventory.pop()
+            else:
+                layer = inventory.pop()
+                residual_amount = layer[0]-transaction[0]
+                if residual_amount > 0:
+                    residual_fiat = residual_amount*layer[1]
+                    new_layer = [residual_amount, layer[1], residual_fiat, 'debit']
+                    inventory.append(new_layer)
+    if inventory:
+        for layer in inventory:
+            amount += layer[0]
+            costbasis += layer[2]
+        rate = round(costbasis/amount*100000000, 2)
+        return [amount, rate, costbasis]
+    else:
+        return [0, 0, 0]
+    
+    
+def get_fifo_unrealized_gain(accountName, querydate):
+    costbasis = get_fifo_costbasis(accountName, querydate)
+    balance = get_balance(accountName, querydate)
+    querydate = parser.parse(querydate)
+    valuation = prices.getRate(querydate)
+    valuation = valuation * balance/100000000
+    gain = valuation - costbasis[2]
+    return gain
+
+def get_fifo_realized_gain(accountName, startDate, endDate):
+    querydate = parser.parse(startDate)
+    querydate = parser.parse(endDate)
+    transactions = query = db.session.query(\
+      models.LedgerEntries.amount,\
+      models.LedgerEntries.rate,\
+      models.LedgerEntries.fiat,\
+      models.LedgerEntries.entryType,\
+      models.LedgerEntries.date).\
+      filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= endDate, models.LedgerEntries.date >= startDate).\
+      order_by(models.LedgerEntries.date.desc()).\
+      all()
+    inventory = []
+    gain = 0
+    begbal = get_fifo_costbasis(accountName, startDate)
+    inventory.insert(0, begbal)
+    transactions = [list(tx) for tx in transactions]
+    while transactions:
+        transaction = transactions.pop()
+        tx_satoshis = transaction[0]
+        tx_historical_rate = transaction[1]
+        tx_costbasis = transaction[2]
+        tx_type = transaction[3]
+        tx_date = transaction[4]
+        layer = inventory.pop()
+        layer_satoshis = layer[0]
+        layer_rate = layer[1]
+        layer_costbasis = layer[2]
+        if tx_type == 'debit':
+            inventory.insert(0, transaction)
+        elif tx_type == 'credit':
+            # [5000000000, 720.0, 36000.0, 'credit', datetime.datetime(2013, 12, 31, 1, 1, 1)]
+            if tx_satoshis > layer_satoshis:
+                saleprice = prices.getRate(tx_date)
+                satoshis_sold = layer_satoshis
+                salevalue = saleprice * satoshis_sold/100000000
+                costbasis = satoshis_sold * tx_historical_rate/100000000
+                gain += salevalue - costbasis
+                residual_amount = tx_satoshis - satoshis_sold
+                residual_fiat = residual_amount*tx_historical_rate/100000000
+                new_transaction = [residual_amount, tx_historical_rate, residual_fiat, 'credit', tx_type]
+                transactions.append(new_transaction)
+            elif tx_satoshis < layer_satoshis:
+                saleprice = prices.getRate(tx_date)
+                satoshis_sold = tx_satoshis
+                salevalue = saleprice * satoshis_sold/100000000
+                costbasis = satoshis_sold * layer_rate/100000000
+                gain += salevalue - costbasis
+                residual_amount = layer_satoshis - satoshis_sold
+                residual_fiat = residual_amount*layer_rate/100000000
+                new_layer = [residual_amount, layer_rate, residual_fiat, 'debit']
+                inventory.append(new_layer)
+            elif tx_satoshis == layer_satoshis:
+                saleprice = prices.getRate(tx_date)
+                satoshis_sold = tx_satoshis
+                salevalue = saleprice * satoshis_sold/100000000
+                costbasis = tx_costbasis
+                gain += salevalue - costbasis
+    return gain

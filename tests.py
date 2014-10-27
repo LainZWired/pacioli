@@ -27,6 +27,7 @@ class TestCase(unittest.TestCase):
         pacioli.app.config['WTF_CSRF_ENABLED'] = False
         pacioli.app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://pacioli@localhost/pacioli-test"
         self.app = pacioli.app.test_client()
+        # pacioli.db.drop_all()
         pacioli.db.create_all()
         rows = pacioli.db.session.query(pacioli.models.Prices).count()
         if rows == 0:
@@ -82,7 +83,7 @@ class TestCase(unittest.TestCase):
         searchdir = os.path.join(APP_ROOT,'pacioli/data_wallets/')
         matches = []
         for root, dirnames, filenames in os.walk('%s' % searchdir):
-            for filename in fnmatch.filter(filenames, '*.csv'):
+            for filename in fnmatch.filter(filenames, '*Test.csv'):
                 matches.append(os.path.join(root,filename))
         for csvfile in matches:
             memoranda_id = str(uuid.uuid4())
@@ -99,6 +100,7 @@ class TestCase(unittest.TestCase):
         assert '<a href="/Memoranda/Coinbase' in page
         assert '<a href="/Memoranda/Bitcoin' in page
         assert '<a href="/Memoranda/Electrum' in page
+        assert '<a href="/Memoranda/Armory' in page
         
         rv = self.app.get('/Memoranda/Transactions')
         page = rv.data.decode("utf-8")
@@ -115,15 +117,45 @@ class TestCase(unittest.TestCase):
         rv = self.app.get('/GeneralLedger')
         page = rv.data.decode("utf-8")
         assert '<a href="/Ledger/Bitcoins/Monthly/01-2013">' in page
-        assert '200.0' in page
+        assert '250.0' in page
         assert '<a href="/Ledger/Expense/All">' in page
         
         rv = self.app.get('/Ledger/Bitcoins/Monthly/01-2013')
         page = rv.data.decode("utf-8")
         assert '<a href="/Ledger/Bitcoins/Daily">' in page
-        assert '200.0' in page
+        assert '250.0' in page
         assert '<a href="/GeneralJournal/' in page
         
+        rv = self.app.get('/IncomeStatement')
+        page = rv.data.decode("utf-8")
+        assert '12-2013' in page
+        assert '-250.0' in page
+        assert 'Net Income' in page
+        
+        balance = pacioli.ledgers.get_balance('Bitcoins', '11/20/2013')
+        assert balance == 25000000000
+        
+        
+        balance = pacioli.ledgers.get_balance('Bitcoins', '12/31/2013 11:59:59.00PM')
+        assert balance == 0
+        
+        fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '12/31/2013 11:59:59.00PM')
+        assert fifo_costbasis == [0, 0, 0]
+        
+        fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '11/30/2013 11:59:59.00PM')
+        assert fifo_costbasis[2] == 3250
+        
+        fifo_unrealized_gain = pacioli.ledgers.get_fifo_unrealized_gain('Bitcoins', '12/31/2013 11:59:59.00PM')
+        assert fifo_unrealized_gain == 0.0
+        
+        fifo_unrealized_gain = pacioli.ledgers.get_fifo_unrealized_gain('Bitcoins', '11/30/2013 11:59:59.00PM')
+        assert fifo_unrealized_gain == 265750.0
+        
+        fifo_realized_gain = pacioli.ledgers.get_fifo_realized_gain('Bitcoins', '12/1/2013', '12/31/2013 11:59:59.00PM')
+        assert fifo_realized_gain == 141400.0
+        
+        fifo_realized_gain = pacioli.ledgers.get_fifo_realized_gain('Bitcoins', '11/1/2013',  '11/30/2013 11:59:59.00PM')
+        assert fifo_realized_gain == 0.0
 
 if __name__ == '__main__':
     unittest.main()
