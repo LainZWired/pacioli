@@ -232,7 +232,7 @@ def income_statement():
         accounts['Net Income'] = OrderedDict(sorted(accounts['Net Income'].items()))
         
     return render_template('incomeStatement.html',
-      title = 'Income Statemnt',
+      title = 'Income Statement',
       periods = periods,
       accounts = accounts)
     

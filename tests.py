@@ -131,6 +131,9 @@ class TestCase(unittest.TestCase):
         assert '10-2014' in page
         assert '-200.0' in page
         assert 'Net Income' in page
+        
+        balance = pacioli.ledgers.get_balance('Bitcoins', '11/20/2013')
+        assert balance == 25000000000
 
 if __name__ == '__main__':
     unittest.main()

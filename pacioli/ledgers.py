@@ -15,6 +15,8 @@ import datetime
 from collections import OrderedDict
 from sqlalchemy.sql import func
 from pacioli import db, models
+from dateutil import parser
+
 
 def query_entries(accountName, groupby):
   if groupby == "All":
@@ -103,3 +105,17 @@ def foot_account(accountName, entries, interval):
     elif account['totalDebit'] < account['totalCredit']:
       account['creditBalance'] = account['totalCredit'] - account['totalDebit']
     return account
+    
+def get_balance(accountName, querydate):
+    querydate = parser.parse(querydate)
+    transactions = query = db.session.query(\
+      models.LedgerEntries.amount, models.LedgerEntries.entryType).\
+      filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= querydate).\
+      all()
+    balance = 0
+    for transaction in transactions:
+        if transaction[1] == 'debit':
+            balance += transaction[0]
+        elif transaction[1] == 'credit':
+            balance += transaction[0]
+    return balance
