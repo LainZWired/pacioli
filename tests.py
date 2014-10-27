@@ -128,10 +128,9 @@ class TestCase(unittest.TestCase):
         
         rv = self.app.get('/IncomeStatement')
         page = rv.data.decode("utf-8")
-        print(page)
-        # assert '<a href="/Ledger/Bitcoins/Monthly/01-2013">' in page
-        # assert '250.0' in page
-        # assert '<a href="/Ledger/Expense/All">' in page
+        assert '10-2014' in page
+        assert '-200.0' in page
+        assert 'Net Income' in page
 
 if __name__ == '__main__':
     unittest.main()
