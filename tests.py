@@ -27,11 +27,6 @@ class TestCase(unittest.TestCase):
         pacioli.app.config['WTF_CSRF_ENABLED'] = False
         pacioli.app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://pacioli@localhost/pacioli-test"
         self.app = pacioli.app.test_client()
-        # pacioli.db.drop_all()
-        pacioli.db.create_all()
-        rows = pacioli.db.session.query(pacioli.models.Prices).count()
-        if rows == 0:
-            pacioli.prices.import_data('pacioli-test')
         print("Setup complete.")
 
     def tearDown(self):

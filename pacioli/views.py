@@ -29,6 +29,18 @@ from collections import OrderedDict
 @app.route('/')
 def index():
   return render_template("index.html")
+  
+@app.route('/Configure')
+def configure():
+  return render_template("Configure.html")
+  
+@app.route('/Configure/ChartOfAccounts')
+def chart_of_accounts():
+    account_types = models.AccountTypes.query.all()
+    accounts = models.Accounts.query.all()
+    return render_template("chart_of_accounts.html",
+    accounts=accounts,
+    account_types=account_types)
 
 @app.route('/Upload', methods=['POST','GET'])
 def upload():
@@ -39,7 +51,6 @@ def upload():
       pacioli.memoranda.process_filestorage(file)
     return redirect(url_for('upload'))
   memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-
   return render_template('upload.html',
     title = 'Upload',
     memos=memos)
