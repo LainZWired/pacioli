@@ -128,12 +128,18 @@ class TestCase(unittest.TestCase):
         
         rv = self.app.get('/IncomeStatement')
         page = rv.data.decode("utf-8")
-        assert '10-2014' in page
-        assert '-200.0' in page
+        assert '12-2013' in page
+        assert '-250.0' in page
         assert 'Net Income' in page
         
         balance = pacioli.ledgers.get_balance('Bitcoins', '11/20/2013')
         assert balance == 25000000000
+        
+        fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '12/31/2013 11:59:59.00PM')
+        assert fifo_costbasis == 0.0
+        
+        fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '11/30/2013 11:59:59.00PM')
+        assert fifo_costbasis == 3250
 
 if __name__ == '__main__':
     unittest.main()

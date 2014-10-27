@@ -119,3 +119,32 @@ def get_balance(accountName, querydate):
         elif transaction[1] == 'credit':
             balance += transaction[0]
     return balance
+
+def get_fifo_costbasis(accountName, querydate):
+    querydate = parser.parse(querydate)
+    transactions = query = db.session.query(\
+      models.LedgerEntries.amount,\
+      models.LedgerEntries.rate,\
+      models.LedgerEntries.fiat,\
+      models.LedgerEntries.entryType,\
+      models.LedgerEntries.date).\
+      filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= querydate).\
+      all()
+    inventory = []
+    costbasis = 0
+    transactions = [list(tx) for tx in transactions]
+    for transaction in transactions:
+        if transaction[3] == 'debit':
+            inventory.insert(0, transaction)
+        elif transaction[3] == 'credit':
+            while inventory[-1][0] < transaction[0]:
+                layer = inventory.pop()
+            else:
+                layer = inventory.pop()
+                residual_amount = layer[0]-transaction[0]
+                residual_fiat = residual_amount*layer[1]
+                new_layer = [residual_amount, layer[1], residual_fiat, 'debit']
+                inventory.append(new_layer)
+    for layer in inventory:
+        costbasis += layer[2]
+    return costbasis

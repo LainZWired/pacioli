@@ -101,6 +101,11 @@ def process_csv(document, memoranda_id):
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
             date = parser.parse(memoranda['Date'])
+            fee = memoranda['Fee (paid by this wallet)']
+            if fee == '':
+                fee = 0
+            else:
+                fee = int(float(fee)*100000000)
             if memoranda['Credit'] == '':
                 memoranda['Credit'] = 0
             if memoranda['Debit'] == '':
@@ -112,10 +117,10 @@ def process_csv(document, memoranda_id):
                 debit_ledger_account = "Bitcoins"
                 credit_ledger_amount = abs(credit)
                 credit_ledger_account = "Revenue"
-            elif debit < 0:
-                debit_ledger_amount = abs(debit)
+            elif debit > 0:
+                debit_ledger_amount = abs(debit) - abs(fee)
                 debit_ledger_account = "Expense"
-                credit_ledger_amount = abs(debit)
+                credit_ledger_amount = abs(debit) - abs(fee)
                 credit_ledger_account = "Bitcoins"
 
         # Electrum
