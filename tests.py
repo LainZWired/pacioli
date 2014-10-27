@@ -140,6 +140,9 @@ class TestCase(unittest.TestCase):
         
         fifo_costbasis = pacioli.ledgers.get_fifo_costbasis('Bitcoins', '11/30/2013 11:59:59.00PM')
         assert fifo_costbasis == 3250
+        
+        fifo_unrealized_gain = pacioli.ledgers.get_fifo_unrealized_gain('Bitcoins', '11/30/2013 11:59:59.00PM')
+        assert fifo_unrealized_gain == 265750.0
 
 if __name__ == '__main__':
     unittest.main()

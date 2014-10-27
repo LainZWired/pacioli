@@ -14,9 +14,8 @@
 import datetime
 from collections import OrderedDict
 from sqlalchemy.sql import func
-from pacioli import db, models
+from pacioli import db, models, prices
 from dateutil import parser
-
 
 def query_entries(accountName, groupby):
   if groupby == "All":
@@ -148,3 +147,13 @@ def get_fifo_costbasis(accountName, querydate):
     for layer in inventory:
         costbasis += layer[2]
     return costbasis
+    
+    
+def get_fifo_unrealized_gain(accountName, querydate):
+    costbasis = get_fifo_costbasis(accountName, querydate)
+    balance = get_balance(accountName, querydate)
+    querydate = parser.parse(querydate)
+    valuation = prices.getRate(querydate)
+    valuation = valuation * balance/100000000
+    gain = valuation - costbasis
+    return gain

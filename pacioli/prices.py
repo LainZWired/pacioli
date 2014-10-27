@@ -25,6 +25,8 @@ from pacioli import app, db, models
 from sqlalchemy.sql import func, extract
 from sqlalchemy import exc
 import subprocess
+from dateutil import parser
+
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -66,7 +68,7 @@ def import_data(database):
         
     return True
 
-def getRate(date):
-    date = int(date.strftime('%s'))
-    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( date -  models.Prices.date)).first()
+def getRate(querydate):
+    querydate = int(querydate.strftime('%s'))
+    closest_price = db.session.query(models.Prices.rate).order_by(func.abs( querydate -  models.Prices.date)).first()
     return int(closest_price[0]/100)
