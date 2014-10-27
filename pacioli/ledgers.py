@@ -108,15 +108,17 @@ def foot_account(accountName, entries, interval):
 def get_balance(accountName, querydate):
     querydate = parser.parse(querydate)
     transactions = query = db.session.query(\
-      models.LedgerEntries.amount, models.LedgerEntries.entryType).\
+      models.LedgerEntries.amount,\
+      models.LedgerEntries.date,\
+      models.LedgerEntries.entryType).\
       filter(models.LedgerEntries.account==accountName, models.LedgerEntries.date <= querydate).\
       all()
     balance = 0
     for transaction in transactions:
-        if transaction[1] == 'debit':
+        if transaction[2] == 'debit':
             balance += transaction[0]
-        elif transaction[1] == 'credit':
-            balance += transaction[0]
+        elif transaction[2] == 'credit':
+            balance -= transaction[0]
     return balance
 
 def get_fifo_costbasis(accountName, querydate):
