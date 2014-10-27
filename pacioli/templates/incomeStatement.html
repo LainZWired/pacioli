@@ -15,14 +15,14 @@
         {% endfor %}
       </tr>
       <tbody>
-        {% for account in accounts %}
+        {% for account, periods in accounts.items() %}
         <tr>
           <td>
-            {{account[0]}}
+            {{account}}
           </td>
-          {% for period in account[1] %}
+          {% for period, amount in periods.items() %}
           <td>
-              {{format_satoshis(period[0][2])}}
+              {{format_satoshis(amount)}}
           </td>
           {% endfor %}
         </tr>

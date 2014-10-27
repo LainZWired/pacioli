@@ -24,7 +24,7 @@ import csv
 import sqlalchemy
 from sqlalchemy.sql import func
 from datetime import datetime,date
-import collections
+from collections import OrderedDict
 
 @app.route('/')
 def index():
@@ -208,18 +208,14 @@ def income_statement():
       ).all()
     periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
     account_names = ['Revenue', 'Expense']
-    accounts = []
+    accounts = (('Revenue', {}), ('Expense',{}),( 'Net Income', {}))
+    accounts = OrderedDict(accounts)
     for account_name in account_names:
-        account = []
-        account.append(account_name)
-        account.append([])
         for period in periods:
             query = db.session.query(\
-              func.date_part('year', models.LedgerEntries.date),
-              func.date_part('month', models.LedgerEntries.date),
               func.sum(models.LedgerEntries.amount)).\
               filter_by(
-                account=account[0]).\
+                account=account_name).\
               group_by(\
                 func.date_part('year', models.LedgerEntries.date),
                 func.date_part('month', models.LedgerEntries.date)).\
@@ -227,10 +223,14 @@ def income_statement():
               having(func.date_part('month', models.LedgerEntries.date)==period.month).\
                 all()
             if query == []:
-                query = [(period.year, period.month, 0)]
-            account[1].append(query)
-        accounts.append(account)
-    accounts = sorted(accounts, reverse=True)
+                query = [[(0)]]
+            accounts[account_name][period] = int(query[0][0])
+        accounts[account_name] = OrderedDict(sorted(accounts[account_name].items()))
+    for period in periods:
+        net = accounts['Revenue'][period] - accounts['Expense'][period]
+        accounts['Net Income'][period] = net
+        accounts['Net Income'] = OrderedDict(sorted(accounts['Net Income'].items()))
+        
     return render_template('incomeStatement.html',
       title = 'Income Statemnt',
       periods = periods,
