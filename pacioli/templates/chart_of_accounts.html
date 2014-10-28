@@ -1,8 +1,24 @@
 {% extends "configure_header.html" %}
 {% block config %}
 
+<table border="1">
+  <tr>
+    <th>
+      Account Name
+    </th>
+    <th>
+      Type
+    </th>
+  </tr>
 {% for account in accounts %}
-{{account.name}}
+  <tr>
+    <td>
+      {{account.name}}
+    </td>
+    <td>
+      {{account.parent}}
+    </td>
+  </tr>
 {% endfor %}
 
 {% endblock %}

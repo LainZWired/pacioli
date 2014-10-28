@@ -34,13 +34,11 @@ def index():
 def configure():
   return render_template("Configure.html")
   
-@app.route('/Configure/ChartOfAccounts')
+@app.route('/Configure/ChartOfAccounts', methods=['POST','GET'])
 def chart_of_accounts():
-    account_types = models.AccountTypes.query.all()
-    accounts = models.Accounts.query.all()
+    accounts = models.Accounts.query.order_by(models.Accounts.parent).all()
     return render_template("chart_of_accounts.html",
-    accounts=accounts,
-    account_types=account_types)
+    accounts=accounts)
 
 @app.route('/Upload', methods=['POST','GET'])
 def upload():
