@@ -36,9 +36,18 @@ def configure():
   
 @app.route('/Configure/ChartOfAccounts', methods=['POST','GET'])
 def chart_of_accounts():
+    form = forms.NewAccount()
     accounts = models.Accounts.query.order_by(models.Accounts.parent).all()
+    if request.method == 'POST':
+        name = form.account.data
+        parent = form.accounttype.data
+        account = models.Accounts(name=name, parent=parent)
+        db.session.add(account)
+        db.session.commit()
+        return redirect(url_for('chart_of_accounts'))
     return render_template("chart_of_accounts.html",
-    accounts=accounts)
+    accounts=accounts,
+    form=form)
 
 @app.route('/Upload', methods=['POST','GET'])
 def upload():

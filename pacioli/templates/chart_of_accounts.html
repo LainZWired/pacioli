@@ -1,6 +1,22 @@
 {% extends "configure_header.html" %}
 {% block config %}
 
+<h2>
+  New Account
+</h2>
+
+<form  action="/Configure/ChartOfAccounts" method="POST">
+  {{ form.account() }}
+    <br>
+  {{ form.accounttype() }}
+    <br>
+    <input type=submit value="Add Account">
+</form>
+
+<h2>
+  Chart of Accounts
+</h2>
+
 <table border="1">
   <tr>
     <th>

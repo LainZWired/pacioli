@@ -15,3 +15,14 @@ from flask_wtf import Form
 from wtforms import TextField, TextAreaField, \
 SubmitField, SelectField, FloatField, validators, BooleanField
 from wtforms.validators import Required, Length
+
+
+class NewAccount(Form):
+    account = TextField("Account Name")
+    accounttype = SelectField('Account Type', choices=[
+        ('Asset','Asset'),
+        ('Liability','Liability'),
+        ('Equity','Equity'),
+        ('Revenue','Revenue'),
+        ('Expense','Expense')
+        ])
