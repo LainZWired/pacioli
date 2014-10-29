@@ -28,141 +28,184 @@ from collections import OrderedDict
 
 @app.route('/')
 def index():
-  return render_template("index.html")
-
-@app.route('/Upload', methods=['POST','GET'])
-def upload():
-  filenames = ''
-  if request.method == 'POST':
-    uploaded_files = request.files.getlist("file[]")
-    for file in uploaded_files:
-      pacioli.memoranda.process_filestorage(file)
-    return redirect(url_for('upload'))
-  memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-
-  return render_template('upload.html',
-    title = 'Upload',
-    memos=memos)
-
-@app.route('/Import/Prices')
-def import_prices():
-    prices.import_data("pacioli")
-    return redirect(url_for('upload'))
-
-@app.route('/Memoranda', methods=['POST','GET'])
-def memoranda():
-  memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-  for memo in memos:
-    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
-    memo.count = len(transactions)
-
-  return render_template('memoranda.html',
-    title = 'Memoranda',
-    memos=memos)
-    
-@app.route('/Memoranda/Delete/<fileName>')
-def delete_memoranda(fileName):
-  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-  transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
-  for transaction in transactions:
-    journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = journal_entry.id).all()
-    for entry in ledger_entries:
-      db.session.delete(entry)
-      db.session.commit()
-    db.session.delete(journal_entry)
-    db.session.commit()
-    db.session.delete(transaction)
-    db.session.commit()
-
-  db.session.delete(memo)
-  db.session.commit()
-  return redirect(url_for('upload'))
-
-@app.route('/Memoranda/<fileName>')
-def memo_file(fileName):
-  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-  fileText = memo.fileText
-  document = io.StringIO(fileText)
-  reader = csv.reader(document)
-  rows = [pair for pair in reader]
-  return render_template('memoFile.html',
-    title = 'Memo',
-    rows=rows,
-    fileName=fileName)
+    return render_template("index.html")
   
-@app.route('/Memoranda/Transactions')
+@app.route('/Configure')
+def configure():
+    return render_template("configure/configure.html")
+  
+@app.route('/Configure/Import/Prices')
+def import_prices():
+    prices.import_summary("pacioli")
+    return redirect(url_for('configure'))
+  
+@app.route('/Configure/ChartOfAccounts', methods=['POST','GET'])
+def chart_of_accounts():
+    form = forms.NewAccount()
+    accounts = models.Accounts.query.order_by(models.Accounts.parent).all()
+    if request.method == 'POST':
+        name = form.account.data
+        parent = form.accounttype.data
+        parent = parent.name
+        account = models.Accounts(name=name, parent=parent)
+        db.session.add(account)
+        db.session.commit()
+        return redirect(url_for('chart_of_accounts'))
+    return render_template("configure/chart_of_accounts.html",
+    accounts=accounts,
+    form=form)
+
+@app.route('/Configure/ChartOfAccounts/Delete/<account>')
+def delete_account(account):
+    findaccount = models.Accounts.query.filter_by(name=account).first()
+    db.session.delete(findaccount)
+    db.session.commit()
+    return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Bookkeeping')
+def bookkeeping():
+    return render_template("bookkeeping/bookkeeping.html")
+
+@app.route('/Bookkeeping/Upload', methods=['POST','GET'])
+def upload_csv():
+    filenames = ''
+    if request.method == 'POST':
+        uploaded_files = request.files.getlist("file[]")
+        for file in uploaded_files:
+            pacioli.memoranda.process_filestorage(file)
+        return redirect(url_for('upload'))
+    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+    return render_template('bookkeeping/upload.html',
+        title = 'Upload',
+        memos=memos)
+
+@app.route('/Bookkeeping/Memoranda/Delete/<fileName>')
+def delete_memoranda(fileName):
+    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+    for transaction in transactions:
+        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+        ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = journal_entry.id).all()
+        for entry in ledger_entries:
+            db.session.delete(entry)
+            db.session.commit()
+        db.session.delete(journal_entry)
+        db.session.commit()
+        db.session.delete(transaction)
+        db.session.commit()
+    db.session.delete(memo)
+    db.session.commit()
+    return redirect(url_for('upload_csv'))
+
+@app.route('/Bookkeeping/Memoranda', methods=['POST','GET'])
+def memoranda():
+    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+    for memo in memos:
+        transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+        memo.count = len(transactions)
+
+    return render_template('bookkeeping/memoranda.html',
+        title = 'Memoranda',
+        memos=memos)
+
+@app.route('/Bookkeeping/Memoranda/<fileName>')
+def memo_file(fileName):
+    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+    fileText = memo.fileText
+    document = io.StringIO(fileText)
+    reader = csv.reader(document)
+    rows = [pair for pair in reader]
+    return render_template('bookkeeping/memo_file.html',
+        title = 'Memo',
+        rows=rows,
+        fileName=fileName)
+  
+@app.route('/Bookkeeping/Memoranda/Transactions')
 def transactions():
-  transactions = models.MemorandaTransactions.query.all()
-  for transaction in transactions:
-    transaction.details = ast.literal_eval(transaction.details)
-    journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
-    transaction.journal_entry_id = journal_entry.id
-  return render_template('memoTransactions.html',
-    title = 'Memo',
-    transactions=transactions)
+    transactions = models.MemorandaTransactions.query.all()
+    for transaction in transactions:
+        transaction.details = ast.literal_eval(transaction.details)
+        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+        transaction.journal_entry_id = journal_entry.id
+    return render_template('bookkeeping/memo_transactions.html',
+        title = 'Memo',
+        transactions=transactions)
 
 
-@app.route('/Memoranda/<fileName>/Transactions')
+@app.route('/Bookkeeping/Memoranda/<fileName>/Transactions')
 def memo_transactions(fileName):
-  memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-  transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
-  for transaction in transactions:
-    transaction.details = ast.literal_eval(transaction.details)
-    journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
-    transaction.journal_entry_id = journal_entry.id
-  return render_template('memoTransactions.html',
-    title = 'Memo',
-    transactions=transactions,
-    fileName=fileName)
+    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+    for transaction in transactions:
+        transaction.details = ast.literal_eval(transaction.details)
+        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+        transaction.journal_entry_id = journal_entry.id
+    return render_template('bookkeeping/memo_transactions.html',
+        title = 'Memo',
+        transactions=transactions,
+        fileName=fileName)
 
-@app.route('/GeneralJournal')
+@app.route('/Bookkeeping/GeneralJournal')
 def general_journal():
-  entries = models.LedgerEntries.query.\
-  order_by(models.LedgerEntries.date.desc()).\
-  order_by(models.LedgerEntries.journal_entry_id.desc()).\
-  order_by(models.LedgerEntries.entryType.desc()).all()
-  return render_template('generalJournal.html',
-    title = 'General Journal',
-    entries=entries)
+    entries = models.LedgerEntries.query.\
+    order_by(models.LedgerEntries.date.desc()).\
+    order_by(models.LedgerEntries.journal_entry_id.desc()).\
+    order_by(models.LedgerEntries.entryType.desc()).all()
+    return render_template('bookkeeping/general_journal.html',
+        title = 'General Journal',
+        entries=entries)
 
-@app.route('/GeneralJournal/<id>')
+@app.route('/Bookkeeping/GeneralJournal/<id>')
 def journal_entry(id):
-  journal_entry = journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-  ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
-  transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
-  memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
-  transaction.details = ast.literal_eval(transaction.details)
-  return render_template('journalEntry.html',
-    title = 'Journal Entry',
-    journal_entry=journal_entry,
-    ledger_entries=ledger_entries,
-    transaction=transaction,
-    memo=memo)
+    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
+    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
+    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
+    transaction.details = ast.literal_eval(transaction.details)
+    return render_template('bookkeeping/journal_entry.html',
+        title = 'Journal Entry',
+        journal_entry=journal_entry,
+        ledger_entries=ledger_entries,
+        transaction=transaction,
+        memo=memo)
 
-@app.route('/GeneralLedger')
+@app.route('/Bookkeeping/GeneralJournal/<id>/Edit', methods=['POST','GET'])
+def edit_journal_entry(id):
+    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
+    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
+    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
+    transaction.details = ast.literal_eval(transaction.details)
+    return render_template('bookkeeping/journal_entry_edit.html',
+        title = 'Journal Entry',
+        journal_entry=journal_entry,
+        ledger_entries=ledger_entries,
+        transaction=transaction,
+        memo=memo)
+
+@app.route('/Bookkeeping/GeneralLedger')
 def general_ledger():
-  accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
-  accounts = []
-  for accountResult in accountsQuery:
-    accountName = accountResult[0]
-    query = ledgers.query_entries(accountName, 'Monthly')
-    accounts.append(query)
-  return render_template('generalLedger.html',
-    title = 'General Ledger',
-    accounts=accounts)
+    accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+    accounts = []
+    for accountResult in accountsQuery:
+        accountName = accountResult[0]
+        query = ledgers.query_entries(accountName, 'Monthly')
+        accounts.append(query)
+    return render_template('bookkeeping/general_ledger.html',
+        title = 'General Ledger',
+        accounts=accounts)
 
-@app.route('/Ledger/<accountName>/<groupby>')
+@app.route('/Bookkeeping/Ledger/<accountName>/<groupby>')
 def ledger(accountName, groupby):
-  query = ledgers.query_entries(accountName, groupby)
-  return render_template('ledger.html',
-    title = 'Ledger',
-    account=query[0],
-    ledger_entries=query[1],
-    groupby = groupby,
-    accountName=accountName)
+    query = ledgers.query_entries(accountName, groupby)
+    return render_template('bookkeeping/ledger.html',
+        title = 'Ledger',
+        account=query[0],
+        ledger_entries=query[1],
+        groupby = groupby,
+        accountName=accountName)
 
-@app.route('/Ledger/<accountName>/<groupby>/<interval>')
+@app.route('/Bookkeeping/Ledger/<accountName>/<groupby>/<interval>')
 def ledger_page(accountName, groupby, interval):
     if groupby == "Daily":
         interval = datetime.strptime(interval, "%m-%d-%Y")
@@ -185,20 +228,25 @@ def ledger_page(accountName, groupby, interval):
           order_by(models.LedgerEntries.date).\
           order_by(models.LedgerEntries.entryType.desc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
-    return render_template('ledger.html',
-      title = 'Ledger',
-      account=account,
-      ledger_entries=ledger_entries,
-      groupby2 = groupby,
-      groupby = 'All',
-      accountName=accountName,
-      interval=interval)
+    return render_template('bookkeeping/ledger.html',
+        title = 'Ledger',
+        account=account,
+        ledger_entries=ledger_entries,
+        groupby2 = groupby,
+        groupby = 'All',
+        accountName=accountName,
+        interval=interval)
 
-@app.route('/BalanceSheet')
-def balance_sheet():
-    return render_template('balanceSheet.html')
+@app.route('/Bookkeeping/TrialBalance')
+def trial_balance():
+    return render_template('bookkeeping/trial_balance.html')
+
+@app.route('/FinancialStatements')
+def financial_statements():
+    return render_template("financial_statements/financial_statements.html")
+
     
-@app.route('/IncomeStatement')
+@app.route('/FinancialStatements/IncomeStatement')
 def income_statement():
     periods = db.session.query(\
       func.date_part('year', models.LedgerEntries.date),\
@@ -230,9 +278,16 @@ def income_statement():
         net = accounts['Revenue'][period] - accounts['Expense'][period]
         accounts['Net Income'][period] = net
         accounts['Net Income'] = OrderedDict(sorted(accounts['Net Income'].items()))
-        
-    return render_template('incomeStatement.html',
-      title = 'Income Statement',
-      periods = periods,
-      accounts = accounts)
+    return render_template('financial_statements/income_statement.html',
+            title = 'Income Statement',
+            periods = periods,
+            accounts = accounts)
+    
+@app.route('/FinancialStatements/BalanceSheet')
+def balance_sheet():
+    return render_template('financial_statements/balanceSheet.html')
+    
+@app.route('/FinancialStatements/StatementOfCashFlows')
+def statement_of_cash_flows():
+    return render_template('financial_statements/statement_of_cash_flows.html')
     

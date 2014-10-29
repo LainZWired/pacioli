@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{url_for('income_statement')}}">Income Statement</a> - 
+<a href="{{url_for('balance_sheet')}}">Balance Sheet</a> - 
+<a href="{{url_for('statement_of_cash_flows')}}">Statement of Cash Flows</a>
+<hr>
+{% block financial_statements %}{% endblock %}
+{% endblock %}

@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "header_bookkeeping.html" %}
+{% block bookkeeping %}
   <h1>
     Journal Entry
   </h1>
@@ -21,6 +21,11 @@
         <th>
           USD
         </th>
+        <td>
+         <a href="{{ url_for('edit_journal_entry', id=journal_entry.id)}}">
+          Edit
+         </a>
+        </td>
       </tr>
       {% for entry in ledger_entries %}
         <tr>

@@ -27,11 +27,6 @@ class TestCase(unittest.TestCase):
         pacioli.app.config['WTF_CSRF_ENABLED'] = False
         pacioli.app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://pacioli@localhost/pacioli-test"
         self.app = pacioli.app.test_client()
-        # pacioli.db.drop_all()
-        pacioli.db.create_all()
-        rows = pacioli.db.session.query(pacioli.models.Prices).count()
-        if rows == 0:
-            pacioli.prices.import_data('pacioli-test')
         print("Setup complete.")
 
     def tearDown(self):
@@ -47,27 +42,27 @@ class TestCase(unittest.TestCase):
         print("Tear down complete.")
     
     def test_empty_uploads(self):
-        rv = self.app.get('/Upload')
+        rv = self.app.get('/Bookkeeping/Upload')
         page = rv.data.decode("utf-8")
         assert "No files have been uploaded." in page
         
     def test_empty_memoranda(self):
-        rv = self.app.get('/Memoranda')
+        rv = self.app.get('/Bookkeeping/Memoranda')
         page = rv.data.decode("utf-8")
         assert "No memoranda have been recorded." in page
         
     def test_empty_memoranda_transactions(self):
-        rv = self.app.get('/Memoranda/Transactions')
+        rv = self.app.get('/Bookkeeping/Memoranda/Transactions')
         page = rv.data.decode("utf-8")
         assert "No memorandum transactions have been recorded." in page
         
     def test_empty_general_journal(self):
-        rv = self.app.get('/GeneralJournal')
+        rv = self.app.get('/Bookkeeping/GeneralJournal')
         page = rv.data.decode("utf-8")
         assert "No journal entries have been recorded." in page
         
     def test_empty_general_ledger(self):
-        rv = self.app.get('/GeneralLedger')
+        rv = self.app.get('/Bookkeeping/GeneralLedger')
         page = rv.data.decode("utf-8")
         assert "No ledger entries have been recorded." in page
 
@@ -94,39 +89,39 @@ class TestCase(unittest.TestCase):
             with open(csvfile, 'rt') as csvfile:
                 fileText = csvfile.read()
                 pacioli.memoranda.process_memoranda(fileName, fileType, fileSize, fileText)
-        rv = self.app.get('/Upload')
+        rv = self.app.get('/Bookkeeping/Upload')
         page = rv.data.decode("utf-8")
-        assert '<a href="/Memoranda/MultiBit' in page
-        assert '<a href="/Memoranda/Coinbase' in page
-        assert '<a href="/Memoranda/Bitcoin' in page
-        assert '<a href="/Memoranda/Electrum' in page
-        assert '<a href="/Memoranda/Armory' in page
+        assert '<a href="/Bookkeeping/Memoranda/MultiBit' in page
+        assert '<a href="/Bookkeeping/Memoranda/Coinbase' in page
+        assert '<a href="/Bookkeeping/Memoranda/Bitcoin' in page
+        assert '<a href="/Bookkeeping/Memoranda/Electrum' in page
+        assert '<a href="/Bookkeeping/Memoranda/Armory' in page
         
-        rv = self.app.get('/Memoranda/Transactions')
+        rv = self.app.get('/Bookkeeping/Memoranda/Transactions')
         page = rv.data.decode("utf-8")
         assert '0000000000000000000000000000000000000000000000000000000000000000-000' in page
         assert '1HR5hGL912oTAEWVn4gyY2jjDw259c4XxF' in page
         assert '2013-01-01T01:01:01' in page
         
-        rv = self.app.get('/GeneralJournal')
+        rv = self.app.get('/Bookkeeping/GeneralJournal')
         page = rv.data.decode("utf-8")
-        assert '<a href="/Ledger/Expense/All">' in page
+        assert '<a href="/Bookkeeping/Ledger/Expense/All">' in page
         assert '01-01-2013 01:01' in page
         assert '50.0' in page
         
-        rv = self.app.get('/GeneralLedger')
+        rv = self.app.get('/Bookkeeping/GeneralLedger')
         page = rv.data.decode("utf-8")
-        assert '<a href="/Ledger/Bitcoins/Monthly/01-2013">' in page
+        assert '<a href="/Bookkeeping/Ledger/Bitcoins/Monthly/01-2013">' in page
         assert '250.0' in page
-        assert '<a href="/Ledger/Expense/All">' in page
+        assert '<a href="/Bookkeeping/Ledger/Expense/All">' in page
         
-        rv = self.app.get('/Ledger/Bitcoins/Monthly/01-2013')
+        rv = self.app.get('/Bookkeeping/Ledger/Bitcoins/Monthly/01-2013')
         page = rv.data.decode("utf-8")
-        assert '<a href="/Ledger/Bitcoins/Daily">' in page
+        assert '<a href="/Bookkeeping/Ledger/Bitcoins/Daily">' in page
         assert '250.0' in page
-        assert '<a href="/GeneralJournal/' in page
+        assert '<a href="/Bookkeeping/GeneralJournal/' in page
         
-        rv = self.app.get('/IncomeStatement')
+        rv = self.app.get('/FinancialStatements/IncomeStatement')
         page = rv.data.decode("utf-8")
         assert '12-2013' in page
         assert '-250.0' in page

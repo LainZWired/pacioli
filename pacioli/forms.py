@@ -14,4 +14,16 @@
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, \
 SubmitField, SelectField, FloatField, validators, BooleanField
+from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms.validators import Required, Length
+from wtforms.ext.sqlalchemy.orm import model_form
+from pacioli.models import AccountTypes, Accounts
+
+def available_parents():
+    return AccountTypes.query
+
+class NewAccount(Form):
+    account = TextField("Account Name")
+    accounttype = QuerySelectField(query_factory=available_parents, allow_blank=False)
+    
+    

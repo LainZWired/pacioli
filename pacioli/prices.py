@@ -65,7 +65,22 @@ def import_data(database):
         'psql', database, '-U', 'pacioli',
         '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
         ])
-        
+    return True
+
+def import_summary(database):
+    searchdir = os.path.join(APP_ROOT,'data_prices/')
+    matches = []
+    for root, dirnames, filenames in os.walk('%s' % searchdir):
+        for filename in fnmatch.filter(filenames, '*.csv'):
+            matches.append(os.path.join(root,filename))
+    for csvfile in matches:
+        filename = csvfile.split("/")
+        filename = filename[-1]
+        p = subprocess.call([
+        'psql', database, '-U', 'pacioli',
+        '-c', "\COPY prices(date, source, currency, rate) FROM %s CSV" % csvfile,
+        '--set=ON_ERROR_STOP=false'
+        ])
     return True
 
 def getRate(querydate):

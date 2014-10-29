@@ -1,0 +1,45 @@
+{% extends "header_configure.html" %}
+{% block configure %}
+
+<h2>
+  New Account
+</h2>
+
+<form  action="/Configure/ChartOfAccounts" method="POST">
+  {{ form.account() }}
+    <br>
+  {{ form.accounttype() }}
+    <br>
+    <input type=submit value="Add Account">
+</form>
+
+<h2>
+  Chart of Accounts
+</h2>
+
+<table border="1">
+  <tr>
+    <th>
+      Type
+    </th>
+    <th>
+      Name
+    </th>
+  </tr>
+{% for account in accounts %}
+  <tr>
+    <td>
+      {{account.parent}}
+    </td>
+    <td>
+      {{account.name}}
+    </td>
+    <td>
+      <a  href="{{ url_for('delete_account', account = account.name)}}">
+    Delete
+      </a>
+    </td>
+  </tr>
+{% endfor %}
+
+{% endblock %}
