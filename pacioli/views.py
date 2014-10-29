@@ -34,7 +34,12 @@ def index():
 def configure():
     return render_template("configure/configure.html")
   
-@app.route('/Configure/Import/Prices')
+@app.route('/Configure/SummarizePrices')
+def summarize_prices():
+    prices.summarize_data("pacioli")
+    return redirect(url_for('configure'))
+    
+@app.route('/Configure/ImportPrices')
 def import_prices():
     prices.import_summary("pacioli")
     return redirect(url_for('configure'))

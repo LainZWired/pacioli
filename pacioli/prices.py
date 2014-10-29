@@ -30,8 +30,9 @@ from dateutil import parser
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-def import_data(database):
-    searchdir = os.path.join(APP_ROOT,'data_prices/')
+def summarize_data(database):
+    searchdir = os.path.join(APP_ROOT,'data_prices/raw/')
+    savedir = os.path.join(APP_ROOT,'data_prices/summary')
     matches = []
     p = subprocess.call([
     'psql', database, '-U', 'pacioli',
@@ -63,22 +64,31 @@ def import_data(database):
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
+        '-c', "\COPY prices to %s/%s-summary.csv HEADER CSV" % (savedir, filename),
+        '--set=ON_ERROR_STOP=true'
+        ])
+        p = subprocess.call([
+        'psql', database, '-U', 'pacioli',
         '-c', "DELETE FROM price_feeds",'--set=ON_ERROR_STOP=true'
+        ])
+        p = subprocess.call([
+        'psql', database, '-U', 'pacioli',
+        '-c', "DELETE FROM prices",'--set=ON_ERROR_STOP=true'
         ])
     return True
 
 def import_summary(database):
-    searchdir = os.path.join(APP_ROOT,'data_prices/')
+    searchdir = os.path.join(APP_ROOT,'data_prices/summary/')
     matches = []
     for root, dirnames, filenames in os.walk('%s' % searchdir):
-        for filename in fnmatch.filter(filenames, '*.csv'):
+        for filename in fnmatch.filter(filenames, '*-summary.csv'):
             matches.append(os.path.join(root,filename))
     for csvfile in matches:
         filename = csvfile.split("/")
         filename = filename[-1]
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
-        '-c', "\COPY prices(date, source, currency, rate) FROM %s CSV" % csvfile,
+        '-c', "\COPY prices(date, source, currency, rate) FROM %s HEADER CSV" % csvfile,
         '--set=ON_ERROR_STOP=false'
         ])
     return True

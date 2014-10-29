@@ -1,9 +1,12 @@
 {% extends "header_configure.html" %}
 {% block configure %}
 
+<a href="{{ url_for('summarize_prices')}}">
+  Summarize Prices</a>
 
+<br>
+<br>
 <a href="{{ url_for('import_prices')}}">
-  Import Prices
-</a>
+  Import Prices</a>
 
 {% endblock %}
