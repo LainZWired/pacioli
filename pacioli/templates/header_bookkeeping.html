@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{url_for('upload_csv')}}">Upload Files</a> - 
+<a href="{{url_for('memoranda')}}">Memoranda</a> - 
+<a href="{{url_for('general_journal')}}">General Journal</a> - 
+<a href="{{url_for('general_ledger')}}">General Ledger</a> - 
+<a href="{{url_for('trial_balance')}}">Trial Balance</a>
+<hr>
+{% block bookkeeping %}{% endblock %}
+{% endblock %}

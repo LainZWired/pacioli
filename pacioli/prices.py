@@ -76,7 +76,6 @@ def import_summary(database):
     for csvfile in matches:
         filename = csvfile.split("/")
         filename = filename[-1]
-        print(filename)
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
         '-c', "\COPY prices(date, source, currency, rate) FROM %s CSV" % csvfile,
