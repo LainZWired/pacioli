@@ -73,7 +73,7 @@ def upload_csv():
         uploaded_files = request.files.getlist("file[]")
         for file in uploaded_files:
             pacioli.memoranda.process_filestorage(file)
-        return redirect(url_for('upload'))
+        return redirect(url_for('upload_csv'))
     memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
     return render_template('bookkeeping/upload.html',
         title = 'Upload',
