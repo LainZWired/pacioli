@@ -26,30 +26,12 @@ class Memoranda(db.Model):
     fileType = db.Column(db.Text)
     fileSize = db.Column(BigInteger)
     fileText = db.Column(db.Text)
-    
-    def __init__(self, id, date, fileName, fileType, fileSize, fileText):
-        self.id = id
-        self.date = date
-        self.fileName = fileName
-        self.fileType = fileType
-        self.fileSize = fileSize
-        self.fileText = fileText
-        
-    def __repr__(self):
-        return '<id %r> <name %r>' % (self.id, self.fileName)
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
     details = db.Column(JSON)
+    txid = db.Column(db.Text)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
-    
-    def __init__(self, id, memoranda_id, details):
-        self.id = id
-        self.memoranda_id = memoranda_id
-        self.details = details
-
-    def __repr__(self):
-        return '<id %r> <details %r>' % (self.id, self.details)
 
 # There is a one to many relationship between Journal entries and Ledger entries. Every journal entry is composed of at least one debit and at least one credit. Total credits and total debits must always be equal.
 
@@ -57,9 +39,6 @@ class AccountTypes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     
-    def __repr__(self):
-        return self.name
-
 class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
@@ -68,14 +47,6 @@ class Accounts(db.Model):
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
-
-    def __init__(self, id, memoranda_transactions_id):
-        self.id = id
-        self.memoranda_transactions_id = memoranda_transactions_id
-
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)
 
 class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -87,20 +58,6 @@ class LedgerEntries(db.Model):
     rate = db.Column(db.Float)
     fiat = db.Column(db.Float)
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
-    
-    def __init__(self, id, date, entryType, account, amount, unit, rate, fiat, journal_entry_id):
-        self.id = id
-        self.date = date
-        self.entryType = entryType
-        self.account = account
-        self.amount = amount
-        self.unit = unit
-        self.rate = rate
-        self.fiat = fiat
-        self.journal_entry_id = journal_entry_id
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)
 
 class PriceFeeds(db.Model):
     price_id = db.Column(db.Integer, primary_key=True)

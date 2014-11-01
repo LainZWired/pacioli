@@ -20,6 +20,7 @@
           Details
         </th>
         <th>
+         Bitcoin Transaction ID
         </th>
       </tr>
       {% for transaction in transactions %}
@@ -32,6 +33,9 @@
             {{ key }} : {{ value }}
             <br>
           {% endfor %}
+        </td>
+        <td>
+         {{transaction.txid}}
         </td>
         <td>
           <a href="{{ url_for('journal_entry', id = transaction.journal_entry_id)}}">

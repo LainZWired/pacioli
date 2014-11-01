@@ -1,15 +1,18 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-
-  <h1>
-    General Journal
-  </h1>
-  {% if entries %}
+<a href="{{ url_for('trial_balance')}}">Current</a>
+{% for period in periods %}
+<a href="{{ url_for('trial_balance_historical', groupby='Monthly', period=period[0])}}">{{period[0]}}</a>
+{% endfor %}
+<hr>
+  <h2>
+   Unadjusted Trial Balance 
+  </h2>
+  <h3>
+   As of {{period.strftime("%B %d, %Y")}}
+  </h3>
     <table border="1">
       <tr>
-        <th>
-          Date
-        </th>
         <th>
           Account
         </th>
@@ -20,35 +23,34 @@
           Credit
         </th>
       </tr>
-      {% for entry in entries %}
+      {% for account in accounts %}
         <tr>
-          <td>
-            {% if entry.entryType == 'debit' %}
-              {{entry.date.strftime("%m-%d-%Y %H:%M")}}
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
-            {{entry.account}}
-          </td>
+         <td>
+          {{account.accountName}}
+         </td>
           <td align="right">
-            {% if entry.entryType == 'debit' %}
-              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-                {{format_satoshis(entry.amount)}}
-              </a>
+           {% if account.debitBalance > 0 %}
+            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All')}}">
+            {{account.debitBalance}}</a>
             {% endif %}
           </td>
           <td align="right">
-            {% if entry.entryType == 'credit' %}
-              <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-                {{format_satoshis(entry.amount)}} 
-              </a>
-            {% endif %}
+           {% if account.creditBalance > 0 %}
+            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All')}}">
+            {{account.creditBalance}}</a>
+           {% endif %}
           </td>
         </tr>
       {% endfor %}
+      <tr>
+       <td>
+       </td>
+       <td>
+        {{totalDebits}}
+       </td>
+       <td>
+        {{totalCredits}}
+       </td>
+      </tr>
     </table>
-  {% else %}
-  No journal entries have been recorded.
-  {% endif %}
 {% endblock %}

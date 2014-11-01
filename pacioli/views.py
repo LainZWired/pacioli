@@ -244,7 +244,57 @@ def ledger_page(accountName, groupby, interval):
 
 @app.route('/Bookkeeping/TrialBalance')
 def trial_balance():
-    return render_template('bookkeeping/trial_balance.html')
+    period = datetime.now()
+    accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+    periods = db.session.query(\
+        func.date_part('year', models.LedgerEntries.date) + '-'+
+        func.date_part('month', models.LedgerEntries.date)).\
+      group_by(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)).all()
+    interval = datetime.strftime(period, "%m-%Y")
+    year = period.year
+    month = period.month
+    accounts = []
+    for accountResult in accountsQuery:
+        accountName = accountResult[0]
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.desc()).all()
+        query = ledgers.foot_account(accountName, ledger_entries, 'All')
+        accounts.append(query)
+    return render_template('bookkeeping/trial_balance.html', periods=periods, period=period, accounts=accounts)
+
+@app.route('/Bookkeeping/TrialBalance/<groupby>/<period>')
+def trial_balance_historical(groupby, period):
+    accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
+    periods = db.session.query(\
+        func.date_part('year', models.LedgerEntries.date) + '-'+
+        func.date_part('month', models.LedgerEntries.date)).\
+      group_by(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)).all()
+    period = datetime.strptime(period, "%Y-%m")
+    year = period.year
+    month = period.month
+    accounts = []
+    totalDebits = 0
+    totalCredits = 0
+    for accountResult in accountsQuery:
+        accountName = accountResult[0]
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.desc()).all()
+        query = ledgers.foot_account(accountName, ledger_entries, 'All')
+        totalDebits += query['debitBalance']
+        totalCredits += query['creditBalance']
+        accounts.append(query)
+    return render_template('bookkeeping/trial_balance.html', periods=periods, period=period, accounts=accounts, totalDebits=totalDebits, totalCredits=totalCredits)
+
 
 @app.route('/FinancialStatements')
 def financial_statements():
@@ -290,7 +340,7 @@ def income_statement():
     
 @app.route('/FinancialStatements/BalanceSheet')
 def balance_sheet():
-    return render_template('financial_statements/balanceSheet.html')
+    return render_template('financial_statements/balance_sheet.html')
     
 @app.route('/FinancialStatements/StatementOfCashFlows')
 def statement_of_cash_flows():

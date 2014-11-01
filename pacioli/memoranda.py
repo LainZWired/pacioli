@@ -59,21 +59,10 @@ def process_csv(document, memoranda_id):
       if row[0] > header[0] and len(row[1]) == len(header[1]):
         memoranda = zip(header[1], row[1])
         memoranda = dict(memoranda)
-        memoranda_transactions_id = str(uuid.uuid4())
-        tx_details = str(memoranda)
-        memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, details=tx_details)
-        db.session.add(memoranda_transaction)
-        db.session.commit()
 
-        journal_entry_id = str(uuid.uuid4())
-        journal_entry = models.JournalEntries(id=journal_entry_id, memoranda_transactions_id=memoranda_transactions_id)
-        db.session.add(journal_entry)
-        db.session.commit()
-        
-        debit_ledger_entry_id = str(uuid.uuid4())
-        credit_ledger_entry_id = str(uuid.uuid4())
         # Bitcoin Core
         if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+            txid = memoranda['ID'][:64]
             date = parser.parse(memoranda['Date'])
             amount = int(float(memoranda['Amount'])*100000000)
             debit_ledger_amount = abs(amount)
@@ -87,6 +76,7 @@ def process_csv(document, memoranda_id):
               
         # MultiBit
         elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+            txid = memoranda['Transaction Id']
             date = parser.parse(memoranda['Date'])
             amount = int(float(memoranda['Amount (BTC)'])*100000000)
             debit_ledger_amount = abs(amount)
@@ -100,6 +90,7 @@ def process_csv(document, memoranda_id):
         
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
+            txid = memoranda['Transaction ID']
             date = parser.parse(memoranda['Date'])
             fee = memoranda['Fee (paid by this wallet)']
             if fee == '':
@@ -125,6 +116,7 @@ def process_csv(document, memoranda_id):
 
         # Electrum
         elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
+            txid = memoranda['transaction_hash']
             date = parser.parse(memoranda['timestamp'])
             value = int(float(memoranda['value'])*100000000)
             fee = int(float(memoranda['fee'])*100000000)
@@ -141,6 +133,7 @@ def process_csv(document, memoranda_id):
 
         #Coinbase
         elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
+            txid = memoranda['Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)'][:64]
             date = parser.parse(memoranda['Timestamp'])
             amount = int(float(memoranda['BTC Amount'])*100000000)
             debit_ledger_amount = abs(amount)
@@ -154,6 +147,20 @@ def process_csv(document, memoranda_id):
         else:
             return False
             
+        
+        memoranda_transactions_id = str(uuid.uuid4())
+        journal_entry_id = str(uuid.uuid4())
+        debit_ledger_entry_id = str(uuid.uuid4())
+        credit_ledger_entry_id = str(uuid.uuid4())
+        
+        tx_details = str(memoranda)
+        memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, txid=txid, details=tx_details)
+        db.session.add(memoranda_transaction)
+        db.session.commit()
+        journal_entry = models.JournalEntries(id=journal_entry_id, memoranda_transactions_id=memoranda_transactions_id)
+        db.session.add(journal_entry)
+        db.session.commit()
+        
         rate = prices.getRate(date)
         fiat = debit_ledger_amount/100000000*rate
         debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
