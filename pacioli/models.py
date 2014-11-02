@@ -35,14 +35,21 @@ class MemorandaTransactions(db.Model):
 
 # There is a one to many relationship between Journal entries and Ledger entries. Every journal entry is composed of at least one debit and at least one credit. Total credits and total debits must always be equal.
 
-class AccountTypes(db.Model):
+class Elements(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     
+class Classifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    parent = db.Column(db.Text, db.ForeignKey('elements.name'))
+    def __repr__(self):
+        return self.name
+        
 class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
-    parent = db.Column(db.Text, db.ForeignKey('account_types.name'))
+    parent = db.Column(db.Text, db.ForeignKey('classifications.name'))
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -53,6 +60,7 @@ class LedgerEntries(db.Model):
     date = db.Column(db.DateTime)
     entryType = db.Column(db.Text)
     account = db.Column(db.Text, db.ForeignKey('accounts.name'))
+    subaccount = db.Column(db.Text)
     amount = db.Column(BigInteger)
     unit = db.Column(db.Text)
     rate = db.Column(db.Float)

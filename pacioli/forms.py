@@ -19,10 +19,10 @@ from wtforms.validators import Required, Length
 from wtforms.ext.sqlalchemy.orm import model_form
 from sqlalchemy.sql import func 
 from pacioli import models, db
-from pacioli.models import AccountTypes, Accounts, LedgerEntries
+from pacioli.models import Classifications, Accounts, LedgerEntries
 
 def available_parents():
-    return AccountTypes.query
+    return Classifications.query
 
 class NewAccount(Form):
     account = TextField("Account Name")

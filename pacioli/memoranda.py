@@ -69,9 +69,9 @@ def process_csv(document, memoranda_id):
             credit_ledger_amount = abs(amount)
             if amount > 0:
                 debit_ledger_account = "Bitcoins"
-                credit_ledger_account = "Revenue"
+                credit_ledger_account = "Revenues"
             elif amount < 0:
-                debit_ledger_account = "Expense"
+                debit_ledger_account = "Expenses"
                 credit_ledger_account = "Bitcoins"
               
         # MultiBit
@@ -83,9 +83,9 @@ def process_csv(document, memoranda_id):
             credit_ledger_amount = abs(amount)
             if amount > 0:
                 debit_ledger_account = "Bitcoins"
-                credit_ledger_account = "Revenue"
+                credit_ledger_account = "Revenues"
             elif amount < 0:
-                debit_ledger_account = "Expense"
+                debit_ledger_account = "Expenses"
                 credit_ledger_account = "Bitcoins"
         
         # Armory
@@ -107,10 +107,10 @@ def process_csv(document, memoranda_id):
                 debit_ledger_amount = abs(credit)
                 debit_ledger_account = "Bitcoins"
                 credit_ledger_amount = abs(credit)
-                credit_ledger_account = "Revenue"
+                credit_ledger_account = "Revenues"
             elif debit > 0:
                 debit_ledger_amount = abs(debit) - abs(fee)
-                debit_ledger_account = "Expense"
+                debit_ledger_account = "Expenses"
                 credit_ledger_amount = abs(debit) - abs(fee)
                 credit_ledger_account = "Bitcoins"
 
@@ -124,10 +124,10 @@ def process_csv(document, memoranda_id):
                 debit_ledger_amount = abs(value)
                 debit_ledger_account = "Bitcoins"
                 credit_ledger_amount = abs(value)
-                credit_ledger_account = "Revenue"
+                credit_ledger_account = "Revenues"
             elif value < 0:
                 debit_ledger_amount = abs(value) - abs(fee)
-                debit_ledger_account = "Expense"
+                debit_ledger_account = "Expenses"
                 debit_ledger_amount = abs(value) - abs(fee)
                 credit_ledger_account = "Bitcoins"
 
@@ -140,9 +140,9 @@ def process_csv(document, memoranda_id):
             credit_ledger_amount = abs(amount)
             if amount > 0:
                 debit_ledger_account = "Bitcoins"
-                credit_ledger_account = "Revenue"
+                credit_ledger_account = "Revenues"
             elif amount < 0:
-                debit_ledger_account = "Expense"
+                debit_ledger_account = "Expenses"
                 credit_ledger_account = "Bitcoins"
         else:
             return False
