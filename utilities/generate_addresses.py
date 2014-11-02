@@ -3,7 +3,7 @@ import csv
 
 access = AuthServiceProxy("http://rpcusername:rpcpassword@127.0.0.1:8332")
 
-number = 50git
+number = 50
 csvfile = open('addresses.csv','a')
 writer = csv.writer(csvfile)
 
