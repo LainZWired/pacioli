@@ -70,7 +70,7 @@ def delete_account(account):
 
 @app.route('/Bookkeeping')
 def bookkeeping():
-    return render_template("bookkeeping/bookkeeping.html")
+    return redirect(url_for('upload_csv'))
 
 @app.route('/Bookkeeping/Upload', methods=['POST','GET'])
 def upload_csv():
@@ -265,6 +265,9 @@ def trial_balance():
           order_by(models.LedgerEntries.entryType.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         accounts.append(query)
+    print(periods)
+    print(period)
+    print(accounts)
     return render_template('bookkeeping/trial_balance.html', periods=periods, period=period, accounts=accounts)
 
 @app.route('/Bookkeeping/TrialBalance/<groupby>/<period>')
@@ -279,6 +282,8 @@ def trial_balance_historical(groupby, period):
     period = datetime.strptime(period, "%Y-%m")
     year = period.year
     month = period.month
+    day = calendar.monthrange(year, month)[1]
+    period = datetime(year, month, day, 23, 59, 59)
     accounts = []
     totalDebits = 0
     totalCredits = 0
@@ -298,7 +303,7 @@ def trial_balance_historical(groupby, period):
 
 @app.route('/FinancialStatements')
 def financial_statements():
-    return render_template("financial_statements/financial_statements.html")
+    return redirect(url_for('income_statement'))
 
     
 @app.route('/FinancialStatements/IncomeStatement')

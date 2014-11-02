@@ -26,18 +26,18 @@
       {% for account in accounts %}
         <tr>
          <td>
-          {{account.name}}
+          {{account['accountName']}}
          </td>
           <td align="right">
-           {% if account.debitBalance > 0 %}
+           {% if account['debitBalance'] > 0 %}
             <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All')}}">
-            {{account.debitBalance}}</a>
+            {{account['debitBalance']}}</a>
             {% endif %}
           </td>
           <td align="right">
-           {% if account.creditBalance > 0 %}
+           {% if account['creditBalance'] > 0 %}
             <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All')}}">
-            {{account.creditBalance}}</a>
+            {{account['creditBalance']}}</a>
            {% endif %}
           </td>
         </tr>
