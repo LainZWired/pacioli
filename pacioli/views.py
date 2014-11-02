@@ -24,6 +24,7 @@ import csv
 import sqlalchemy
 from sqlalchemy.sql import func
 from datetime import datetime,date
+import calendar
 from collections import OrderedDict
 
 @app.route('/')
@@ -361,12 +362,36 @@ def balance_sheet():
           order_by(models.LedgerEntries.entryType.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         balances.append(query)
-
-    return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts)
+    print(balances)
+    return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts, balances=balances)
     
 @app.route('/FinancialStatements/BalanceSheet/<period>')
 def balance_sheet_historical(period):
-    return render_template('financial_statements/balance_sheet.html')
+    periods = db.session.query(\
+        func.date_part('year', models.LedgerEntries.date) + '-'+
+        func.date_part('month', models.LedgerEntries.date)).\
+      group_by(\
+        func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)).all()
+    elements = db.session.query(models.Elements).all()
+    classifications = db.session.query(models.Classifications).all()
+    accounts = db.session.query(models.Accounts).all()
+    period = datetime.strptime(period, "%Y-%m")
+    year = period.year
+    month = period.month
+    day = calendar.monthrange(year, month)[1]
+    period = datetime(year, month, day, 23, 59, 59)
+    balances = []
+    for account in accounts:
+        accountName = account.name
+        ledger_entries = models.LedgerEntries.query.\
+          filter_by(account=accountName).\
+          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
+          order_by(models.LedgerEntries.date).\
+          order_by(models.LedgerEntries.entryType.desc()).all()
+        balance = ledgers.get_balance(accountName, period)
+        balances.append(balance)
+    return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts, balances=balances)
     
 @app.route('/FinancialStatements/StatementOfCashFlows')
 def statement_of_cash_flows():

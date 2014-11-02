@@ -106,7 +106,8 @@ def foot_account(accountName, entries, interval):
     return account
     
 def get_balance(accountName, querydate):
-    querydate = parser.parse(querydate)
+    if type(querydate) is not datetime.datetime:
+        querydate = parser.parse(querydate)
     transactions = query = db.session.query(\
       models.LedgerEntries.amount,\
       models.LedgerEntries.date,\
@@ -119,10 +120,23 @@ def get_balance(accountName, querydate):
             balance += transaction[0]
         elif transaction[2] == 'credit':
             balance -= transaction[0]
+    if balance > 0:
+        debitBalance = balance
+        creditBalance = 0
+    elif balance < 0:
+        debitBalance = 0
+        creditBalance = balance
+    else:
+        debitBalance = 0
+        creditBalance = 0
+    balance = {'accountName': accountName,\
+     'debitBalance' : debitBalance,\
+     'creditBalance' : creditBalance}
     return balance
 
 def get_fifo_costbasis(accountName, querydate):
-    querydate = parser.parse(querydate)
+    if type(querydate) is not datetime.datetime:
+        querydate = parser.parse(querydate)
     transactions = query = db.session.query(\
       models.LedgerEntries.amount,\
       models.LedgerEntries.rate,\

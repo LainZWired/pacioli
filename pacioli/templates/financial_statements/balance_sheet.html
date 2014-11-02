@@ -2,7 +2,7 @@
 {% block financial_statements %}
 <a href="{{ url_for('balance_sheet')}}">Current</a>
 {% for period in periods %}
-<a href="{{ url_for('balance_sheet_historical', groupby='Monthly', period=period[0])}}">{{period[0]}}</a>
+<a href="{{ url_for('balance_sheet_historical', period=period[0])}}">{{period[0]}}</a>
 {% endfor %}
 
  <h2>
@@ -37,6 +37,19 @@
         <td>
           {{account.name}}
         </td>
+        <td>
+          {% for balance in balances %}
+           {% if balance['accountName'] == account.name %}
+            {% if balance['debitBalance'] > 0 %}
+             {{balance['debitBalance']}}
+            {% elif balance['creditBalance'] > 0 %}
+             {{balance['creditBalance']}}
+            {% else %}
+            0
+            {% endif %}
+           {% endif %}
+          {% endfor %}
+         </td>
        </tr>
         {% endif %}
         {% endfor %}
