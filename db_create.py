@@ -48,7 +48,7 @@ liabilities_entry =  models.Accounts(name = 'Accounts Payable', parent = 'Curren
 db.session.add(liabilities_entry)
 equity_entry =  models.Accounts(name = 'Common Stock', parent = "Stockholders' Equity")
 db.session.add(equity_entry)
-revenues_entry =  models.Accounts(name = 'Revenues', parent = 'Revenue')
+revenues_entry =  models.Accounts(name = 'Revenues', parent = 'Revenues')
 db.session.add(revenues_entry)
 expenses_entry =  models.Accounts(name = 'Expenses', parent = 'Expenses')
 db.session.add(expenses_entry)

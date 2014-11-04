@@ -265,9 +265,6 @@ def trial_balance():
           order_by(models.LedgerEntries.entryType.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         accounts.append(query)
-    print(periods)
-    print(period)
-    print(accounts)
     return render_template('bookkeeping/trial_balance.html', periods=periods, period=period, accounts=accounts)
 
 @app.route('/Bookkeeping/TrialBalance/<groupby>/<period>')
@@ -303,11 +300,11 @@ def trial_balance_historical(groupby, period):
 
 @app.route('/FinancialStatements')
 def financial_statements():
-    return redirect(url_for('income_statement'))
+    return redirect(url_for('income_statement', currency='Dollars'))
 
-    
-@app.route('/FinancialStatements/IncomeStatement')
-def income_statement():
+
+@app.route('/FinancialStatements/IncomeStatement/<currency>')
+def income_statement(currency):
     periods = db.session.query(\
       func.date_part('year', models.LedgerEntries.date),\
       func.date_part('month', models.LedgerEntries.date)).\
@@ -315,15 +312,69 @@ def income_statement():
         func.date_part('month', models.LedgerEntries.date)\
       ).all()
     periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    account_names = ['Revenues', 'Expenses']
-    accounts = (('Revenues', {}), ('Expenses',{}),( 'Net Income', {}))
-    accounts = OrderedDict(accounts)
-    for account_name in account_names:
+    period = datetime.now()
+    period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
+    period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
+
+    entries = db.session\
+        .query(models.LedgerEntries)\
+        .join(models.Accounts)\
+        .join(models.Classifications)\
+        .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
+        .filter(models.LedgerEntries.date.between(period_beg, period_end))\
+        .all()
+    response = {}
+    response['Net Income'] = 0
+    classifications = models.Classifications.query.filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses'])).all()
+    accounts = models.Accounts.query.filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses'])).all()
+    for classification in classifications:
+        print(classification.name)
+        response[classification.name] = {}
+    for account in accounts:
+        classification = account.classification.name
+        response[classification][account.name] = 0
+    for entry in entries:
+        account = entry.account.name
+        classification = entry.account.classification.name
+        if entry.tside == 'debit':
+            response[classification][account] += entry.amount
+        elif entry.tside == 'credit':
+            response[classification][account] -= entry.amount
+        if entry.account.classification.element.name is 'Revenues' or 'Gains':
+            response['Net Income'] += entry.amount
+        elif entry.account.classification.element.name is 'Expenses' or 'Losses':
+            response['Net Income'] -= entry.amount
+    gain = ledger.get_fifo_realized_gain(Bitcoins, period_beg, period_end)
+    ungain = ledger.get_fifo_unrealized_gain(Bitcoins, period_end)
+    response['Gains'] = gain
+    response['Net Income'] += gain
+    response['Unrealized Gain'] += ungain
+    print(response)
+    return render_template('financial_statements/income_statement.html',
+            title = 'Income Statement',
+            periods = periods,
+            response = response)
+    
+@app.route('/FinancialStatements/IncomeStatement/<period>')
+def income_statement_historical(period):
+    lastday = calendar.monthrange(period.year, period.month)[1]
+
+    periods = db.session.query(\
+      func.date_part('year', models.LedgerEntries.date),\
+      func.date_part('month', models.LedgerEntries.date)).\
+      group_by(func.date_part('year', models.LedgerEntries.date),\
+        func.date_part('month', models.LedgerEntries.date)\
+      ).all()
+    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+    accounts = db.session.query(models.Accounts).filter(models.Accounts.parent.in_(['Revenues', 'Expenses'])).all()
+    elements = (('Revenues', {}), ('Expenses',{}),( 'Net Income', {}))
+    elements = OrderedDict(elements)
+    for account in accounts:
         for period in periods:
             query = db.session.query(\
               func.sum(models.LedgerEntries.amount)).\
               filter_by(
-                account=account_name).\
+                account=account).\
               group_by(\
                 func.date_part('year', models.LedgerEntries.date),
                 func.date_part('month', models.LedgerEntries.date)).\
@@ -367,7 +418,6 @@ def balance_sheet():
           order_by(models.LedgerEntries.entryType.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         balances.append(query)
-    print(balances)
     return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts, balances=balances)
     
 @app.route('/FinancialStatements/BalanceSheet/<period>')

@@ -29,20 +29,34 @@ class Memoranda(db.Model):
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    details = db.Column(JSON)
     txid = db.Column(db.Text)
+    details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
+
+class BitcoinTransactions(db.Model):
+    # txid of the bitcoins received
+    txid = db.Column(db.Text, primary_key=True)
+    # output index of the bitcoins received
+    output_index = db.Column(db.Integer, primary_key=True)
+    # address the bitcoins were received with
+    output_address = db.Column(db.Text)
+    amount = db.Column(BigInteger)
+    unspent = db.Column(db.Boolean)
+    last_updated = db.Column(db.DateTime)
+    memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
 # There is a one to many relationship between Journal entries and Ledger entries. Every journal entry is composed of at least one debit and at least one credit. Total credits and total debits must always be equal.
 
 class Elements(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
+    classifications = db.relationship('Classifications', backref='element', lazy='select')
     
 class Classifications(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('elements.name'))
+    accounts = db.relationship('Accounts', backref='classification', lazy='select')
     def __repr__(self):
         return self.name
         
@@ -50,6 +64,7 @@ class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('classifications.name'))
+    ledgerentries = db.relationship('LedgerEntries', backref='account', lazy='select')
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -58,8 +73,8 @@ class JournalEntries(db.Model):
 class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
-    entryType = db.Column(db.Text)
-    account = db.Column(db.Text, db.ForeignKey('accounts.name'))
+    tside = db.Column(db.Text)
+    account_name = db.Column(db.Text, db.ForeignKey('accounts.name'))
     subaccount = db.Column(db.Text)
     amount = db.Column(BigInteger)
     unit = db.Column(db.Text)

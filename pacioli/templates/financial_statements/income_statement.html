@@ -1,5 +1,10 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
+<a href="{{ url_for('income_statement')}}">Current</a>
+{% for period in periods %}
+<a href="{{ url_for('balance_sheet_historical', period=period[0])}}">{{period[0]}}</a>
+{% endfor %}
+<hr>
   <h1>
     Income Statement
   </h1>

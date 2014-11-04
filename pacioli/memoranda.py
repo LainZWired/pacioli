@@ -20,7 +20,7 @@ import sys
 import csv
 import json
 import uuid
-from pacioli import app, db, models
+from pacioli import app, db, models, blockchain
 import pacioli.prices as prices
 from werkzeug import secure_filename
 from dateutil import parser
@@ -62,6 +62,7 @@ def process_csv(document, memoranda_id):
 
         # Bitcoin Core
         if header[1] == ['Confirmed', 'Date', 'Type', 'Label', 'Address', 'Amount', 'ID']:
+            address = memoranda['Address']
             txid = memoranda['ID'][:64]
             date = parser.parse(memoranda['Date'])
             amount = int(float(memoranda['Amount'])*100000000)
@@ -76,6 +77,9 @@ def process_csv(document, memoranda_id):
               
         # MultiBit
         elif header[1] == ['Date', 'Description', 'Amount (BTC)', 'Amount ($)', 'Transaction Id']:
+            address = memoranda['Description']
+            address = address.split('(')[-1]
+            address = address.replace(r"\(.*\)","")
             txid = memoranda['Transaction Id']
             date = parser.parse(memoranda['Date'])
             amount = int(float(memoranda['Amount (BTC)'])*100000000)
@@ -90,6 +94,8 @@ def process_csv(document, memoranda_id):
         
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
+            # Armory does not export the address you're receiving with  / sending to .... complain here: https://github.com/etotheipi/BitcoinArmory/issues/247
+            address = ''
             txid = memoranda['Transaction ID']
             date = parser.parse(memoranda['Date'])
             fee = memoranda['Fee (paid by this wallet)']
@@ -116,6 +122,9 @@ def process_csv(document, memoranda_id):
 
         # Electrum
         elif header[1] == ["transaction_hash","label", "confirmations", "value", "fee", "balance", "timestamp"]:
+            address = ''
+            # Electrum does not export the address you're receiving with  / sending to .... complain here: https://github.com/spesmilo/electrum/issues/911
+
             txid = memoranda['transaction_hash']
             date = parser.parse(memoranda['timestamp'])
             value = int(float(memoranda['value'])*100000000)
@@ -133,6 +142,7 @@ def process_csv(document, memoranda_id):
 
         #Coinbase
         elif header[1] == ["Timestamp","Balance","BTC Amount","To","Notes","Instantly Exchanged","Transfer Total","Transfer Total Currency","Transfer Fee","Transfer Fee Currency","Transfer Payment Method","Transfer ID","Order Price","Order Currency","Order BTC","Order Tracking Code","Order Custom Parameter","Order Paid Out","Recurring Payment ID","Coinbase ID (visit https://www.coinbase.com/transactions/[ID] in your browser)","Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)"]:
+            address = memoranda['To']
             txid = memoranda['Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)'][:64]
             date = parser.parse(memoranda['Timestamp'])
             amount = int(float(memoranda['BTC Amount'])*100000000)
@@ -153,6 +163,7 @@ def process_csv(document, memoranda_id):
         debit_ledger_entry_id = str(uuid.uuid4())
         credit_ledger_entry_id = str(uuid.uuid4())
         
+        # blockchain.get_transaction(txid)
         tx_details = str(memoranda)
         memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, txid=txid, details=tx_details)
         db.session.add(memoranda_transaction)
@@ -163,8 +174,8 @@ def process_csv(document, memoranda_id):
         
         rate = prices.getRate(date)
         fiat = debit_ledger_amount/100000000*rate
-        debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, entryType="debit", account=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
+        debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, tside="debit", account_name=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
         db.session.add(debit_ledger_entry)
-        credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, entryType="credit", account=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
+        credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, tside="credit", account_name=credit_ledger_account, amount=credit_ledger_amount, unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
         db.session.add(credit_ledger_entry)
         db.session.commit()
