@@ -23,23 +23,23 @@
       {% for entry in entries %}
         <tr>
           <td>
-            {% if entry.entryType == 'debit' %}
+            {% if entry.tside == 'debit' %}
               {{entry.date.strftime("%m-%d-%Y %H:%M")}}
             {% endif %}
           </td>
           <td>
             <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
-            {{entry.account}}
+            {{entry.account_name}}
           </td>
           <td align="right">
-            {% if entry.entryType == 'debit' %}
+            {% if entry.tside == 'debit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
                 {{format_satoshis(entry.amount)}}
               </a>
             {% endif %}
           </td>
           <td align="right">
-            {% if entry.entryType == 'credit' %}
+            {% if entry.tside == 'credit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
                 {{format_satoshis(entry.amount)}} 
               </a>

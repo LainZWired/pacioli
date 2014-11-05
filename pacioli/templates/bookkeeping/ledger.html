@@ -38,14 +38,14 @@
             {{entry.date.strftime("%m-%d-%Y %H:%M")}}
           </td>
           <td align="right">
-            {% if entry.entryType == 'debit' %}
+            {% if entry.tside == 'debit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
                 {{format_satoshis(entry.amount)}}
               </a>
             {% endif %}
           </td>
           <td align="right">
-            {% if entry.entryType == 'credit' %}
+            {% if entry.tside == 'credit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
                 {{format_satoshis(entry.amount)}}
               </a>

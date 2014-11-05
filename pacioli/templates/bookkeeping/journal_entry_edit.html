@@ -36,12 +36,12 @@
             </a>
           </td>
           <td>
-            {% if entry.entryType == 'debit' %}
+            {% if entry.tside == 'debit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
           </td>
           <td>
-            {% if entry.entryType == 'credit' %}
+            {% if entry.tside == 'credit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
           </td>

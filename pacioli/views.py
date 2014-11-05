@@ -156,7 +156,7 @@ def general_journal():
     entries = models.LedgerEntries.query.\
     order_by(models.LedgerEntries.date.desc()).\
     order_by(models.LedgerEntries.journal_entry_id.desc()).\
-    order_by(models.LedgerEntries.entryType.desc()).all()
+    order_by(models.LedgerEntries.tside.desc()).all()
     return render_template('bookkeeping/general_journal.html',
         title = 'General Journal',
         entries=entries)
@@ -164,7 +164,7 @@ def general_journal():
 @app.route('/Bookkeeping/GeneralJournal/<id>')
 def journal_entry(id):
     journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
     transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
     memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
     transaction.details = ast.literal_eval(transaction.details)
@@ -178,7 +178,7 @@ def journal_entry(id):
 @app.route('/Bookkeeping/GeneralJournal/<id>/Edit', methods=['POST','GET'])
 def edit_journal_entry(id):
     journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.entryType.desc()).all()
+    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
     transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
     memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
     transaction.details = ast.literal_eval(transaction.details)
@@ -222,7 +222,7 @@ def ledger_page(accountName, groupby, interval):
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month, func.date_part('day', models.LedgerEntries.date)==day).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.asc()).all()
+          order_by(models.LedgerEntries.tside.asc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
     if groupby == "Monthly":
         interval = datetime.strptime(interval, "%m-%Y")
@@ -232,7 +232,7 @@ def ledger_page(accountName, groupby, interval):
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.desc()).all()
+          order_by(models.LedgerEntries.tside.desc()).all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
     return render_template('bookkeeping/ledger.html',
         title = 'Ledger',
@@ -262,7 +262,7 @@ def trial_balance():
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.desc()).all()
+          order_by(models.LedgerEntries.tside.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         accounts.append(query)
     return render_template('bookkeeping/trial_balance.html', periods=periods, period=period, accounts=accounts)
@@ -290,7 +290,7 @@ def trial_balance_historical(groupby, period):
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.desc()).all()
+          order_by(models.LedgerEntries.tside.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         totalDebits += query['debitBalance']
         totalCredits += query['creditBalance']
@@ -325,8 +325,8 @@ def income_statement(currency):
         .all()
     response = {}
     response['Net Income'] = 0
-    classifications = models.Classifications.query.filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses'])).all()
-    accounts = models.Accounts.query.filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses'])).all()
+    classifications = models.Classifications.query.all()
+    accounts = models.Accounts.query.all()
     for classification in classifications:
         print(classification.name)
         response[classification.name] = {}
@@ -344,8 +344,8 @@ def income_statement(currency):
             response['Net Income'] += entry.amount
         elif entry.account.classification.element.name is 'Expenses' or 'Losses':
             response['Net Income'] -= entry.amount
-    gain = ledger.get_fifo_realized_gain(Bitcoins, period_beg, period_end)
-    ungain = ledger.get_fifo_unrealized_gain(Bitcoins, period_end)
+    gain = ledgers.get_fifo_realized_gain('Bitcoins', period_beg, period_end)
+    ungain = ledgers.get_fifo_unrealized_gain('Bitcoins', period_end)
     response['Gains'] = gain
     response['Net Income'] += gain
     response['Unrealized Gain'] += ungain
@@ -415,7 +415,7 @@ def balance_sheet():
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.desc()).all()
+          order_by(models.LedgerEntries.tside.desc()).all()
         query = ledgers.foot_account(accountName, ledger_entries, 'All')
         balances.append(query)
     return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts, balances=balances)
@@ -443,7 +443,7 @@ def balance_sheet_historical(period):
           filter_by(account=accountName).\
           filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
           order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.entryType.desc()).all()
+          order_by(models.LedgerEntries.tside.desc()).all()
         balance = ledgers.get_balance(accountName, period)
         balances.append(balance)
     return render_template('financial_statements/balance_sheet.html', period=period, periods=periods, elements=elements, classifications=classifications, accounts=accounts, balances=balances)
