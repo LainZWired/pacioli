@@ -21,7 +21,7 @@ import csv
 import json
 import uuid
 from pacioli import app, db, models, blockchain
-import pacioli.prices as prices
+import pacioli.rates as rates
 from werkzeug import secure_filename
 from dateutil import parser
 
@@ -172,7 +172,7 @@ def process_csv(document, memoranda_id):
         db.session.add(journal_entry)
         db.session.commit()
         
-        rate = prices.getRate(date)
+        rate = rates.getRate(date)
         fiat = debit_ledger_amount/100000000*rate
         debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, tside="debit", account_name=debit_ledger_account, amount=debit_ledger_amount,unit="satoshis", rate=rate, fiat=fiat, journal_entry_id=journal_entry_id)
         db.session.add(debit_ledger_entry)

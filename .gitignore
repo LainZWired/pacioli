@@ -58,9 +58,9 @@ docs/_build/
 
 CSV_Import_Module_Log.csv
 
-pacioli/data_prices/raw/*.csv
-pacioli/data_prices/*.csv
-pacioli/data_prices/summary/*.csv
+pacioli/data_rates/raw/*.csv
+pacioli/data_rates/*.csv
+pacioli/data_rates/summary/*.csv
 pacioli/data_wallets/private/
 
 migrations/*

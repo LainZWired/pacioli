@@ -14,7 +14,7 @@
 import datetime
 from collections import OrderedDict
 from sqlalchemy.sql import func
-from pacioli import db, models, prices
+from pacioli import db, models, rates
 from dateutil import parser
 
 def query_entries(accountName, groupby):
@@ -169,7 +169,7 @@ def get_fifo_costbasis(accountName, querydate):
                 inventory.insert(0, transaction)
             elif tx_type == 'credit':
                 if tx_satoshis > layer_satoshis:
-                    saleprice = prices.getRate(tx_date)
+                    saleprice = rates.getRate(tx_date)
                     satoshis_sold = layer_satoshis
                     salevalue = saleprice * satoshis_sold/100000000
                     costbasis = satoshis_sold * tx_historical_rate/100000000
@@ -178,7 +178,7 @@ def get_fifo_costbasis(accountName, querydate):
                     new_transaction = [residual_amount, tx_historical_rate, residual_fiat, 'credit', tx_date]
                     transactions.append(new_transaction)
                 elif tx_satoshis < layer_satoshis:
-                    saleprice = prices.getRate(tx_date)
+                    saleprice = rates.getRate(tx_date)
                     satoshis_sold = tx_satoshis
                     salevalue = saleprice * satoshis_sold/100000000
                     costbasis = satoshis_sold * layer_rate/100000000
@@ -187,7 +187,7 @@ def get_fifo_costbasis(accountName, querydate):
                     new_layer = [residual_amount, layer_rate, residual_fiat, 'debit']
                     inventory.append(new_layer)
                 elif tx_satoshis == layer_satoshis:
-                    saleprice = prices.getRate(tx_date)
+                    saleprice = rates.getRate(tx_date)
                     satoshis_sold = tx_satoshis
                     salevalue = saleprice * satoshis_sold/100000000
                     costbasis = tx_costbasis
@@ -207,7 +207,7 @@ def get_fifo_unrealized_gain(accountName, querydate):
     costbasis = get_fifo_costbasis(accountName, querydate)
     balance = get_balance(accountName, querydate)
     querydate = parser.parse(querydate)
-    valuation = prices.getRate(querydate)
+    valuation = rates.getRate(querydate)
     valuation = valuation * balance/100000000
     gain = valuation - costbasis[2]
     return gain
@@ -256,7 +256,7 @@ def get_fifo_realized_gain(accountName, startDate, endDate):
             inventory.insert(0, transaction)
         elif tx_type == 'credit':
             if tx_satoshis > layer_satoshis:
-                saleprice = prices.getRate(tx_date)
+                saleprice = rates.getRate(tx_date)
                 satoshis_sold = layer_satoshis
                 salevalue = saleprice * satoshis_sold/100000000
                 costbasis = satoshis_sold * tx_historical_rate/100000000
@@ -268,7 +268,7 @@ def get_fifo_realized_gain(accountName, startDate, endDate):
                 print(new_transaction)
                 transactions.append(new_transaction)
             elif tx_satoshis < layer_satoshis:
-                saleprice = prices.getRate(tx_date)
+                saleprice = rates.getRate(tx_date)
                 satoshis_sold = tx_satoshis
                 salevalue = saleprice * satoshis_sold/100000000
                 costbasis = satoshis_sold * layer_rate/100000000
@@ -280,7 +280,7 @@ def get_fifo_realized_gain(accountName, startDate, endDate):
                 print(new_layer)
                 inventory.append(new_layer)
             elif tx_satoshis == layer_satoshis:
-                saleprice = prices.getRate(tx_date)
+                saleprice = rates.getRate(tx_date)
                 satoshis_sold = tx_satoshis
                 salevalue = saleprice * satoshis_sold/100000000
                 costbasis = tx_costbasis

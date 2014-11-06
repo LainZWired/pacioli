@@ -45,18 +45,20 @@ class BitcoinTransactions(db.Model):
     last_updated = db.Column(db.DateTime)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
-# There is a one to many relationship between Journal entries and Ledger entries. Every journal entry is composed of at least one debit and at least one credit. Total credits and total debits must always be equal.
-
 class Elements(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
-    classifications = db.relationship('Classifications', backref='element', lazy='select')
+    classifications = db.relationship('Classifications', backref='element', lazy='select', cascade="save-update, merge, delete")
     
+    def __repr__(self):
+        return self.name
+
 class Classifications(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('elements.name'))
-    accounts = db.relationship('Accounts', backref='classification', lazy='select')
+    accounts = db.relationship('Accounts', backref='classification', lazy='select', cascade="save-update, merge, delete")
+    
     def __repr__(self):
         return self.name
         
@@ -64,7 +66,19 @@ class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('classifications.name'))
-    ledgerentries = db.relationship('LedgerEntries', backref='account', lazy='select')
+    subacounts = db.relationship('Subaccounts', backref='account', lazy='select', cascade="save-update, merge, delete")
+    
+    def __repr__(self):
+        return self.name
+
+class Subaccounts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    parent = db.Column(db.Text, db.ForeignKey('accounts.name'))
+    ledgerentries = db.relationship('LedgerEntries', backref='subaccount', lazy='select', cascade="save-update, merge, delete")
+    
+    def __repr__(self):
+        return self.name
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -74,12 +88,11 @@ class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
     tside = db.Column(db.Text)
-    account_name = db.Column(db.Text, db.ForeignKey('accounts.name'))
-    subaccount = db.Column(db.Text)
     amount = db.Column(BigInteger)
-    unit = db.Column(db.Text)
+    currency = db.Column(db.Text)
     rate = db.Column(db.Float)
     fiat = db.Column(db.Float)
+    ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
 class PriceFeeds(db.Model):
@@ -88,17 +101,8 @@ class PriceFeeds(db.Model):
     price = db.Column(db.Float)
     volume = db.Column(db.Float)
 
-class Prices(db.Model):
+class Rates(db.Model):
     date = db.Column(db.BigInteger, primary_key=True)
     source = db.Column(db.Text)
     currency = db.Column(db.Text)
     rate = db.Column(db.Integer)
-    
-    def __init__(self, date, source, currency, rate):
-        self.date = date
-        self.source = source
-        self.currency = currency
-        self.rate = rate
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)

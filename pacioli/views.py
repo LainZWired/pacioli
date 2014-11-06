@@ -19,7 +19,7 @@ import os
 import pacioli.memoranda
 import ast
 import pacioli.ledgers as ledgers
-import pacioli.prices as prices
+import pacioli.rates as rates
 import csv
 import sqlalchemy
 from sqlalchemy.sql import func
@@ -33,38 +33,96 @@ def index():
   
 @app.route('/Configure')
 def configure():
-    return render_template("configure/configure.html")
+    return redirect(url_for('configure_rates'))
   
-@app.route('/Configure/SummarizePrices')
-def summarize_prices():
-    prices.summarize_data("pacioli")
-    return redirect(url_for('configure'))
+@app.route('/Configure/ExchangeRates')
+def configure_rates():
+    return render_template("configure/exchange_rates.html")
+  
+@app.route('/Configure/DownloadRates')
+def download_rates():
+    rates.download_rates()
+    return redirect(url_for('configure_rates'))
     
-@app.route('/Configure/ImportPrices')
-def import_prices():
-    prices.import_summary("pacioli")
-    return redirect(url_for('configure'))
+@app.route('/Configure/SummarizeRates')
+def summarize_rates():
+    rates.summarize_rates("pacioli")
+    return redirect(url_for('configure_rates'))
+    
+@app.route('/Configure/ImportRates')
+def import_rates():
+    rates.import_rates("pacioli")
+    return redirect(url_for('configure_rates'))
   
-@app.route('/Configure/ChartOfAccounts', methods=['POST','GET'])
+@app.route('/Configure/ChartOfAccounts')
 def chart_of_accounts():
-    form = forms.NewAccount()
-    accounts = models.Accounts.query.order_by(models.Accounts.parent).all()
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("configure/chart_of_accounts.html",
+        subaccounts=subaccounts,
+        classificationform=classificationform,
+        accountform=accountform,
+        subaccountform=subaccountform)
+
+@app.route('/Configure/ChartOfAccounts/AddClassification', methods=['POST','GET'])
+def add_classification():
     if request.method == 'POST':
-        name = form.account.data
-        parent = form.accounttype.data
+        form = request.form.copy().to_dict()
+        name = form['classification']
+        parent = form['classificationparent']
+        parent = models.Elements.query.filter_by(id=parent).one()
+        parent = parent.name
+        classification = models.Classifications(name=name, parent=parent)
+        db.session.add(classification)
+        db.session.commit()
+    return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Configure/ChartOfAccounts/DeleteClassification/<classification>')
+def delete_classification(classification):
+    classification = models.Classifications.query.filter_by(name=classification).first()
+    db.session.delete(classification)
+    db.session.commit()
+    return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Configure/ChartOfAccounts/AddAccount', methods=['POST','GET'])
+def add_account():
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        name = form['account']
+        parent = form['accountparent']
+        parent = models.Classifications.query.filter_by(id=parent).one()
         parent = parent.name
         account = models.Accounts(name=name, parent=parent)
         db.session.add(account)
         db.session.commit()
-        return redirect(url_for('chart_of_accounts'))
-    return render_template("configure/chart_of_accounts.html",
-    accounts=accounts,
-    form=form)
+    return redirect(url_for('chart_of_accounts'))
 
-@app.route('/Configure/ChartOfAccounts/Delete/<account>')
+@app.route('/Configure/ChartOfAccounts/DeleteAccount/<account>')
 def delete_account(account):
-    findaccount = models.Accounts.query.filter_by(name=account).first()
-    db.session.delete(findaccount)
+    account = models.Accounts.query.filter_by(name=account).first()
+    db.session.delete(account)
+    db.session.commit()
+    return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Configure/ChartOfAccounts/AddSubAccount', methods=['POST','GET'])
+def add_subaccount():
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        name = form['subaccount']
+        parent = form['subaccountparent']
+        parent = models.Accounts.query.filter_by(id=parent).one()
+        parent = parent.name
+        subaccount = models.Subaccounts(name=name, parent=parent)
+        db.session.add(subaccount)
+        db.session.commit()
+    return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Configure/ChartOfAccounts/DeleteSubAccount/<subaccount>')
+def delete_subaccount(subaccount):
+    subaccount = models.Accounts.query.filter_by(name=subaccount).first()
+    db.session.delete(subaccount)
     db.session.commit()
     return redirect(url_for('chart_of_accounts'))
 
