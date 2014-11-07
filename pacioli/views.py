@@ -303,11 +303,16 @@ def ledger_page(accountName, currency, groupby, interval):
         interval = datetime.strptime(interval, "%m-%Y")
         year = interval.year
         month = interval.month
-        ledger_entries = models.LedgerEntries.query.\
-          filter_by(ledger=accountName).\
-          filter( func.date_part('year', models.LedgerEntries.date)==year, func.date_part('month', models.LedgerEntries.date)==month).\
-          order_by(models.LedgerEntries.date).\
-          order_by(models.LedgerEntries.tside.desc()).all()
+        ledger_entries = models.LedgerEntries\
+            .query\
+            .filter_by(ledger=accountName) \
+            .filter_by(currency=currency) \
+            .filter( \
+                func.date_part('year', models.LedgerEntries.date)==year, \
+                func.date_part('month', models.LedgerEntries.date)==month)\
+            .order_by(models.LedgerEntries.date) \
+            .order_by(models.LedgerEntries.tside.desc()) \
+            .all()
         account = ledgers.foot_account(accountName, ledger_entries, 'All')
     return render_template('bookkeeping/ledger.html',
         title = 'Ledger',
