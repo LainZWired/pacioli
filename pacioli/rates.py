@@ -108,5 +108,5 @@ def import_rates(database):
 
 def getRate(querydate):
     querydate = int(querydate.strftime('%s'))
-    closest_price = db.session.query(models.rates.rate).order_by(func.abs( querydate -  models.rates.date)).first()
+    closest_price = db.session.query(models.Rates.rate).order_by(func.abs( querydate -  models.Rates.date)).first()
     return int(closest_price[0]/100)

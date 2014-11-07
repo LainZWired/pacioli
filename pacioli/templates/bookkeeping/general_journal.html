@@ -1,5 +1,8 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
+<a href="{{ url_for('general_journal', currency='satoshis')}}">Bitcoins</a>
+<a href="{{ url_for('general_journal', currency='usd')}}">USD</a>
+<hr>
 
   <h1>
     General Journal
@@ -29,19 +32,27 @@
           </td>
           <td>
             <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
-            {{entry.account_name}}
+            {{entry.ledger}}
           </td>
           <td align="right">
             {% if entry.tside == 'debit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
+               {% if entry.currency == 'satoshis' %}
                 {{format_satoshis(entry.amount)}}
+               {% elif entry.currency == 'usd' %}
+                {{format_usd(entry.amount)}}
+               {% endif %}
               </a>
             {% endif %}
           </td>
           <td align="right">
             {% if entry.tside == 'credit' %}
               <a href="{{ url_for('journal_entry', id=entry.journal_entry_id)}}">
-                {{format_satoshis(entry.amount)}} 
+                {% if entry.currency == 'satoshis' %}
+                 {{format_satoshis(entry.amount)}}
+                {% elif entry.currency == 'usd' %}
+                 {{format_usd(entry.amount)}}
+                {% endif %} 
               </a>
             {% endif %}
           </td>

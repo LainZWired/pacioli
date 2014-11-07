@@ -90,8 +90,6 @@ class LedgerEntries(db.Model):
     tside = db.Column(db.Text)
     amount = db.Column(BigInteger)
     currency = db.Column(db.Text)
-    rate = db.Column(db.Float)
-    fiat = db.Column(db.Float)
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 

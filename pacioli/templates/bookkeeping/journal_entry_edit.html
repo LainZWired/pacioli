@@ -18,9 +18,6 @@
         <th>
           Credit
         </th>
-        <th>
-          USD
-        </th>
         <td>
           Edit
         </td>
@@ -44,9 +41,6 @@
             {% if entry.tside == 'credit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
-          </td>
-          <td>
-            {{format_usd(entry.fiat)}}
           </td>
         </tr>
       {% endfor %}

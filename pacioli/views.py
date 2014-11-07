@@ -30,30 +30,11 @@ from collections import OrderedDict
 @app.route('/')
 def index():
     return render_template("index.html")
-  
+
 @app.route('/Configure')
 def configure():
-    return redirect(url_for('configure_rates'))
-  
-@app.route('/Configure/ExchangeRates')
-def configure_rates():
-    return render_template("configure/exchange_rates.html")
-  
-@app.route('/Configure/DownloadRates')
-def download_rates():
-    rates.download_rates()
-    return redirect(url_for('configure_rates'))
-    
-@app.route('/Configure/SummarizeRates')
-def summarize_rates():
-    rates.summarize_rates("pacioli")
-    return redirect(url_for('configure_rates'))
-    
-@app.route('/Configure/ImportRates')
-def import_rates():
-    rates.import_rates("pacioli")
-    return redirect(url_for('configure_rates'))
-  
+    return redirect(url_for('chart_of_accounts'))
+
 @app.route('/Configure/ChartOfAccounts')
 def chart_of_accounts():
     classificationform = forms.NewClassification()
@@ -125,6 +106,25 @@ def delete_subaccount(subaccount):
     db.session.delete(subaccount)
     db.session.commit()
     return redirect(url_for('chart_of_accounts'))
+
+@app.route('/Configure/ExchangeRates')
+def configure_rates():
+  return render_template("configure/exchange_rates.html")
+
+@app.route('/Configure/DownloadRates')
+def download_rates():
+  rates.download_rates()
+  return redirect(url_for('configure_rates'))
+  
+@app.route('/Configure/SummarizeRates')
+def summarize_rates():
+  rates.summarize_rates("pacioli")
+  return redirect(url_for('configure_rates'))
+  
+@app.route('/Configure/ImportRates')
+def import_rates():
+  rates.import_rates("pacioli")
+  return redirect(url_for('configure_rates'))
 
 @app.route('/Bookkeeping')
 def bookkeeping():
@@ -209,9 +209,10 @@ def memo_transactions(fileName):
         transactions=transactions,
         fileName=fileName)
 
-@app.route('/Bookkeeping/GeneralJournal')
-def general_journal():
+@app.route('/Bookkeeping/GeneralJournal/<currency>')
+def general_journal(currency):
     entries = models.LedgerEntries.query.\
+    filter_by(currency=currency).\
     order_by(models.LedgerEntries.date.desc()).\
     order_by(models.LedgerEntries.journal_entry_id.desc()).\
     order_by(models.LedgerEntries.tside.desc()).all()
@@ -226,6 +227,7 @@ def journal_entry(id):
     transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
     memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
     transaction.details = ast.literal_eval(transaction.details)
+    print(ledger_entries)
     return render_template('bookkeeping/journal_entry.html',
         title = 'Journal Entry',
         journal_entry=journal_entry,
@@ -247,7 +249,7 @@ def edit_journal_entry(id):
         transaction=transaction,
         memo=memo)
 
-@app.route('/Bookkeeping/GeneralLedger')
+@app.route('/Bookkeeping/GeneralLedger/<currency>')
 def general_ledger():
     accountsQuery = db.session.query(models.LedgerEntries.account).group_by(models.LedgerEntries.account).all()
     accounts = []
