@@ -4,16 +4,16 @@
     {{accountName}} Ledger
   </h1>
   <p>
-    <a href="{{ url_for('ledger', accountName=accountName, groupby='All')}}">
+    <a href="{{ url_for('ledger', accountName=accountName, currency=currency, groupby='All')}}">
       All</a> - 
-    <a href="{{ url_for('ledger', accountName=accountName, groupby='Daily')}}">
+    <a href="{{ url_for('ledger', accountName=accountName, currency=currency, groupby='Daily')}}">
       Daily</a> - 
-    <a href="{{ url_for('ledger', accountName=accountName, groupby='Monthly')}}">
+    <a href="{{ url_for('ledger', accountName=accountName, currency=currency, groupby='Monthly')}}">
       Monthly</a>
     {% if groupby2 == 'Daily' and interval %}
     <br>
     <br>
-    <a href="{{ url_for('ledger_page', accountName=accountName, groupby='Monthly', interval=interval.strftime('%m-%Y'))}}">
+    <a href="{{ url_for('ledger_page', accountName=accountName, groupby='Monthly', interval=interval.strftime('%m-%Y'), currency=currency)}}">
       {{interval.strftime("%m-%Y")}} Ledger
     </a>
     {% endif %}
@@ -58,7 +58,7 @@
         {% for entry in ledger_entries %}
         <tr>
           <td>
-            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, interval=entry.strftime('%m-%d-%Y'))}}">
+            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, interval=entry.strftime('%m-%d-%Y'), currency=currency)}}">
               {{entry.strftime("%m-%d-%Y")}}
             </a>
           </td>
@@ -79,7 +79,7 @@
         {% for entry in ledger_entries %}
         <tr>
           <td>
-            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, interval=entry.strftime('%m-%Y'))}}">
+            <a href="{{ url_for('ledger_page', accountName=accountName, groupby=groupby, currency=currency, interval=entry.strftime('%m-%Y'))}}">
               {{entry.strftime("%m-%Y")}}
             </a>
           </td>

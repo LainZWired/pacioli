@@ -30,18 +30,26 @@
             {{entry.date}}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
-              {{entry.account}}
+            <a href="{{ url_for('ledger', accountName=entry.ledger, groupby='All', currency='satoshis')}}">
+              {{entry.ledger}}
             </a>
           </td>
           <td>
             {% if entry.tside == 'debit' %}
-              {{format_satoshis(entry.amount)}}
+              {% if entry.currency == 'satoshis' %}
+               {{format_satoshis(entry.amount)}}
+              {% elif entry.currency == 'usd' %}
+               {{format_usd(entry.amount)}}
+              {% endif %}
             {% endif %}
           </td>
           <td>
             {% if entry.tside == 'credit' %}
-              {{format_satoshis(entry.amount)}}
+              {% if entry.currency == 'satoshis' %}
+               {{format_satoshis(entry.amount)}}
+              {% elif entry.currency == 'usd' %}
+               {{format_usd(entry.amount)}}
+              {% endif %}
             {% endif %}
           </td>
         </tr>

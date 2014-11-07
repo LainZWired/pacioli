@@ -82,14 +82,14 @@ def process_csv(document, memoranda_id):
             txid = memoranda['Transaction Id']
             date = parser.parse(memoranda['Date'])
             amount = int(float(memoranda['Amount (BTC)'])*100000000)
-            amount = abs(amount)
             if amount > 0:
                 debit_ledger_account = "MultiBit"
                 credit_ledger_account = "Revenues"
             elif amount < 0:
                 debit_ledger_account = "Expenses"
                 credit_ledger_account = "MultiBit"
-        
+            amount = abs(amount)
+            
         # Armory
         elif header[1] == ['Date', 'Transaction ID', '#Conf', 'Wallet ID', 'Wallet Name', 'Credit', 'Debit', 'Fee (paid by this wallet)', 'Wallet Balance', 'Total Balance', 'Label']:
             # Armory does not export the address you're receiving with  / sending to .... complain here: https://github.com/etotheipi/BitcoinArmory/issues/247
@@ -140,13 +140,13 @@ def process_csv(document, memoranda_id):
             txid = memoranda['Bitcoin Hash (visit https://www.coinbase.com/tx/[HASH] in your browser for more info)'][:64]
             date = parser.parse(memoranda['Timestamp'])
             amount = int(float(memoranda['BTC Amount'])*100000000)
-            amount = abs(amount)
             if amount > 0:
                 debit_ledger_account = "Coinbase"
                 credit_ledger_account = "Revenues"
             elif amount < 0:
                 debit_ledger_account = "Expenses"
                 credit_ledger_account = "Coinbase"
+            amount = abs(amount)
         else:
             return False
 

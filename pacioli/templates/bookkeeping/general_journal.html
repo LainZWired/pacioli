@@ -1,6 +1,6 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('general_journal', currency='satoshis')}}">Bitcoins</a>
+<a href="{{ url_for('general_journal', currency='satoshis')}}">Satoshis</a>
 <a href="{{ url_for('general_journal', currency='usd')}}">USD</a>
 <hr>
 
@@ -31,7 +31,7 @@
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
+            <a href="{{ url_for('ledger', accountName=entry.ledger, currency=currency, groupby='All')}}">
             {{entry.ledger}}
           </td>
           <td align="right">
