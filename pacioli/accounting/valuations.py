@@ -20,29 +20,30 @@ from pacioli import db, models
 import pacioli.accounting.rates as rates
 
 class Partial:
-    def __init__(self, date, tside, amount, currency, ledger, journal_entry_id):
+    def __init__(self, date, tside, amount, currency, ledger, journal_entry_id, rate):
         self.date = date
         self.tside = tside
         self.amount = amount
         self.currency = currency
         self.ledger = ledger
         self.journal_entry_id = journal_entry_id
+        self.rate = rate
 
 def calculate_bitcoin_gains(method):
     usdtransactions = db.session \
         .query(models.LedgerEntries) \
         .filter(models.LedgerEntries.currency == 'usd') \
         .delete()
-    if method == "fifo":
-        transactions = db.session \
-            .query(models.LedgerEntries) \
-            .join(models.Subaccounts)\
-            .join(models.Accounts)\
-            .filter(models.Accounts.name == 'Bitcoins') \
-            .filter(models.LedgerEntries.currency == 'satoshis') \
-            .order_by(models.LedgerEntries.date.desc())\
-            .all()
-        # split out transactions into debit and credit for FIFO/LIFO/HiFO
+
+    transactions = db.session \
+        .query(models.LedgerEntries) \
+        .join(models.Subaccounts)\
+        .join(models.Accounts)\
+        .filter(models.Accounts.name == 'Bitcoins') \
+        .filter(models.LedgerEntries.currency == 'satoshis') \
+        .order_by(models.LedgerEntries.date.desc())\
+        .all()
+
     inventory = []
     
     while transactions:
@@ -54,6 +55,7 @@ def calculate_bitcoin_gains(method):
         tx_rate = rates.getRate(tx.date)
         if tx.tside == 'debit':
             inventory.insert(0, tx)
+            tx.rate = tx_rate
             amount = tx.amount*tx_rate/100000000
             debit_ledger_entry_id = str(uuid.uuid4())
             debit_ledger_entry = models.LedgerEntries(
@@ -79,13 +81,21 @@ def calculate_bitcoin_gains(method):
 
             db.session.add(credit_ledger_entry)
             db.session.commit()
+            
+            if method == 'hifo':
+                inventory.sort(key=lambda x: x.rate)
 
         elif tx.tside == 'credit':
-            layer = inventory.pop()
+            if method in ['fifo','hifo']:
+                layer = inventory.pop()
+            elif method == 'lifo':
+                layer = inventory.pop(0)
+                
             print('layer')
             print(layer.date)
             print(layer.amount)
-            layer_rate = rates.getRate(layer.date)
+            # layer_rate = rates.getRate(layer.date)
+            layer_rate = layer.rate
             layer_costbasis = layer_rate*layer.amount/100000000
             if tx.amount > layer.amount:
                 satoshis_sold = layer.amount
@@ -99,7 +109,8 @@ def calculate_bitcoin_gains(method):
                     amount=residual_amount,
                     currency=tx.currency,
                     ledger=tx.ledger,
-                    journal_entry_id=tx.journal_entry_id)
+                    journal_entry_id=tx.journal_entry_id,
+                    rate=tx_rate)
                 print('new transaction')
                 print(new_tx.date)
                 print(new_tx.amount)
@@ -117,7 +128,8 @@ def calculate_bitcoin_gains(method):
                     amount = residual_amount,
                     currency = layer.currency,
                     ledger = layer.ledger,
-                    journal_entry_id = layer.journal_entry_id)
+                    journal_entry_id = layer.journal_entry_id,
+                    rate = layer.rate)
                 print('new layer')
                 print(new_layer.date)
                 print(new_layer.amount)
