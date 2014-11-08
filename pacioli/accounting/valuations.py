@@ -11,12 +11,13 @@
 # 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import uuid
 import datetime
+from dateutil import parser
 from collections import OrderedDict
 from sqlalchemy.sql import func
 from pacioli import db, models
 import pacioli.accounting.rates as rates
-from dateutil import parser
 
 class Partial:
     def __init__(self, date, tside, amount, currency, ledger, journal_entry_id):
@@ -27,18 +28,21 @@ class Partial:
         self.ledger = ledger
         self.journal_entry_id = journal_entry_id
 
-def calculate_bitcoin_fifo_realized_gain():
-    usdtransactions = db.models.LedgerEntries \
-        .query \
-        .filter_by(currency = 'usd') \
+def calculate_bitcoin_gains(method):
+    usdtransactions = db.session \
+        .query(models.LedgerEntries.ledger) \
+        .filter(models.LedgerEntries.currency == 'usd') \
         .delete()
-        
-    transactions = db.models.LedgerEntries
-        .query
-        .filter_by(subaccount.account.name = 'Bitcoins') \
-        .filter_by(currency = 'satoshis') \
-        .order_by(models.LedgerEntries.date.desc())\
-        .all()
+    if method == "fifo":
+        transactions = db.session \
+            .query(models.LedgerEntries) \
+            .join(models.Subaccounts)\
+            .join(models.Accounts)\
+            .filter(models.Accounts.name == 'Bitcoins') \
+            .filter(models.LedgerEntries.currency == 'satoshis') \
+            .order_by(models.LedgerEntries.date.desc())\
+            .all()
+        # split out transactions into debit and credit for FIFO/LIFO/HiFO
     inventory = []
     
     while transactions:
@@ -52,11 +56,11 @@ def calculate_bitcoin_fifo_realized_gain():
             layer = inventory.pop()
             print('layer')
             print(layer)
-            layer_satoshis = layer.satoshis
+            layer_satoshis = layer.amount
             layer_rate = rates.getRate(layer.date)
             layer_costbasis = layer_rate*layer_satoshis/100000000
         if tx_type == 'debit':
-            inventory.insert(0, transaction)
+            inventory.insert(0, tx)
             amount = tx.amount*tx_rate/100000000
             debit_ledger_entry_id = str(uuid.uuid4())
             credit_ledger_entry_id = str(uuid.uuid4())

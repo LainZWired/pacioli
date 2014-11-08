@@ -26,6 +26,7 @@ from sqlalchemy.sql import func
 from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
+import pacioli.accounting.valuations as valuations
 
 @app.route('/')
 def index():
@@ -129,22 +130,28 @@ def upload_csv():
 
 @app.route('/Bookkeeping/Memoranda/ExchangeRates')
 def exchange_rates():
-  return render_template("bookkeeping/exchange_rates.html")
+    
+    return render_template("bookkeeping/exchange_rates.html")
 
 @app.route('/Bookkeeping/Memoranda/DownloadRates')
 def download_rates():
-  rates.download_rates()
-  return redirect(url_for('exchange_rates'))
+    rates.download_rates()
+    return redirect(url_for('exchange_rates'))
   
 @app.route('/Bookkeeping/Memoranda/ExchangeRates/Summarize')
 def summarize_rates():
-  rates.summarize_rates("pacioli")
-  return redirect(url_for('exchange_rates'))
+    rates.summarize_rates("pacioli")
+    return redirect(url_for('exchange_rates'))
   
 @app.route('/Bookkeeping/Memoranda/ExchangeRates/Import')
 def import_rates():
-  rates.import_rates("pacioli")
-  return redirect(url_for('exchange_rates'))
+    rates.import_rates("pacioli")
+    return redirect(url_for('exchange_rates'))
+
+@app.route('/Bookkeeping/Memoranda/ExchangeRates/CalculateGains/<method>')
+def calc_gains(method):
+    valuations.calculate_bitcoin_gains(method)
+    return redirect(url_for('exchange_rates'))
 
 @app.route('/Bookkeeping/Memoranda/Memos', methods=['POST','GET'])
 def memoranda():

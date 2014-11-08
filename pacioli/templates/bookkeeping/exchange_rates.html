@@ -20,9 +20,9 @@ These operations are inherently time consuming, please be patient.
   Import Exchange Rates</a>
  </li>
  <li>
- Calculate gains and losses:<a href="{{ url_for('calc_gains','fifo')}}">
-  FIFO</a>, <a href="{{ url_for('calc_gains', 'lifo')}}">
-   LIFO</a>, or <a href="{{ url_for('calc_gains', 'hifo')}}">
+ Calculate gains and losses:<a href="{{ url_for('calc_gains', method='fifo')}}">
+  FIFO</a>, <a href="{{ url_for('calc_gains', method='lifo')}}">
+   LIFO</a>, or <a href="{{ url_for('calc_gains', method='hifo')}}">
     HiFO</a>.
  </li>
 
