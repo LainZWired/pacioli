@@ -28,6 +28,11 @@ class Partial:
         self.journal_entry_id = journal_entry_id
 
 def calculate_bitcoin_fifo_realized_gain():
+    usdtransactions = db.models.LedgerEntries \
+        .query \
+        .filter_by(currency = 'usd') \
+        .delete()
+        
     transactions = db.models.LedgerEntries
         .query
         .filter_by(subaccount.account.name = 'Bitcoins') \

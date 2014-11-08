@@ -23,7 +23,7 @@ from flask import flash, render_template, request, redirect, url_for, send_from_
 from pacioli import app, db, forms, models
 import sqlalchemy
 from sqlalchemy.sql import func
-import pacioli.accounting.memoranda as memoranda
+from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
 
@@ -110,43 +110,54 @@ def delete_subaccount(subaccount):
     db.session.commit()
     return redirect(url_for('chart_of_accounts'))
 
-@app.route('/Configure/ExchangeRates')
-def configure_rates():
-  return render_template("configure/exchange_rates.html")
-
-@app.route('/Configure/DownloadRates')
-def download_rates():
-  rates.download_rates()
-  return redirect(url_for('configure_rates'))
-  
-@app.route('/Configure/SummarizeRates')
-def summarize_rates():
-  rates.summarize_rates("pacioli")
-  return redirect(url_for('configure_rates'))
-  
-@app.route('/Configure/ImportRates')
-def import_rates():
-  rates.import_rates("pacioli")
-  return redirect(url_for('configure_rates'))
-
 @app.route('/Bookkeeping')
 def bookkeeping():
     return redirect(url_for('upload_csv'))
 
-@app.route('/Bookkeeping/Upload', methods=['POST','GET'])
+@app.route('/Bookkeeping/Memoranda/Upload', methods=['POST','GET'])
 def upload_csv():
     filenames = ''
     if request.method == 'POST':
         uploaded_files = request.files.getlist("file[]")
         for file in uploaded_files:
-            memoranda.process_filestorage(file)
+            process_filestorage(file)
         return redirect(url_for('upload_csv'))
     memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
     return render_template('bookkeeping/upload.html',
         title = 'Upload',
         memos=memos)
 
-@app.route('/Bookkeeping/Memoranda/Delete/<fileName>')
+@app.route('/Bookkeeping/Memoranda/ExchangeRates')
+def exchange_rates():
+  return render_template("bookkeeping/exchange_rates.html")
+
+@app.route('/Bookkeeping/Memoranda/DownloadRates')
+def download_rates():
+  rates.download_rates()
+  return redirect(url_for('exchange_rates'))
+  
+@app.route('/Bookkeeping/Memoranda/ExchangeRates/Summarize')
+def summarize_rates():
+  rates.summarize_rates("pacioli")
+  return redirect(url_for('exchange_rates'))
+  
+@app.route('/Bookkeeping/Memoranda/ExchangeRates/Import')
+def import_rates():
+  rates.import_rates("pacioli")
+  return redirect(url_for('exchange_rates'))
+
+@app.route('/Bookkeeping/Memoranda/Memos', methods=['POST','GET'])
+def memoranda():
+    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+    for memo in memos:
+        transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+        memo.count = len(transactions)
+
+    return render_template('bookkeeping/memos.html',
+        title = 'Memoranda',
+        memos=memos)
+
+@app.route('/Bookkeeping/Memoranda/Memos/Delete/<fileName>')
 def delete_memoranda(fileName):
     memo = models.Memoranda.query.filter_by(fileName=fileName).first()
     transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
@@ -164,18 +175,7 @@ def delete_memoranda(fileName):
     db.session.commit()
     return redirect(url_for('upload_csv'))
 
-@app.route('/Bookkeeping/Memoranda', methods=['POST','GET'])
-def memoranda():
-    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
-    for memo in memos:
-        transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
-        memo.count = len(transactions)
-
-    return render_template('bookkeeping/memoranda.html',
-        title = 'Memoranda',
-        memos=memos)
-
-@app.route('/Bookkeeping/Memoranda/<fileName>')
+@app.route('/Bookkeeping/Memoranda/Memos/<fileName>')
 def memo_file(fileName):
     memo = models.Memoranda.query.filter_by(fileName=fileName).first()
     fileText = memo.fileText
@@ -187,7 +187,7 @@ def memo_file(fileName):
         rows=rows,
         fileName=fileName)
   
-@app.route('/Bookkeeping/Memoranda/Transactions')
+@app.route('/Bookkeeping/Memoranda/Memos/Transactions')
 def transactions():
     transactions = models.MemorandaTransactions.query.all()
     for transaction in transactions:
@@ -199,7 +199,7 @@ def transactions():
         transactions=transactions)
 
 
-@app.route('/Bookkeeping/Memoranda/<fileName>/Transactions')
+@app.route('/Bookkeeping/Memoranda/Memos/<fileName>/Transactions')
 def memo_transactions(fileName):
     memo = models.Memoranda.query.filter_by(fileName=fileName).first()
     transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
