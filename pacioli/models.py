@@ -83,7 +83,7 @@ class Subaccounts(db.Model):
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
-    ledgerentries = db.relationship('LedgerEntries', backref='journalentry', lazy='select', cascade="save-update, merge, delete")
+    ledgerentries = db.relationship('LedgerEntries', backref='journalentry', lazy='select', cascade="save-update, merge, delete", order_by="desc(LedgerEntries.tside)")
 
 class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)

@@ -221,14 +221,21 @@ def memo_transactions(fileName):
 
 @app.route('/Bookkeeping/GeneralJournal/<currency>')
 def general_journal(currency):
-    entries = models.LedgerEntries.query.\
-    filter_by(currency=currency).\
-    order_by(models.LedgerEntries.date.desc()).\
-    order_by(models.LedgerEntries.journal_entry_id.desc()).\
-    order_by(models.LedgerEntries.tside.desc()).all()
+    # entries = models.LedgerEntries.query \
+    #     .filter_by(currency=currency) \
+    #     .order_by(models.LedgerEntries.date.desc()) \
+    #     .order_by(models.LedgerEntries.journal_entry_id.desc()) \
+    #     .order_by(models.LedgerEntries.ledger) \
+    #     .order_by(models.LedgerEntries.tside.desc()) \
+    #     .all()
+    journal_entries = db.session \
+        .query(models.JournalEntries) \
+        .join(models.LedgerEntries) \
+        .order_by(models.LedgerEntries.date.desc()) \
+        .all()
     return render_template('bookkeeping/general_journal.html',
         title = 'General Journal',
-        entries=entries,
+        journal_entries=journal_entries,
         currency=currency)
 
 @app.route('/Bookkeeping/GeneralJournal/Entry/<id>')

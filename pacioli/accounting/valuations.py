@@ -30,7 +30,7 @@ class Partial:
 
 def calculate_bitcoin_gains(method):
     usdtransactions = db.session \
-        .query(models.LedgerEntries.ledger) \
+        .query(models.LedgerEntries) \
         .filter(models.LedgerEntries.currency == 'usd') \
         .delete()
     if method == "fifo":
