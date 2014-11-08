@@ -48,22 +48,14 @@ def calculate_bitcoin_gains(method):
     while transactions:
         tx = transactions.pop()
         print('transaction')
-        print(tx)
-        tx_type = tx.tside
-        tx_date = tx.date
+        print(tx.date)
+        print(tx.amount)
+        print(tx.tside)
         tx_rate = rates.getRate(tx.date)
-        if inventory:
-            layer = inventory.pop()
-            print('layer')
-            print(layer)
-            layer_satoshis = layer.amount
-            layer_rate = rates.getRate(layer.date)
-            layer_costbasis = layer_rate*layer_satoshis/100000000
-        if tx_type == 'debit':
+        if tx.tside == 'debit':
             inventory.insert(0, tx)
             amount = tx.amount*tx_rate/100000000
             debit_ledger_entry_id = str(uuid.uuid4())
-            credit_ledger_entry_id = str(uuid.uuid4())
             debit_ledger_entry = models.LedgerEntries(
                 id=debit_ledger_entry_id,
                 date=tx.date, 
@@ -72,9 +64,10 @@ def calculate_bitcoin_gains(method):
                 amount=amount,
                 currency="usd", 
                 journal_entry_id=tx.journal_entry_id)
-                
+
             db.session.add(debit_ledger_entry)
-            
+
+            credit_ledger_entry_id = str(uuid.uuid4())
             credit_ledger_entry = models.LedgerEntries(
                 id=credit_ledger_entry_id,
                 date=tx.date, 
@@ -83,19 +76,23 @@ def calculate_bitcoin_gains(method):
                 amount=amount, 
                 currency="usd", 
                 journal_entry_id=tx.journal_entry_id)
-                
+
             db.session.add(credit_ledger_entry)
             db.session.commit()
-            
-        elif tx_type == 'credit':
-            tx_satoshis = tx.amount
-            if tx_satoshis > layer_satoshis:
-                satoshis_sold = layer_satoshis
+
+        elif tx.tside == 'credit':
+            layer = inventory.pop()
+            print('layer')
+            print(layer.date)
+            print(layer.amount)
+            layer_rate = rates.getRate(layer.date)
+            layer_costbasis = layer_rate*layer.amount/100000000
+            if tx.amount > layer.amount:
+                satoshis_sold = layer.amount
                 salevalue = satoshis_sold * tx_rate/100000000
                 costbasis = satoshis_sold * layer_rate/100000000
                 gain = salevalue - costbasis
-                residual_amount = tx_satoshis - satoshis_sold
-                residual_fiat = residual_amount*tx_rate/100000000
+                residual_amount = tx.amount - satoshis_sold
                 new_tx = Partial(
                     date=tx.date,
                     tside=tx.tside,
@@ -104,16 +101,16 @@ def calculate_bitcoin_gains(method):
                     ledger=tx.ledger,
                     journal_entry_id=tx.journal_entry_id)
                 print('new transaction')
-                print(new_tx)
+                print(new_tx.date)
+                print(new_tx.amount)
                 transactions.append(new_tx)
                 
-            elif tx_satoshis < layer_satoshis:
-                satoshis_sold = tx_satoshis
+            elif tx.amount < layer.amount:
+                satoshis_sold = tx.amount
                 salevalue = tx_rate * satoshis_sold/100000000
                 costbasis = layer_rate * satoshis_sold/100000000
                 gain = salevalue - costbasis
-                residual_amount = layer_satoshis - satoshis_sold
-                residual_fiat = residual_amount*layer_rate/100000000
+                residual_amount = layer.amount - satoshis_sold
                 new_layer = Partial(
                     date = layer.date,
                     tside = layer.tside,
@@ -122,25 +119,36 @@ def calculate_bitcoin_gains(method):
                     ledger = layer.ledger,
                     journal_entry_id = layer.journal_entry_id)
                 print('new layer')
-                print(new_layer)
+                print(new_layer.date)
+                print(new_layer.amount)
                 inventory.append(new_layer)
-            elif tx_satoshis == layer_satoshis:
-                satoshis_sold = tx_satoshis
+            elif tx.amount == layer.amount:
+                satoshis_sold = tx.amount
                 salevalue = tx_rate * satoshis_sold/100000000
                 costbasis = layer_rate * satoshis_sold/100000000
                 gain = salevalue - costbasis
             
+            if gain:
+                if gain > 0:
+                    gain_tside = 'credit'
+                    gain_ledger = 'Gains from the Sale of Bitcoins'
+                elif gain < 0:
+                    gain_tside = 'debit'
+                    gain_ledger = 'Losses from the Sale of Bitcoins'
+                gain = abs(gain)
+                gain_leger_entry_id = str(uuid.uuid4())
+                gain_ledger_entry = models.LedgerEntries(
+                    id=gain_leger_entry_id,
+                    date=tx.date, 
+                    tside=gain_tside, 
+                    ledger=gain_ledger, 
+                    amount=gain, 
+                    currency="usd", 
+                    journal_entry_id=tx.journal_entry_id)
+                    
+                db.session.add(gain_ledger_entry)
+
             debit_ledger_entry_id = str(uuid.uuid4())
-            credit_ledger_entry_id = str(uuid.uuid4())
-            gain_leger_entry_id = str(uuid.uuid4())
-            
-            if gain >= 0:
-                gain_tside = 'credit'
-                gain_ledger = 'Gains from the Sale of Bitcoins'
-            elif gain < 0:
-                gain_tside = 'debit'
-                gain_ledger = 'Losses from the Sale of Bitcoins'
-            gain = abs(gain)
             debit_ledger_entry = models.LedgerEntries(
                 id=debit_ledger_entry_id,
                 date=tx.date, 
@@ -152,6 +160,7 @@ def calculate_bitcoin_gains(method):
                 
             db.session.add(debit_ledger_entry)
             
+            credit_ledger_entry_id = str(uuid.uuid4())
             credit_ledger_entry = models.LedgerEntries(
                 id=credit_ledger_entry_id,
                 date=tx.date, 
@@ -162,15 +171,5 @@ def calculate_bitcoin_gains(method):
                 journal_entry_id=tx.journal_entry_id)
                 
             db.session.add(credit_ledger_entry)
-            
-            gain_ledger_entry = models.LedgerEntries(
-                id=gain_leger_entry_id,
-                date=tx.date, 
-                tside=gain_tside, 
-                ledger=gain_ledger, 
-                amount=gain, 
-                currency="usd", 
-                journal_entry_id=tx.journal_entry_id)
-                
-            db.session.add(gain_ledger_entry)
+
             db.session.commit()

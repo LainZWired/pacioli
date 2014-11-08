@@ -73,7 +73,7 @@ def summarize_rates(database):
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
-        '-c', "INSERT INTO rates SELECT timestamp,  '%s' AS source, 'USD' as currency, cast(((sum(price*volume) / sum(volume))*100) as int) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
+        '-c', "INSERT INTO rates SELECT timestamp,  '%s' AS source, 'USD' as currency, (sum(price*volume) / sum(volume)) AS rate FROM price_feeds WHERE volume > 0 GROUP BY timestamp" % filename,'--set=ON_ERROR_STOP=true'
         ])
         p = subprocess.call([
         'psql', database, '-U', 'pacioli',
@@ -110,8 +110,9 @@ def getRate(querydate):
     if type(querydate) is not datetime:
         querydate = parser.parse(querydate)
     querydate = int(querydate.strftime("%s"))
+    print(querydate)
     closest_price = db.session \
-        .query(models.Rates.rate) \
+        .query(models.Rates) \
         .order_by(func.abs( querydate -  models.Rates.date)) \
         .first()
-    return int(closest_price[0]/100)
+    return closest_price.rate

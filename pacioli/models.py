@@ -89,7 +89,7 @@ class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
     tside = db.Column(db.Text)
-    amount = db.Column(BigInteger)
+    amount = db.Column(db.Numeric)
     currency = db.Column(db.Text)
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
@@ -97,11 +97,11 @@ class LedgerEntries(db.Model):
 class PriceFeeds(db.Model):
     price_id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.BigInteger)
-    price = db.Column(db.Float)
-    volume = db.Column(db.Float)
+    price = db.Column(db.Numeric)
+    volume = db.Column(db.Numeric)
 
 class Rates(db.Model):
     date = db.Column(db.BigInteger, primary_key=True)
     source = db.Column(db.Text)
     currency = db.Column(db.Text)
-    rate = db.Column(db.Integer)
+    rate = db.Column(db.Numeric)

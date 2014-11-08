@@ -25,7 +25,6 @@
       </tr>
       {% for journal_entry in journal_entries %}
           {% for ledger_entry in journal_entry.ledgerentries %}
-          {% if ledger_entry.currency==currency %}
           <tr>
            <td>
             {% if journal_entry.ledgerentries[0] == ledger_entry %}
@@ -59,7 +58,6 @@
             {% endif %}
           </td>
          </tr>
-          {% endif %}
           {% endfor %}
 
       {% endfor %}

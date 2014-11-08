@@ -230,9 +230,12 @@ def general_journal(currency):
     #     .all()
     journal_entries = db.session \
         .query(models.JournalEntries) \
+        .filter(models.JournalEntries.ledgerentries.any(currency=currency)) \
         .join(models.LedgerEntries) \
         .order_by(models.LedgerEntries.date.desc()) \
         .all()
+    for journal_entry in journal_entries:
+        journal_entry.ledgerentries = [c for c in journal_entry.ledgerentries if c.currency == currency]
     return render_template('bookkeeping/general_journal.html',
         title = 'General Journal',
         journal_entries=journal_entries,
@@ -240,7 +243,6 @@ def general_journal(currency):
 
 @app.route('/Bookkeeping/GeneralJournal/Entry/<id>')
 def journal_entry(id):
-    print("HELLO")
     journal_entry = models.JournalEntries.query.filter_by(id = id).first()
     ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
     transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
