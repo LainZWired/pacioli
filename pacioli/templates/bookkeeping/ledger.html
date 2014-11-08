@@ -141,7 +141,13 @@
           </td>
           <td align="right">
             {% if account['totalCredit'] %}
-              {{format_satoshis(account['totalCredit'])}}
+            {% if account['totalDebit'] %}
+            {% if currency == 'satoshis' %}
+             {{format_satoshis(account['totalCredit'])}}
+             {% elif currency == 'usd' %}
+              {{format_usd(account['totalCredit'])}}
+             {% endif %}
+            {% endif %}
             {% endif %}
           </td>
         </tr>

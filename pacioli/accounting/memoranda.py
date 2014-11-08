@@ -20,8 +20,9 @@ import sys
 import csv
 import json
 import uuid
-from pacioli import app, db, models, blockchain
-import pacioli.rates as rates
+from pacioli import app, db, models
+import pacioli.auditing.blockchain as blockchain
+import pacioli.accounting.rates as rates
 from werkzeug import secure_filename
 from dateutil import parser
 
@@ -43,7 +44,13 @@ def process_filestorage(file):
 def process_memoranda(fileName, fileType, fileSize, fileText):
     uploadDate = datetime.now()
     memoranda_id = str(uuid.uuid4())
-    memo = models.Memoranda(id=memoranda_id, date=uploadDate, fileName=fileName, fileType=fileType, fileText=fileText, fileSize=fileSize)
+    memo = models.Memoranda(
+        id=memoranda_id, 
+        date=uploadDate, 
+        fileName=fileName, 
+        fileType=fileType, 
+        fileText=fileText, 
+        fileSize=fileSize)
     db.session.add(memo)
     db.session.commit()
     document = io.StringIO(fileText)
@@ -157,27 +164,36 @@ def process_csv(document, memoranda_id):
         
         # blockchain.get_transaction(txid)
         tx_details = str(memoranda)
-        memoranda_transaction = models.MemorandaTransactions(id=memoranda_transactions_id, memoranda_id=memoranda_id, txid=txid, details=tx_details)
+        memoranda_transaction = models.MemorandaTransactions(
+            id=memoranda_transactions_id, 
+            memoranda_id=memoranda_id, 
+            txid=txid, 
+            details=tx_details)
         db.session.add(memoranda_transaction)
         db.session.commit()
-        journal_entry = models.JournalEntries(id=journal_entry_id, memoranda_transactions_id=memoranda_transactions_id)
+        journal_entry = models.JournalEntries(
+            id=journal_entry_id, 
+            memoranda_transactions_id=memoranda_transactions_id)
         db.session.add(journal_entry)
         db.session.commit()
         
-
-        debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, tside="debit", ledger=debit_ledger_account, amount=amount,currency="satoshis", journal_entry_id=journal_entry_id)
+        debit_ledger_entry = models.LedgerEntries(
+            id=debit_ledger_entry_id,
+            date=date,
+            tside="debit", 
+            ledger=debit_ledger_account, 
+            amount=amount,currency="satoshis", 
+            journal_entry_id=journal_entry_id)
+            
         db.session.add(debit_ledger_entry)
-        credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, tside="credit", ledger=credit_ledger_account, amount=amount, currency="satoshis", journal_entry_id=journal_entry_id)
-        db.session.add(credit_ledger_entry)
-        db.session.commit()
         
-        debit_ledger_entry_id = str(uuid.uuid4())
-        credit_ledger_entry_id = str(uuid.uuid4())
-        rate = rates.getRate(date)
-        amount = amount/100000000*rate
-        
-        debit_ledger_entry = models.LedgerEntries(id=debit_ledger_entry_id,date=date, tside="debit", ledger=debit_ledger_account, amount=amount,currency="usd", journal_entry_id=journal_entry_id)
-        db.session.add(debit_ledger_entry)
-        credit_ledger_entry = models.LedgerEntries(id=credit_ledger_entry_id,date=date, tside="credit", ledger=credit_ledger_account, amount=amount, currency="usd", journal_entry_id=journal_entry_id)
+        credit_ledger_entry = models.LedgerEntries(
+            id=credit_ledger_entry_id,date=date, 
+            tside="credit", 
+            ledger=credit_ledger_account, 
+            amount=amount, 
+            currency="satoshis", 
+            journal_entry_id=journal_entry_id)
+            
         db.session.add(credit_ledger_entry)
         db.session.commit()

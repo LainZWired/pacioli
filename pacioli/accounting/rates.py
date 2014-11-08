@@ -107,6 +107,7 @@ def import_rates(database):
     return True
 
 def getRate(querydate):
-    querydate = int(querydate.strftime('%s'))
+    if type(querydate) is not datetime.datetime:
+        querydate = parser.parse(querydate)
     closest_price = db.session.query(models.Rates.rate).order_by(func.abs( querydate -  models.Rates.date)).first()
     return int(closest_price[0]/100)

@@ -11,21 +11,21 @@
 # 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
-from pacioli import app, db, forms, models
+import os
 import io
 import uuid
-import os
-import pacioli.memoranda
 import ast
-import pacioli.ledgers as ledgers
-import pacioli.rates as rates
 import csv
-import sqlalchemy
-from sqlalchemy.sql import func
-from datetime import datetime,date
 import calendar
 from collections import OrderedDict
+from datetime import datetime,date
+from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
+from pacioli import app, db, forms, models
+import sqlalchemy
+from sqlalchemy.sql import func
+import pacioli.accounting.memoranda as memoranda
+import pacioli.accounting.ledgers as ledgers
+import pacioli.accounting.rates as rates
 
 @app.route('/')
 def index():
@@ -139,7 +139,7 @@ def upload_csv():
     if request.method == 'POST':
         uploaded_files = request.files.getlist("file[]")
         for file in uploaded_files:
-            pacioli.memoranda.process_filestorage(file)
+            memoranda.process_filestorage(file)
         return redirect(url_for('upload_csv'))
     memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
     return render_template('bookkeeping/upload.html',
@@ -421,7 +421,7 @@ def trial_balance_historical(currency, groupby, period):
 
 @app.route('/FinancialStatements')
 def financial_statements():
-    return redirect(url_for('income_statement', currency='Dollars'))
+    return redirect(url_for('income_statement', currency='usd'))
 
 
 @app.route('/FinancialStatements/IncomeStatement/<currency>')
@@ -441,6 +441,7 @@ def income_statement(currency):
     
     entries = db.session\
         .query(models.LedgerEntries)\
+        .join(models.Subaccounts)\
         .join(models.Accounts)\
         .join(models.Classifications)\
         .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
@@ -450,20 +451,26 @@ def income_statement(currency):
     response['Net Income'] = 0
     classifications = models.Classifications.query.all()
     accounts = models.Accounts.query.all()
+    subaccounts = models.Subaccounts.query.all()
     for classification in classifications:
-        print(classification.name)
         response[classification.name] = {}
     for account in accounts:
         classification = account.classification.name
-        response[classification][account.name] = 0
+        response[classification][account.name] = {}
+    for subaccount in subaccounts:
+        account = subaccount.account.name
+        classification = subaccount.account.classification.name
+        response[classification][account][subaccount.name] = 0
+        
     for entry in entries:
-        account = entry.ledger.name
-        classification = entry.ledger.classification.name
+        subaccount = entry.subaccount.name
+        account = entry.subaccount.account.name
+        classification = entry.subaccount.account.classification.name
         if entry.tside == 'debit':
-            response[classification][account] += entry.amount
+            response[classification][account][subaccount] += entry.amount
         elif entry.tside == 'credit':
-            response[classification][account] -= entry.amount
-        if entry.ledger.classification.element.name is 'Revenues' or 'Gains':
+            response[classification][account][subaccount] -= entry.amount
+        if entry.subaccount.account.classification.element.name is 'Revenues' or 'Gains':
             response['Net Income'] += entry.amount
         elif entry.ledger.classification.element.name is 'Expenses' or 'Losses':
             response['Net Income'] -= entry.amount
