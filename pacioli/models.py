@@ -66,7 +66,7 @@ class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('classifications.name'))
-    subacounts = db.relationship('Subaccounts', backref='account', lazy='select', cascade="save-update, merge, delete")
+    subaccounts = db.relationship('Subaccounts', backref='account', lazy='select', cascade="save-update, merge, delete")
     
     def __repr__(self):
         return self.name

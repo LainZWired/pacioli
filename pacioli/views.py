@@ -23,6 +23,7 @@ from flask import flash, render_template, request, redirect, url_for, send_from_
 from pacioli import app, db, forms, models
 import sqlalchemy
 from sqlalchemy.sql import func
+from sqlalchemy.orm import aliased
 from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
@@ -77,7 +78,10 @@ def add_account():
         form = request.form.copy().to_dict()
         name = form['account']
         parent = form['accountparent']
-        parent = models.Classifications.query.filter_by(id=parent).one()
+        parent = models.Classifications \
+            .query \
+            .filter_by(id=parent) \
+            .one()
         parent = parent.name
         account = models.Accounts(name=name, parent=parent)
         db.session.add(account)
@@ -123,7 +127,10 @@ def upload_csv():
         for file in uploaded_files:
             process_filestorage(file)
         return redirect(url_for('upload_csv'))
-    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+    memos = models.Memoranda \
+        .query \
+        .order_by(models.Memoranda.date.desc()) \
+        .all()
     return render_template('bookkeeping/upload.html',
         title = 'Upload',
         memos=memos)
@@ -155,9 +162,15 @@ def calc_gains(method):
 
 @app.route('/Bookkeeping/Memoranda/Memos', methods=['POST','GET'])
 def memoranda():
-    memos = models.Memoranda.query.order_by(models.Memoranda.date.desc()).all()
+    memos = models.Memoranda \
+        .query \
+        .order_by(models.Memoranda.date.desc()) \
+        .all()
     for memo in memos:
-        transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+        transactions = models.MemorandaTransactions \
+            .query \
+            .filter_by(memoranda_id=memo.id) \
+            .all()
         memo.count = len(transactions)
 
     return render_template('bookkeeping/memos.html',
@@ -166,11 +179,23 @@ def memoranda():
 
 @app.route('/Bookkeeping/Memoranda/Memos/Delete/<fileName>')
 def delete_memoranda(fileName):
-    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+    memo = models.Memoranda \
+        .query \
+        .filter_by(fileName=fileName) \
+        .first()
+    transactions = models.MemorandaTransactions \
+        .query \
+        .filter_by(memoranda_id=memo.id) \
+        .all()
     for transaction in transactions:
-        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
-        ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = journal_entry.id).all()
+        journal_entry = models.JournalEntries \
+            .query \
+            .filter_by(memoranda_transactions_id=transaction.id) \
+            .first()
+        ledger_entries = models.LedgerEntries \
+            .query \
+            .filter_by(journal_entry_id = journal_entry.id) \
+            .all()
         for entry in ledger_entries:
             db.session.delete(entry)
             db.session.commit()
@@ -221,16 +246,10 @@ def memo_transactions(fileName):
 
 @app.route('/Bookkeeping/GeneralJournal/<currency>')
 def general_journal(currency):
-    # entries = models.LedgerEntries.query \
-    #     .filter_by(currency=currency) \
-    #     .order_by(models.LedgerEntries.date.desc()) \
-    #     .order_by(models.LedgerEntries.journal_entry_id.desc()) \
-    #     .order_by(models.LedgerEntries.ledger) \
-    #     .order_by(models.LedgerEntries.tside.desc()) \
-    #     .all()
     journal_entries = db.session \
         .query(models.JournalEntries) \
-        .filter(models.JournalEntries.ledgerentries.any(currency=currency)) \
+        .filter(models.JournalEntries.ledgerentries \
+            .any(currency=currency)) \
         .join(models.LedgerEntries) \
         .order_by(models.LedgerEntries.date.desc()) \
         .all()
@@ -276,7 +295,7 @@ def general_ledger(currency):
         .query(models.LedgerEntries.ledger)\
         .group_by(models.LedgerEntries.ledger).all()
     accounts = []
-    for accountResult in accountsQuery:
+    for accountResult in accountsQuery: 
         accountName = accountResult[0]
         query = ledgers.query_entries(accountName, 'Monthly', currency)
         accounts.append(query)
@@ -434,11 +453,9 @@ def trial_balance_historical(currency, groupby, period):
         totalDebits=totalDebits,
         totalCredits=totalCredits)
 
-
 @app.route('/FinancialStatements')
 def financial_statements():
     return redirect(url_for('income_statement', currency='usd'))
-
 
 @app.route('/FinancialStatements/IncomeStatement/<currency>')
 def income_statement(currency):
@@ -454,57 +471,40 @@ def income_statement(currency):
     period = datetime.now()
     period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
     period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
-    
-    entries = db.session\
-        .query(models.LedgerEntries)\
-        .join(models.Subaccounts)\
-        .join(models.Accounts)\
-        .join(models.Classifications)\
+
+    elements = db.session \
+        .query(models.Elements) \
+        .join(models.Classifications) \
         .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
-        .filter(models.LedgerEntries.date.between(period_beg, period_end))\
+        .join(models.Accounts) \
+        .join(models.Subaccounts) \
         .all()
-    response = {}
-    response['Net Income'] = 0
-    classifications = models.Classifications.query.all()
-    accounts = models.Accounts.query.all()
-    subaccounts = models.Subaccounts.query.all()
-    for classification in classifications:
-        response[classification.name] = {}
-    for account in accounts:
-        classification = account.classification.name
-        response[classification][account.name] = {}
-    for subaccount in subaccounts:
-        account = subaccount.account.name
-        classification = subaccount.account.classification.name
-        response[classification][account][subaccount.name] = 0
-        
-    for entry in entries:
-        subaccount = entry.subaccount.name
-        account = entry.subaccount.account.name
-        classification = entry.subaccount.account.classification.name
-        if entry.tside == 'debit':
-            response[classification][account][subaccount] += entry.amount
-        elif entry.tside == 'credit':
-            response[classification][account][subaccount] -= entry.amount
-        if entry.subaccount.account.classification.element.name is 'Revenues' or 'Gains':
-            response['Net Income'] += entry.amount
-        elif entry.ledger.classification.element.name is 'Expenses' or 'Losses':
-            response['Net Income'] -= entry.amount
-    gain = ledgers.get_fifo_realized_gain('Bitcoins', period_beg, period_end)
-    ungain = ledgers.get_fifo_unrealized_gain('Bitcoins', period_end)
-    response['Gains'] = gain
-    response['Net Income'] += gain
-    response['Unrealized Gain'] += ungain
-    print(response)
+    net_income = 0
+    for element in elements:
+        element.classifications = [c for c in element.classifications if c.name in ['Revenues', 'Expenses', 'Gains', 'Losses']]
+        for classification in element.classifications:
+            for account in classification.accounts:
+                for subaccount in account.subaccounts:
+                    subaccount.total = 0
+                    subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
+                    for ledger_entry in subaccount.ledgerentries:
+                        if ledger_entry.currency == currency:
+                            subaccount.total += ledger_entry.amount
+                            if ledger_entry.tside == 'credit':
+                                net_income += ledger_entry.amount
+                            elif ledger_entry.tside == 'debit':
+                                net_income -= ledger_entry.amount
     return render_template('financial_statements/income_statement.html',
             title = 'Income Statement',
             periods = periods,
-            response = response)
+            currency = currency,
+            elements = elements,
+            net_income = net_income)
     
-@app.route('/FinancialStatements/IncomeStatement/<period>')
-def income_statement_historical(period):
+@app.route('/FinancialStatements/IncomeStatement/<currency>/<period>')
+def income_statement_historical(currency, period):
+    period = datetime.strptime(period, "%Y-%m")
     lastday = calendar.monthrange(period.year, period.month)[1]
-
     periods = db.session \
         .query(\
             func.date_part('year', models.LedgerEntries.date), \
@@ -514,36 +514,37 @@ def income_statement_historical(period):
             func.date_part('month', models.LedgerEntries.date)) \
         .all()
     periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    accounts = db.session \
-        .query(models.Accounts) \
-        .filter(models.Accounts.parent.in_(['Revenues', 'Expenses'])) \
+    period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
+    period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
+
+    elements = db.session \
+        .query(models.Elements) \
+        .join(models.Classifications) \
+        .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
+        .join(models.Accounts) \
+        .join(models.Subaccounts) \
         .all()
-    elements = (('Revenues', {}), ('Expenses',{}),( 'Net Income', {}))
-    elements = OrderedDict(elements)
-    for account in accounts:
-        for period in periods:
-            query = db.session.query(\
-              func.sum(models.LedgerEntries.amount)).\
-              filter_by(
-                account=account).\
-              group_by(\
-                func.date_part('year', models.LedgerEntries.date),
-                func.date_part('month', models.LedgerEntries.date)).\
-              having(func.date_part('year', models.LedgerEntries.date)==period.year).\
-              having(func.date_part('month', models.LedgerEntries.date)==period.month).\
-                all()
-            if query == []:
-                query = [[(0)]]
-            accounts[account_name][period] = int(query[0][0])
-        accounts[account_name] = OrderedDict(sorted(accounts[account_name].items()))
-    for period in periods:
-        net = accounts['Revenues'][period] - accounts['Expenses'][period]
-        accounts['Net Income'][period] = net
-        accounts['Net Income'] = OrderedDict(sorted(accounts['Net Income'].items()))
+    net_income = 0
+    for element in elements:
+        element.classifications = [c for c in element.classifications if c.name in ['Revenues', 'Expenses', 'Gains', 'Losses']]
+        for classification in element.classifications:
+            for account in classification.accounts:
+                for subaccount in account.subaccounts:
+                    subaccount.total = 0
+                    subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
+                    for ledger_entry in subaccount.ledgerentries:
+                        if ledger_entry.currency == currency:
+                            subaccount.total += ledger_entry.amount
+                            if ledger_entry.tside == 'credit':
+                                net_income += ledger_entry.amount
+                            elif ledger_entry.tside == 'debit':
+                                net_income -= ledger_entry.amount
     return render_template('financial_statements/income_statement.html',
             title = 'Income Statement',
             periods = periods,
-            accounts = accounts)
+            currency = currency,
+            elements = elements,
+            net_income = net_income)
     
 @app.route('/FinancialStatements/BalanceSheet')
 def balance_sheet():
