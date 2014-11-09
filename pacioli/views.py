@@ -665,7 +665,57 @@ def balance_sheet_historical(currency, period):
 
 
     
-@app.route('/FinancialStatements/StatementOfCashFlows/<currency>')
-def statement_of_cash_flows(currency):
-    return render_template('financial_statements/statement_of_cash_flows.html')
-    
+@app.route('/FinancialStatements/StatementOfCashFlows/<currency>/<period>')
+def statement_of_cash_flows(currency, period):
+    periods = db.session \
+        .query(\
+            func.date_part('year', models.LedgerEntries.date), \
+            func.date_part('month', models.LedgerEntries.date)) \
+        .group_by( \
+            func.date_part('year', models.LedgerEntries.date), \
+            func.date_part('month', models.LedgerEntries.date)) \
+        .all()
+    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+    if period == 'Current':
+        period = datetime.now()
+        lastday = period.day
+    else:
+        period = datetime.strptime(period, "%Y-%m")
+        lastday = calendar.monthrange(period.year, period.month)[1]
+    period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
+    period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
+
+    elements = db.session \
+        .query(models.Elements) \
+        .join(models.Classifications) \
+        .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
+        .join(models.Accounts) \
+        .join(models.Subaccounts) \
+        .all()
+    net_income = 0
+    for element in elements:
+        element.classifications = [c for c in element.classifications if c.name in ['Revenues', 'Expenses', 'Gains', 'Losses']]
+        for classification in element.classifications:
+            classification.balance = 0
+            for account in classification.accounts:
+                account.balance = 0
+                for subaccount in account.subaccounts:
+                    subaccount.balance = 0
+                    subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
+                    for ledger_entry in subaccount.ledgerentries:
+                        if ledger_entry.currency == currency:
+                            
+                            if ledger_entry.tside == 'credit':
+                                classification.balance -= ledger_entry.amount
+                                account.balance -= ledger_entry.amount
+                                subaccount.balance -= ledger_entry.amount
+                            elif ledger_entry.tside == 'debit':
+                                classification.balance += ledger_entry.amount
+                                account.balance += ledger_entry.amount
+                                subaccount.balance += ledger_entry.amount
+    return render_template('financial_statements/statement_of_cash_flows.html',
+            period = period,
+            periods = periods,
+            currency = currency,
+            elements = elements,
+            net_income = net_income)
