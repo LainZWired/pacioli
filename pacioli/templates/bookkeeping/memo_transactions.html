@@ -1,5 +1,6 @@
-{% extends "header_bookkeeping.html" %}
-{% block bookkeeping %}
+{% extends "bookkeeping/header_memoranda.html" %}
+{% block memoranda %}
+
   <h1>
     Memo Transactions
   </h1>
@@ -20,6 +21,7 @@
           Details
         </th>
         <th>
+         Bitcoin Transaction ID
         </th>
       </tr>
       {% for transaction in transactions %}
@@ -32,6 +34,9 @@
             {{ key }} : {{ value }}
             <br>
           {% endfor %}
+        </td>
+        <td>
+         {{transaction.txid}}
         </td>
         <td>
           <a href="{{ url_for('journal_entry', id = transaction.journal_entry_id)}}">

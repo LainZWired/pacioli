@@ -18,9 +18,6 @@
         <th>
           Credit
         </th>
-        <th>
-          USD
-        </th>
         <td>
           Edit
         </td>
@@ -31,22 +28,19 @@
             {{entry.date}}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.account, groupby='All')}}">
-              {{entry.account}}
+            <a href="{{ url_for('ledger', accountName=entry.ledger, groupby='All')}}">
+              {{entry.ledger}}
             </a>
           </td>
           <td>
-            {% if entry.entryType == 'debit' %}
+            {% if entry.tside == 'debit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
           </td>
           <td>
-            {% if entry.entryType == 'credit' %}
+            {% if entry.tside == 'credit' %}
               {{format_satoshis(entry.amount)}}
             {% endif %}
-          </td>
-          <td>
-            {{format_usd(entry.fiat)}}
           </td>
         </tr>
       {% endfor %}

@@ -1,32 +1,61 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-  <h1>
-    Income Statement
-  </h1>
+<a href="{{ url_for('balance_sheet')}}">Current</a>
+{% for period in periods %}
+<a href="{{ url_for('balance_sheet_historical', period=period[0])}}">{{period[0]}}</a>
+{% endfor %}
+<hr>
+ <h2>
+  Balance Sheet
+ </h2>
+ <h3>
+  As of {{period.strftime("%B %d, %Y")}}
+ </h3>
+ {% for element in elements %}
+  <h4> 
+   {{element.name}}
+  </h4>
     <table border="1">
       <tr>
         <th>
-          Account
         </th>
-        {% for period in periods %}
         <th>
-          {{ period.strftime('%m-%Y') }}
+         Balance
         </th>
-        {% endfor %}
       </tr>
       <tbody>
-        {% for account, periods in accounts.items() %}
-        <tr>
-          <td>
-            {{account}}
-          </td>
-          {% for period, amount in periods.items() %}
-          <td>
-              {{format_satoshis(amount)}}
-          </td>
-          {% endfor %}
+        {% for classification in classifications %}
+         {% if classification.parent == element.name %}
+         <tr>
+         <td>
+        <b>{{classification.name}}</b>
+         </td>
         </tr>
+        {% for account in accounts %}
+        {% if account.parent == classification.name %}
+        <tr>
+        <td>
+          {{account.name}}
+        </td>
+        <td>
+          {% for balance in balances %}
+           {% if balance['accountName'] == account.name %}
+            {% if balance['debitBalance'] > 0 %}
+             {{balance['debitBalance']}}
+            {% elif balance['creditBalance'] > 0 %}
+             {{balance['creditBalance']}}
+            {% else %}
+            0
+            {% endif %}
+           {% endif %}
+          {% endfor %}
+         </td>
+       </tr>
+        {% endif %}
+        {% endfor %}
+         {% endif %}
         {% endfor %}
       </tbody>
     </table>
+   {% endfor %}
 {% endblock %}

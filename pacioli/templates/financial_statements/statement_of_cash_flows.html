@@ -1,32 +1,23 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
   <h1>
-    Income Statement
+    Statement of Cash Flows
   </h1>
     <table border="1">
       <tr>
         <th>
-          Account
+          Cash flows from operating activities
         </th>
-        {% for period in periods %}
+       </tr>
+      <tr>
         <th>
-          {{ period.strftime('%m-%Y') }}
+          Cash flows from investing activities
         </th>
-        {% endfor %}
-      </tr>
-      <tbody>
-        {% for account, periods in accounts.items() %}
-        <tr>
-          <td>
-            {{account}}
-          </td>
-          {% for period, amount in periods.items() %}
-          <td>
-              {{format_satoshis(amount)}}
-          </td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
+       </tr>
+      <tr>
+        <th>
+          Cash flows from financing activities
+        </th>
+       </tr>
     </table>
 {% endblock %}

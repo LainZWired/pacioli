@@ -26,99 +26,82 @@ class Memoranda(db.Model):
     fileType = db.Column(db.Text)
     fileSize = db.Column(BigInteger)
     fileText = db.Column(db.Text)
-    
-    def __init__(self, id, date, fileName, fileType, fileSize, fileText):
-        self.id = id
-        self.date = date
-        self.fileName = fileName
-        self.fileType = fileType
-        self.fileSize = fileSize
-        self.fileText = fileText
-        
-    def __repr__(self):
-        return '<id %r> <name %r>' % (self.id, self.fileName)
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
+    txid = db.Column(db.Text)
     details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
-    
-    def __init__(self, id, memoranda_id, details):
-        self.id = id
-        self.memoranda_id = memoranda_id
-        self.details = details
 
-    def __repr__(self):
-        return '<id %r> <details %r>' % (self.id, self.details)
+class BitcoinTransactions(db.Model):
+    # txid of the bitcoins received
+    txid = db.Column(db.Text, primary_key=True)
+    # output index of the bitcoins received
+    output_index = db.Column(db.Integer, primary_key=True)
+    # address the bitcoins were received with
+    output_address = db.Column(db.Text)
+    amount = db.Column(BigInteger)
+    unspent = db.Column(db.Boolean)
+    last_updated = db.Column(db.DateTime)
+    memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
 
-# There is a one to many relationship between Journal entries and Ledger entries. Every journal entry is composed of at least one debit and at least one credit. Total credits and total debits must always be equal.
-
-class AccountTypes(db.Model):
+class Elements(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
+    classifications = db.relationship('Classifications', backref='element', lazy='select', cascade="save-update, merge, delete")
     
     def __repr__(self):
         return self.name
 
+class Classifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    parent = db.Column(db.Text, db.ForeignKey('elements.name'))
+    accounts = db.relationship('Accounts', backref='classification', lazy='select', cascade="save-update, merge, delete")
+    
+    def __repr__(self):
+        return self.name
+        
 class Accounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
-    parent = db.Column(db.Text, db.ForeignKey('account_types.name'))
+    parent = db.Column(db.Text, db.ForeignKey('classifications.name'))
+    subaccounts = db.relationship('Subaccounts', backref='account', lazy='select', cascade="save-update, merge, delete")
+    
+    def __repr__(self):
+        return self.name
+
+class Subaccounts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    parent = db.Column(db.Text, db.ForeignKey('accounts.name'))
+    ledgerentries = db.relationship('LedgerEntries', backref='subaccount', lazy='select', cascade="save-update, merge, delete")
+    
+    def __repr__(self):
+        return self.name
 
 class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
-
-    def __init__(self, id, memoranda_transactions_id):
-        self.id = id
-        self.memoranda_transactions_id = memoranda_transactions_id
-
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)
+    ledgerentries = db.relationship('LedgerEntries', backref='journalentry', lazy='select', cascade="save-update, merge, delete", order_by="desc(LedgerEntries.tside), desc(LedgerEntries.amount)")
 
 class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
-    entryType = db.Column(db.Text)
-    account = db.Column(db.Text, db.ForeignKey('accounts.name'))
-    amount = db.Column(BigInteger)
-    unit = db.Column(db.Text)
-    rate = db.Column(db.Float)
-    fiat = db.Column(db.Float)
+    tside = db.Column(db.Text)
+    amount = db.Column(db.Numeric)
+    currency = db.Column(db.Text)
+    ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
-    
-    def __init__(self, id, date, entryType, account, amount, unit, rate, fiat, journal_entry_id):
-        self.id = id
-        self.date = date
-        self.entryType = entryType
-        self.account = account
-        self.amount = amount
-        self.unit = unit
-        self.rate = rate
-        self.fiat = fiat
-        self.journal_entry_id = journal_entry_id
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)
 
 class PriceFeeds(db.Model):
     price_id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.BigInteger)
-    price = db.Column(db.Float)
-    volume = db.Column(db.Float)
+    price = db.Column(db.Numeric)
+    volume = db.Column(db.Numeric)
 
-class Prices(db.Model):
+class Rates(db.Model):
     date = db.Column(db.BigInteger, primary_key=True)
     source = db.Column(db.Text)
     currency = db.Column(db.Text)
-    rate = db.Column(db.Integer)
-    
-    def __init__(self, date, source, currency, rate):
-        self.date = date
-        self.source = source
-        self.currency = currency
-        self.rate = rate
-        
-    def __repr__(self):
-        return '<id %r>' % (self.id)
+    rate = db.Column(db.Numeric)
