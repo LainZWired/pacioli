@@ -1,8 +1,11 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('balance_sheet')}}">Current</a>
+<a href="{{ url_for('balance_sheet', currency='satoshis')}}">Satoshis</a>
+<a href="{{ url_for('balance_sheet', currency='usd')}}">USD</a>
+<hr>
+<a href="{{ url_for('balance_sheet', currency=currency)}}">Current</a>
 {% for period in periods %}
-<a href="{{ url_for('balance_sheet_historical', period=period[0])}}">{{period[0]}}</a>
+<a href='{{ url_for("balance_sheet_historical", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 <hr>
  <h2>
@@ -15,6 +18,7 @@
   <h4> 
    {{element.name}}
   </h4>
+  {% if element.balance != 0 %}
     <table border="1">
       <tr>
         <th>
@@ -24,38 +28,70 @@
         </th>
       </tr>
       <tbody>
-        {% for classification in classifications %}
-         {% if classification.parent == element.name %}
+        {% for classification in element.classifications %}
+        {% if classification.balance != 0 %}
          <tr>
          <td>
         <b>{{classification.name}}</b>
          </td>
         </tr>
-        {% for account in accounts %}
-        {% if account.parent == classification.name %}
+        {% for account in classification.accounts %}
+        {% if account.balance != 0 %}
         <tr>
         <td>
-          {{account.name}}
+       <i>{{account.name}}</i>
         </td>
-        <td>
-          {% for balance in balances %}
-           {% if balance['accountName'] == account.name %}
-            {% if balance['debitBalance'] > 0 %}
-             {{balance['debitBalance']}}
-            {% elif balance['creditBalance'] > 0 %}
-             {{balance['creditBalance']}}
-            {% else %}
-            0
-            {% endif %}
-           {% endif %}
-          {% endfor %}
-         </td>
        </tr>
+       {% for subaccount in account.subaccounts %}
+       {% if subaccount.balance != 0 %}
+        <tr>
+         <td>
+          {{subaccount.name}}
+         </td>
+         <td>
+          {% if currency == 'satoshis' %}
+         {{format_satoshis(subaccount.balance)}}
+         {% elif currency == 'usd' %}
+         {{format_usd(subaccount.balance)}}
+         {% endif %}
+         </td>
+        </tr>
         {% endif %}
         {% endfor %}
-         {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+    No {{element.name}}
+    {% endif %}
    {% endfor %}
+   <h4> 
+    Equity
+   </h4>
+   <table border="1">
+     <tr>
+       <th>
+       </th>
+       <th>
+        Balance
+       </th>
+     </tr>
+     <tbody>
+        <tr>
+        <td>
+       <b>Retained Earnings</b>
+        </td>
+        <td>
+         {% if currency == 'satoshis' %}
+        {{format_satoshis(retained_earnings)}}
+        {% elif currency == 'usd' %}
+        {{format_usd(retained_earnings)}}
+        {% endif %}
+        </td>
+       </tr>
+     </tbody>
+   </table>
 {% endblock %}
