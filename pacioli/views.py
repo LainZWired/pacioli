@@ -183,33 +183,16 @@ def delete_memoranda(fileName):
         .query \
         .filter_by(fileName=fileName) \
         .first()
-    transactions = models.MemorandaTransactions \
-        .query \
-        .filter_by(memoranda_id=memo.id) \
-        .all()
-    for transaction in transactions:
-        journal_entry = models.JournalEntries \
-            .query \
-            .filter_by(memoranda_transactions_id=transaction.id) \
-            .first()
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(journal_entry_id = journal_entry.id) \
-            .all()
-        for entry in ledger_entries:
-            db.session.delete(entry)
-            db.session.commit()
-        db.session.delete(journal_entry)
-        db.session.commit()
-        db.session.delete(transaction)
-        db.session.commit()
     db.session.delete(memo)
     db.session.commit()
     return redirect(url_for('upload_csv'))
 
 @app.route('/Bookkeeping/Memoranda/Memos/<fileName>')
 def memo_file(fileName):
-    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+    memo = models.Memoranda \
+        .query \
+        .filter_by(fileName=fileName) \
+        .first()
     fileText = memo.fileText
     document = io.StringIO(fileText)
     reader = csv.reader(document)
@@ -233,11 +216,20 @@ def transactions():
 
 @app.route('/Bookkeeping/Memoranda/Memos/<fileName>/Transactions')
 def memo_transactions(fileName):
-    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+    memo = models.Memoranda \
+        .query \
+        .filter_by(fileName=fileName) \
+        .first()
+    transactions = models.MemorandaTransactions \
+        .query \
+        .filter_by(memoranda_id=memo.id) \
+        .all()
     for transaction in transactions:
         transaction.details = ast.literal_eval(transaction.details)
-        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+        journal_entry = models.JournalEntries \
+            .query \
+            .filter_by(memoranda_transactions_id=transaction.id) \
+            .first()
         transaction.journal_entry_id = journal_entry.id
     return render_template('bookkeeping/memo_transactions.html',
         title = 'Memo',
@@ -455,7 +447,7 @@ def trial_balance_historical(currency, groupby, period):
 
 @app.route('/FinancialStatements')
 def financial_statements():
-    return redirect(url_for('income_statement', currency='satoshis'))
+    return redirect(url_for('income_statement', currency='Satoshis'))
 
 @app.route('/FinancialStatements/IncomeStatement/<currency>')
 def income_statement(currency):

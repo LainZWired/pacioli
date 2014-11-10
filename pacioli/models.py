@@ -26,12 +26,14 @@ class Memoranda(db.Model):
     fileType = db.Column(db.Text)
     fileSize = db.Column(BigInteger)
     fileText = db.Column(db.Text)
+    transactions = db.relationship('MemorandaTransactions',  backref='memo', lazy='select', cascade="save-update, merge, delete")
 
 class MemorandaTransactions(db.Model):
     id = db.Column(db.Text, primary_key=True)
     txid = db.Column(db.Text)
     details = db.Column(JSON)
     memoranda_id = db.Column(db.Text, db.ForeignKey('memoranda.id'))
+    journal_entry = db.relationship('JournalEntries', backref='transaction', lazy='select', cascade="save-update, merge, delete")
 
 class BitcoinTransactions(db.Model):
     # txid of the bitcoins received
@@ -75,6 +77,7 @@ class Subaccounts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, unique=True)
     parent = db.Column(db.Text, db.ForeignKey('accounts.name'))
+    cash = db.Column(db.Text)
     ledgerentries = db.relationship('LedgerEntries', backref='subaccount', lazy='select', cascade="save-update, merge, delete")
     
     def __repr__(self):
@@ -90,9 +93,13 @@ class LedgerEntries(db.Model):
     date = db.Column(db.DateTime)
     tside = db.Column(db.Text)
     amount = db.Column(db.Numeric)
-    currency = db.Column(db.Text)
+    currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
+
+class Currencies(db.Model):
+    currency = db.Column(db.Text, primary_key=True)
+    
 
 class PriceFeeds(db.Model):
     price_id = db.Column(db.Integer, primary_key=True)
@@ -103,5 +110,5 @@ class PriceFeeds(db.Model):
 class Rates(db.Model):
     date = db.Column(db.BigInteger, primary_key=True)
     source = db.Column(db.Text)
-    currency = db.Column(db.Text)
+    currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
     rate = db.Column(db.Numeric)

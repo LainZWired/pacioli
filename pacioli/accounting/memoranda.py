@@ -182,7 +182,7 @@ def process_csv(document, memoranda_id):
             date=date,
             tside="debit", 
             ledger=debit_ledger_account, 
-            amount=amount,currency="satoshis", 
+            amount=amount,currency="Satoshis", 
             journal_entry_id=journal_entry_id)
             
         db.session.add(debit_ledger_entry)
@@ -192,7 +192,7 @@ def process_csv(document, memoranda_id):
             tside="credit", 
             ledger=credit_ledger_account, 
             amount=amount, 
-            currency="satoshis", 
+            currency="Satoshis", 
             journal_entry_id=journal_entry_id)
             
         db.session.add(credit_ledger_entry)

@@ -32,7 +32,7 @@ class Partial:
 def calculate_bitcoin_gains(method):
     usdtransactions = db.session \
         .query(models.LedgerEntries) \
-        .filter(models.LedgerEntries.currency == 'usd') \
+        .filter(models.LedgerEntries.currency == 'USD') \
         .delete()
 
     transactions = db.session \
@@ -40,7 +40,7 @@ def calculate_bitcoin_gains(method):
         .join(models.Subaccounts)\
         .join(models.Accounts)\
         .filter(models.Accounts.name == 'Bitcoins') \
-        .filter(models.LedgerEntries.currency == 'satoshis') \
+        .filter(models.LedgerEntries.currency == 'Satoshis') \
         .order_by(models.LedgerEntries.date.desc())\
         .all()
 
@@ -64,7 +64,7 @@ def calculate_bitcoin_gains(method):
                 tside="debit", 
                 ledger=tx.ledger, 
                 amount=amount,
-                currency="usd", 
+                currency="USD", 
                 journal_entry_id=tx.journal_entry_id)
 
             db.session.add(debit_ledger_entry)
@@ -76,7 +76,7 @@ def calculate_bitcoin_gains(method):
                 tside="credit", 
                 ledger="Revenues", 
                 amount=amount, 
-                currency="usd", 
+                currency="USD", 
                 journal_entry_id=tx.journal_entry_id)
 
             db.session.add(credit_ledger_entry)
@@ -155,7 +155,7 @@ def calculate_bitcoin_gains(method):
                     tside=gain_tside, 
                     ledger=gain_ledger, 
                     amount=gain, 
-                    currency="usd", 
+                    currency="USD", 
                     journal_entry_id=tx.journal_entry_id)
                     
                 db.session.add(gain_ledger_entry)
@@ -167,7 +167,7 @@ def calculate_bitcoin_gains(method):
                 tside="debit", 
                 ledger="Expenses", 
                 amount=salevalue,
-                currency="usd", 
+                currency="USD", 
                 journal_entry_id=tx.journal_entry_id)
                 
             db.session.add(debit_ledger_entry)
@@ -179,7 +179,7 @@ def calculate_bitcoin_gains(method):
                 tside="credit", 
                 ledger=tx.ledger, 
                 amount=costbasis, 
-                currency="usd", 
+                currency="USD", 
                 journal_entry_id=tx.journal_entry_id)
                 
             db.session.add(credit_ledger_entry)

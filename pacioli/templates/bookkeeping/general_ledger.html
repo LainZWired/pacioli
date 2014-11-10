@@ -1,7 +1,7 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('general_ledger', currency='satoshis')}}">Satoshis</a>
-<a href="{{ url_for('general_ledger', currency='usd')}}">USD</a>
+<a href="{{ url_for('general_ledger', currency='Satoshis')}}">Satoshis</a>
+<a href="{{ url_for('general_ledger', currency='USD')}}">USD</a>
 <hr>
 
   <h1>
@@ -35,9 +35,9 @@
             </td>
               {% if 'debit' in account[1][entry] %}
               <td align="right">
-               {% if currency == 'satoshis' %}
+               {% if currency == 'Satoshis' %}
                 {{format_satoshis(account[1][entry]['debit'])}}
-               {% elif currency == 'usd' %}
+               {% elif currency == 'USD' %}
                 {{format_usd(account[1][entry]['debit'])}}
                {% endif %}
               </td>
@@ -48,9 +48,9 @@
               {% endif %}
             {% if 'credit' in account[1][entry] %}
               <td align="right">
-               {% if currency == 'satoshis' %}
+               {% if currency == 'Satoshis' %}
                {{format_satoshis(account[1][entry]['credit'])}}
-               {% elif currency == 'usd' %}
+               {% elif currency == 'USD' %}
                {{format_usd(account[1][entry]['credit'])}}
                {% endif %}
               </td>
@@ -69,9 +69,9 @@
             </td>
             <td align="center">
               {% if account[0]['totalDebit'] %}
-              {% if currency == 'satoshis' %}
+              {% if currency == 'Satoshis' %}
               {{format_satoshis(account[0]['totalDebit'])}}
-              {% elif currency == 'usd' %}
+              {% elif currency == 'USD' %}
               {{format_usd(account[0]['totalDebit'])}}
               {% endif %}
               {% else %}
@@ -80,9 +80,9 @@
             </td>
             <td align="center">
               {% if account[0]['totalCredit'] %}
-              {% if currency == 'satoshis' %}
+              {% if currency == 'Satoshis' %}
               {{format_satoshis(account[0]['totalCredit'])}}
-              {% elif currency == 'usd' %}
+              {% elif currency == 'USD' %}
               {{format_usd(account[0]['totalCredit'])}}
               {% endif %}
               {% else %}
@@ -98,9 +98,9 @@
             </td>
             <td align="center">
               {% if account[0]['debitBalance'] %}
-              {% if currency == 'satoshis' %}
+              {% if currency == 'Satoshis' %}
               {{format_satoshis(account[0]['debitBalance'])}}
-              {% elif currency == 'usd' %}
+              {% elif currency == 'USD' %}
               {{format_usd(account[0]['debitBalance'])}}
               {% endif %}
               {% else %}
@@ -109,9 +109,9 @@
             </td>
             <td align="center">
               {% if account[0]['creditBalance'] %}
-              {% if currency == 'satoshis' %}
+              {% if currency == 'Satoshis' %}
               {{format_satoshis(account[0]['creditBalance'])}}
-              {% elif currency == 'usd' %}
+              {% elif currency == 'USD' %}
               {{format_usd(account[0]['creditBalance'])}}
               {% endif %}
               {% else %}

@@ -1,7 +1,7 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('general_journal', currency='satoshis')}}">Satoshis</a>
-<a href="{{ url_for('general_journal', currency='usd')}}">USD</a>
+<a href="{{ url_for('general_journal', currency='Satoshis')}}">Satoshis</a>
+<a href="{{ url_for('general_journal', currency='USD')}}">USD</a>
 <hr>
 
   <h1>
@@ -38,9 +38,9 @@
           <td align="right">
             {% if ledger_entry.tside == 'debit' %}
               <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
-               {% if ledger_entry.currency == 'satoshis' %}
+               {% if ledger_entry.currency == 'Satoshis' %}
                 {{format_satoshis(ledger_entry.amount)}}
-               {% elif ledger_entry.currency == 'usd' %}
+               {% elif ledger_entry.currency == 'USD' %}
                 {{format_usd(ledger_entry.amount)}}
                {% endif %}
               </a>
@@ -49,9 +49,9 @@
           <td align="right">
             {% if ledger_entry.tside == 'credit' %}
               <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
-                {% if ledger_entry.currency == 'satoshis' %}
+                {% if ledger_entry.currency == 'Satoshis' %}
                  {{format_satoshis(ledger_entry.amount)}}
-                {% elif ledger_entry.currency == 'usd' %}
+                {% elif ledger_entry.currency == 'USD' %}
                  {{format_usd(ledger_entry.amount)}}
                 {% endif %} 
               </a>

@@ -1,7 +1,7 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('income_statement', currency='satoshis')}}">Satoshis</a>
-<a href="{{ url_for('income_statement', currency='usd')}}">USD</a>
+<a href="{{ url_for('income_statement', currency='Satoshis')}}">Satoshis</a>
+<a href="{{ url_for('income_statement', currency='USD')}}">USD</a>
 <hr>
 <a href="{{ url_for('income_statement', currency=currency)}}">Current</a>
 {% for period in periods %}
@@ -37,9 +37,9 @@
               {{subaccount.name}}
           </td>
           <td>
-           {% if currency == 'satoshis' %}
+           {% if currency == 'Satoshis' %}
           {{format_satoshis(subaccount.total)}}
-          {% elif currency == 'usd' %}
+          {% elif currency == 'USD' %}
           {{format_usd(subaccount.total)}}
           {% endif %}
          </tr>
@@ -53,9 +53,9 @@
         Net Income
        </td>
        <td>
-        {% if currency == 'satoshis' %}
+        {% if currency == 'Satoshis' %}
        {{format_satoshis(net_income)}}
-       {% elif currency == 'usd' %}
+       {% elif currency == 'USD' %}
        {{format_usd(net_income)}}
        {% endif %}
        </td>
