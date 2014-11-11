@@ -1,17 +1,20 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('income_statement', currency='Satoshis')}}">Satoshis</a>
-<a href="{{ url_for('income_statement', currency='USD')}}">USD</a>
+<a href="{{ url_for('income_statement', currency='Satoshis', period=period)}}">Satoshis</a> - 
+<a href="{{ url_for('income_statement', currency='USD', period=period)}}">USD</a>
 <hr>
-<a href="{{ url_for('income_statement', currency=currency)}}">Current</a>
+Period 
 {% for period in periods %}
-<a href='{{ url_for("income_statement_historical", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
+- <a href='{{ url_for("income_statement", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 
 <hr>
-  <h1>
+  <h2>
     Income Statement
-  </h1>
+  </h2>
+  <h3>
+   As of {{period.strftime("%B %d, %Y")}}
+  </h3>
     <table border="1">
       <tbody>
         {% for element in elements %}

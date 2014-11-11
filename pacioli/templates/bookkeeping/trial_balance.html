@@ -1,11 +1,11 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('trial_balance', currency='Satoshis')}}">Satoshis</a>
-<a href="{{ url_for('trial_balance', currency='USD')}}">USD</a>
+<a href="{{ url_for('trial_balance', currency='Satoshis', groupby='Monthly', period=period.strftime('%Y-%m'))}}">Satoshis</a> -
+<a href="{{ url_for('trial_balance', currency='USD', groupby='Monthly', period=period.strftime('%Y-%m'))}}">USD</a>
 <hr>
-<a href="{{ url_for('trial_balance', currency=currency)}}">Current</a>
+Period 
 {% for period in periods %}
-<a href="{{ url_for('trial_balance_historical', currency=currency, groupby='Monthly', period=period[0])}}">{{period[0]}}</a>
+- <a href="{{ url_for('trial_balance', currency=currency, groupby='Monthly', period=period.strftime('%Y-%m'))}}">{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 <hr>
   <h2>
@@ -55,6 +55,7 @@
           </td>
         </tr>
       {% endfor %}
+      <tfoot bgcolor="silver">
       <tr>
        <td>
        </td>
@@ -73,5 +74,6 @@
        {% endif %}
        </td>
       </tr>
+     </tfoot>
     </table>
 {% endblock %}

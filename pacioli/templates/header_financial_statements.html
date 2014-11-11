@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<a href="{{url_for('income_statement', currency='Satoshis')}}">Income Statement</a> - 
-<a href="{{url_for('balance_sheet', currency='Satoshis')}}">Balance Sheet</a> - 
+<a href="{{url_for('income_statement', currency='Satoshis', period='Current')}}">Income Statement</a> - 
+<a href="{{url_for('balance_sheet', currency='Satoshis', period='Current')}}">Balance Sheet</a> - 
 <a href="{{url_for('statement_of_cash_flows', currency='Satoshis', period='Current')}}">Statement of Cash Flows</a>
 <hr>
 {% block financial_statements %}{% endblock %}

@@ -3,7 +3,7 @@
 <a href="{{url_for('upload_csv')}}">Memoranda</a> - 
 <a href="{{url_for('general_journal', currency='Satoshis')}}">General Journal</a> - 
 <a href="{{url_for('general_ledger', currency='Satoshis')}}">General Ledger</a> - 
-<a href="{{url_for('trial_balance', currency='Satoshis')}}">Trial Balance</a>
+<a href="{{url_for('trial_balance', currency='Satoshis', groupby = 'Monthly', period='Current')}}">Trial Balance</a>
 <hr>
 {% block bookkeeping %}{% endblock %}
 {% endblock %}
