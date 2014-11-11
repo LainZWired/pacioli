@@ -539,8 +539,6 @@ def balance_sheet(currency, period):
     retained_earnings=retained_earnings,
     period=period_end)
 
-
-    
 @app.route('/FinancialStatements/StatementOfCashFlows/<currency>/<period>')
 def statement_of_cash_flows(currency, period):
     periods = db.session \

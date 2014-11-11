@@ -99,7 +99,6 @@ class LedgerEntries(db.Model):
 
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)
-    
 
 class PriceFeeds(db.Model):
     price_id = db.Column(db.Integer, primary_key=True)
