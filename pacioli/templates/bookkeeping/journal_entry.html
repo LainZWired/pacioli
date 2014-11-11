@@ -1,9 +1,11 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-  <h1>
+  <h2>
     Journal Entry
-  </h1>
-  {% if ledger_entries %}
+  </h2>
+  <h3>
+   Bitcoins
+  </h3>
     <table border="1">
       <tr>
         <th>
@@ -24,7 +26,8 @@
          </a>
         </td>
       </tr>
-      {% for entry in ledger_entries %}
+      {% for entry in journal_entry.ledgerentries %}
+      {% if entry.currency == 'Satoshis' %}
         <tr>
           <td>
             {{entry.date}}
@@ -36,31 +39,90 @@
           </td>
           <td>
             {% if entry.tside == 'debit' %}
-              {% if entry.currency == 'satoshis' %}
+              {% if entry.currency == 'Satoshis' %}
                {{format_satoshis(entry.amount)}}
-              {% elif entry.currency == 'usd' %}
+              {% elif entry.currency == 'USD' %}
                {{format_usd(entry.amount)}}
               {% endif %}
             {% endif %}
           </td>
           <td>
             {% if entry.tside == 'credit' %}
-              {% if entry.currency == 'satoshis' %}
+              {% if entry.currency == 'Satoshis' %}
                {{format_satoshis(entry.amount)}}
-              {% elif entry.currency == 'usd' %}
+              {% elif entry.currency == 'USD' %}
                {{format_usd(entry.amount)}}
               {% endif %}
             {% endif %}
           </td>
         </tr>
+        {% endif %}
+      {% endfor %}
+     </table>
+      <br>
+      
+      <h3>
+       USD
+      </h3>
+      <table border="1">
+        <tr>
+          <th>
+            Date
+          </th>
+          <th>
+            Account
+          </th>
+          <th>
+            Debit
+          </th>
+          <th>
+            Credit
+          </th>
+          <td>
+           <a href="{{ url_for('edit_journal_entry', id=journal_entry.id)}}">
+            Edit
+           </a>
+          </td>
+        </tr>
+      
+      {% for entry in journal_entry.ledgerentries %}
+      {% if entry.currency == 'USD' %}
+        <tr>
+          <td>
+            {{entry.date}}
+          </td>
+          <td>
+            <a href="{{ url_for('ledger', accountName=entry.ledger, groupby='All', currency='Satoshis')}}">
+              {{entry.ledger}}
+            </a>
+          </td>
+          <td>
+            {% if entry.tside == 'debit' %}
+              {% if entry.currency == 'Satoshis' %}
+               {{format_satoshis(entry.amount)}}
+              {% elif entry.currency == 'USD' %}
+               {{format_usd(entry.amount)}}
+              {% endif %}
+            {% endif %}
+          </td>
+          <td>
+            {% if entry.tside == 'credit' %}
+              {% if entry.currency == 'Satoshis' %}
+               {{format_satoshis(entry.amount)}}
+              {% elif entry.currency == 'USD' %}
+               {{format_usd(entry.amount)}}
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
       {% endfor %}
     </table>
-  {% endif %}
   <br>
   {% if transaction %}
-    <h1>
+    <h2>
       Transaction Detail
-    </h1>
+    </h2>
     {% for key, value in transaction.details.items() %}
       {{ key }} : {{ value }}
       <br>

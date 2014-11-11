@@ -1,9 +1,9 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
 <a href="{{ url_for('ledger', accountName=accountName, currency=
-'satoshis', groupby=groupby)}}">Satoshis</a> -
+'Satoshis', groupby=groupby)}}">Satoshis</a> -
 <a href="{{ url_for('ledger', accountName=accountName, currency=
-'usd', groupby=groupby)}}">USD</a>
+'USD', groupby=groupby)}}">USD</a>
 <hr>
   <a href="{{ url_for('ledger', accountName=accountName, currency=currency, groupby='All')}}">
     All</a> - 

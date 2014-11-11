@@ -254,16 +254,27 @@ def general_journal(currency):
 
 @app.route('/Bookkeeping/GeneralJournal/Entry/<id>')
 def journal_entry(id):
-    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
-    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
-    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=id) \
+        .join(models.LedgerEntries) \
+        .order_by(models.LedgerEntries.date.desc()) \
+        .order_by(models.LedgerEntries.tside.desc()) \
+        .one()
+    
+    transaction = models.MemorandaTransactions \
+        .query \
+        .filter_by(id=journal_entry.memoranda_transactions_id) \
+        .first()
+    memo = models.Memoranda \
+        .query \
+        .filter_by(id=transaction.memoranda_id) \
+        .first()
     transaction.details = ast.literal_eval(transaction.details)
-    print(ledger_entries)
+
     return render_template('bookkeeping/journal_entry.html',
         title = 'Journal Entry',
         journal_entry=journal_entry,
-        ledger_entries=ledger_entries,
         transaction=transaction,
         memo=memo)
 
