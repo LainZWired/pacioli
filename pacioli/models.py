@@ -97,6 +97,18 @@ class LedgerEntries(db.Model):
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
+class Customer(db.Model):
+    nick = db.Column(db.Text, primary_key=True)
+    email = db.Column(db.Text)
+    fingerprint = db.Column(db.Text)
+
+class CustomerOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Numeric)
+    credit = db.Column(db.Boolean)
+    shipped = db.Column(db.Boolean)
+    invoiced = db.Column(db.Boolean)
+
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)
 

@@ -21,9 +21,11 @@ from collections import OrderedDict
 from datetime import datetime,date
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
+from flask_wtf import Form
 import sqlalchemy
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
+from wtforms.ext.sqlalchemy.orm import model_form
 from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
@@ -137,7 +139,6 @@ def upload_csv():
 
 @app.route('/Bookkeeping/Memoranda/ExchangeRates')
 def exchange_rates():
-    
     return render_template("bookkeeping/exchange_rates.html")
 
 @app.route('/Bookkeeping/Memoranda/DownloadRates')
@@ -278,17 +279,43 @@ def journal_entry(id):
         transaction=transaction,
         memo=memo)
 
-@app.route('/Bookkeeping/GeneralJournal/<id>/Edit', methods=['POST','GET'])
-def edit_journal_entry(id):
-    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
-    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
-    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
+@app.route('/Bookkeeping/GeneralJournal/<id>/<currency>/Edit', methods=['POST','GET'])
+def edit_journal_entry(id, currency):
+    
+    if request.method == 'POST':
+        print(request.form.copy())
+        return redirect(url_for('edit_journal_entry', id=id, currency=currency))
+    
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=id) \
+        .join(models.LedgerEntries) \
+        .order_by(models.LedgerEntries.date.desc()) \
+        .order_by(models.LedgerEntries.tside.desc()) \
+        .one()
+        
+    MyForm = model_form(models.LedgerEntries, Form, exclude_fk=False)
+    
+    for ledger_entry in journal_entry.ledgerentries:
+        if ledger_entry.currency == currency:
+            ledger_entry.form = MyForm(request.form, ledger_entry)
+            print(ledger_entry.form.tside)
+
+    transaction = models.MemorandaTransactions \
+        .query \
+        .filter_by(id=journal_entry.memoranda_transactions_id) \
+        .first()
+    memo = models.Memoranda \
+        .query \
+        .filter_by(id=transaction.memoranda_id) \
+        .first()
     transaction.details = ast.literal_eval(transaction.details)
+    
     return render_template('bookkeeping/journal_entry_edit.html',
         title = 'Journal Entry',
+        id=id,
+        currency = currency, 
         journal_entry=journal_entry,
-        ledger_entries=ledger_entries,
         transaction=transaction,
         memo=memo)
 
