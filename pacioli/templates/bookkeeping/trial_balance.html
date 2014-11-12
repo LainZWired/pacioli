@@ -1,11 +1,17 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('trial_balance', currency='Satoshis', groupby='Monthly', period=period.strftime('%Y-%m'))}}">Satoshis</a> -
-<a href="{{ url_for('trial_balance', currency='USD', groupby='Monthly', period=period.strftime('%Y-%m'))}}">USD</a>
+<a href="{{ url_for('trial_balance', currency='Satoshis', groupby=groupby, period=period.strftime('%Y-%m'))}}">Satoshis</a> -
+<a href="{{ url_for('trial_balance', currency='USD', groupby=groupby, period=period.strftime('%Y-%m'))}}">USD</a>
+<hr>
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Daily', period='Current')}}">Daily</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Weekly', period='Current')}}">Weekly</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Monthly', period='Current')}}">Monthly</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Annual', period='Current')}}">Annual</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='All', period='Current')}}">All</a>
 <hr>
 Period 
 {% for period in periods %}
-- <a href="{{ url_for('trial_balance', currency=currency, groupby='Monthly', period=period.strftime('%Y-%m'))}}">{{period.strftime("%Y-%m")}}</a>
+- <a href="{{ url_for('trial_balance', currency=currency, groupby=groupby, period=period.strftime('%Y-%m'))}}">{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 <hr>
   <h2>

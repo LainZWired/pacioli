@@ -18,7 +18,7 @@ import ast
 import csv
 import calendar
 from collections import OrderedDict
-from datetime import datetime,date
+from datetime import datetime, date, timedelta
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
 from flask_wtf import Form
@@ -391,32 +391,81 @@ def ledger_page(accountName, currency, groupby, interval):
 
 @app.route('/Bookkeeping/TrialBalance/<currency>/<groupby>/<period>')
 def trial_balance(currency, groupby, period):
+    if groupby == 'Daily':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y-%m-%d")
+        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
+        period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
+        
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .order_by( \
+                func.date_part('year', models.LedgerEntries.date).desc(), \
+                func.date_part('month', models.LedgerEntries.date).desc(), \
+                func.date_part('day', models.LedgerEntries.date).desc()) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .limit(7)
+
+        periods = sorted([date(int(period[0]), int(period[1]), int(period[2])) for period in periods])
+        for period in periods:
+            print(period)
+
+    elif groupby == 'Weekly':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y-%m-%d")
+        period_beg = period - timedelta(days = period.weekday())
+        period_end = period_beg + timedelta(days = 6)
+        period_beg = datetime(period_beg.year, period_beg.month, period_beg.day, 0, 0, 0, 0)
+        period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59, 999999)
+
+    elif groupby == 'Monthly':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y-%m")
+        lastday = calendar.monthrange(period.year, period.month)[1]
+        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
+        period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
+
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .all()
+        periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+        
+    elif groupby == 'Yearly':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y")
+        period_beg = datetime(period.year, 1, 1, 0, 0, 0, 0)
+        period_end = datetime(period.year, 12, 31, 23, 59, 59, 999999)
+    
+    
+    accounts = []
+    totalDebits = 0
+    totalCredits = 0
+    
     accountsQuery = db.session \
         .query(models.LedgerEntries.ledger) \
         .group_by(models.LedgerEntries.ledger) \
         .filter(models.LedgerEntries.currency==currency) \
         .all()
-    periods = db.session \
-        .query(\
-            func.date_part('year', models.LedgerEntries.date), \
-            func.date_part('month', models.LedgerEntries.date)) \
-        .group_by( \
-            func.date_part('year', models.LedgerEntries.date), \
-            func.date_part('month', models.LedgerEntries.date)) \
-        .all()
-    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
     
-    if period == 'Current':
-        period = datetime.now()
-    else:
-        period = datetime.strptime(period, "%Y-%m")
-    lastday = calendar.monthrange(period.year, period.month)[1]
-    year = period.year
-    month = period.month
-    period = datetime(year, month, lastday, 23, 59, 59)
-    accounts = []
-    totalDebits = 0
-    totalCredits = 0
     for accountResult in accountsQuery:
         accountName = accountResult[0]
         ledger_entries = models.LedgerEntries \
@@ -424,8 +473,8 @@ def trial_balance(currency, groupby, period):
             .filter_by(ledger=accountName) \
             .filter_by(currency=currency) \
             .filter( \
-                func.date_part('year', models.LedgerEntries.date)==year, \
-                func.date_part('month', models.LedgerEntries.date)==month) \
+                func.date_part('year', models.LedgerEntries.date)==period.year, \
+                func.date_part('month', models.LedgerEntries.date)==period.month) \
             .order_by(models.LedgerEntries.date) \
             .order_by(models.LedgerEntries.tside.desc()) \
             .all()
@@ -434,6 +483,7 @@ def trial_balance(currency, groupby, period):
         totalCredits += query['creditBalance']
         accounts.append(query)
     return render_template('bookkeeping/trial_balance.html',
+        groupby=groupby,
         currency=currency,
         periods=periods,
         period=period,
