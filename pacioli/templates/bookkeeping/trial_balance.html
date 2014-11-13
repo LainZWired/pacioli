@@ -23,7 +23,7 @@ Period
     <table border="1">
       <tr>
         <th>
-          Account
+          Subaccount
         </th>
         <th>
           Debit
@@ -32,29 +32,29 @@ Period
           Credit
         </th>
       </tr>
-      {% for account in accounts %}
+      {% for subaccount in subaccounts %}
         <tr>
          <td>
-          {{account['accountName']}}
+          {{subaccount[0]}}
          </td>
           <td align="right">
-           {% if account['debitBalance'] > 0 %}
-            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All', currency=currency)}}">
+           {% if subaccount[1] == 'debit' %}
+            <a href="{{ url_for('ledger', accountName=subaccount[0], groupby='All', currency=currency)}}">
              {% if currency == 'Satoshis' %}
-            {{format_satoshis(account['debitBalance'])}}
+            {{format_satoshis(subaccount[2])}}
             {% elif currency == 'USD' %}
-            {{format_usd(account['debitBalance'])}}
+            {{format_usd(subaccount[2])}}
             {% endif %}
             </a>
             {% endif %}
           </td>
           <td align="right">
-           {% if account['creditBalance'] > 0 %}
-            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All', currency=currency)}}">
+           {% if subaccount[1] == 'credit' %}
+            <a href="{{ url_for('ledger', accountName=subaccount.subaccountName, groupby='All', currency=currency)}}">
             {% if currency == 'Satoshis' %}
-           {{format_satoshis(account['creditBalance'])}}
+           {{format_satoshis(subaccount[2])}}
            {% elif currency == 'USD' %}
-           {{format_usd(account['creditBalance'])}}
+           {{format_usd(subaccount[2])}}
            {% endif %}
             </a>
            {% endif %}

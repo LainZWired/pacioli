@@ -391,6 +391,7 @@ def ledger_page(accountName, currency, groupby, interval):
 
 @app.route('/Bookkeeping/TrialBalance/<currency>/<groupby>/<period>')
 def trial_balance(currency, groupby, period):
+    
     if groupby == 'Daily':
         if period == 'Current':
             period = datetime.now()
@@ -434,8 +435,8 @@ def trial_balance(currency, groupby, period):
         else:
             period = datetime.strptime(period, "%Y-%m")
         lastday = calendar.monthrange(period.year, period.month)[1]
-        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
-        period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
+        period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
+        period_end = period = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
 
         periods = db.session \
             .query(\
@@ -447,49 +448,46 @@ def trial_balance(currency, groupby, period):
             .all()
         periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
         
-    elif groupby == 'Yearly':
+    elif groupby == 'Annual':
         if period == 'Current':
             period = datetime.now()
         else:
             period = datetime.strptime(period, "%Y")
         period_beg = datetime(period.year, 1, 1, 0, 0, 0, 0)
         period_end = datetime(period.year, 12, 31, 23, 59, 59, 999999)
+        
+        periods = db.session \
+            .query(func.date_part('year', models.LedgerEntries.date)) \
+            .group_by(func.date_part('year', models.LedgerEntries.date)) \
+            .all()
+        periods = sorted([date(int(period[0]), 12, 31) for period in periods])
     
-    
-    accounts = []
+    print(period_beg)
+    print(period_end)
+    subaccounts = db.session \
+        .query(models.LedgerEntries.ledger, models.LedgerEntries.tside, func.sum(models.LedgerEntries.amount)) \
+        .filter(models.LedgerEntries.currency==currency) \
+        .filter( models.LedgerEntries.date.between(period_beg, period_end)) \
+        .group_by(models.LedgerEntries.ledger) \
+        .group_by(models.LedgerEntries.tside) \
+        .all()
     totalDebits = 0
     totalCredits = 0
-    
-    accountsQuery = db.session \
-        .query(models.LedgerEntries.ledger) \
-        .group_by(models.LedgerEntries.ledger) \
-        .filter(models.LedgerEntries.currency==currency) \
-        .all()
-    
-    for accountResult in accountsQuery:
-        accountName = accountResult[0]
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter( \
-                func.date_part('year', models.LedgerEntries.date)==period.year, \
-                func.date_part('month', models.LedgerEntries.date)==period.month) \
-            .order_by(models.LedgerEntries.date) \
-            .order_by(models.LedgerEntries.tside.desc()) \
-            .all()
-        query = ledgers.foot_account(accountName, ledger_entries, 'All')
-        totalDebits += query['debitBalance']
-        totalCredits += query['creditBalance']
-        accounts.append(query)
+    for subaccount in subaccounts:
+        if subaccount[1] == 'debit':
+            totalDebits += subaccount[2]
+        if subaccount[1] == 'credit':
+            totalCredits += subaccount[2]
+
+    print(subaccounts)
     return render_template('bookkeeping/trial_balance.html',
         groupby=groupby,
         currency=currency,
         periods=periods,
         period=period,
-        accounts=accounts,
         totalDebits=totalDebits,
-        totalCredits=totalCredits)
+        totalCredits=totalCredits,
+        subaccounts=subaccounts)
 
 @app.route('/FinancialStatements')
 def financial_statements():
