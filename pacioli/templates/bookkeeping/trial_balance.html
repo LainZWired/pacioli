@@ -11,15 +11,15 @@
 <hr>
 Period 
 {% for period in periods %}
-- <a href="{{ url_for('trial_balance', currency=currency, groupby=groupby, period=period.strftime('%Y-%m'))}}">{{period.strftime("%Y-%m")}}</a>
+- <a href="{{ url_for('trial_balance', currency=currency, groupby=groupby, period=period)}}">{{period}}</a>
 {% endfor %}
 <hr>
   <h2>
    Unadjusted Trial Balance 
   </h2>
-  <h3>
-   As of {{period.strftime("%B %d, %Y")}}
-  </h3>
+  <h4>
+   {{period_beg.strftime("%A %m/%d/%Y")}} to {{period_end.strftime("%A %m/%d/%Y")}}
+  </h4>
     <table border="1">
       <tr>
         <th>

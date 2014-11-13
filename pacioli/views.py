@@ -17,8 +17,9 @@ import uuid
 import ast
 import csv
 import calendar
-from collections import OrderedDict
+from isoweek import Week
 from datetime import datetime, date, timedelta
+from collections import OrderedDict
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
 from flask_wtf import Form
@@ -393,13 +394,6 @@ def ledger_page(accountName, currency, groupby, interval):
 def trial_balance(currency, groupby, period):
     
     if groupby == 'Daily':
-        if period == 'Current':
-            period = datetime.now()
-        else:
-            period = datetime.strptime(period, "%Y-%m-%d")
-        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
-        period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
-        
         periods = db.session \
             .query(\
                 func.date_part('year', models.LedgerEntries.date), \
@@ -416,18 +410,44 @@ def trial_balance(currency, groupby, period):
             .limit(7)
 
         periods = sorted([date(int(period[0]), int(period[1]), int(period[2])) for period in periods])
-        for period in periods:
-            print(period)
-
-    elif groupby == 'Weekly':
         if period == 'Current':
-            period = datetime.now()
+            period = periods[-1]
         else:
             period = datetime.strptime(period, "%Y-%m-%d")
+        
+        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
+        period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
+        
+        periods = sorted([period.strftime("%Y-%m-%d") for period in periods])
+        
+
+    elif groupby == 'Weekly':
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .order_by( \
+                func.date_part('year', models.LedgerEntries.date).desc(), \
+                func.date_part('week', models.LedgerEntries.date).desc()) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .limit(7)
+        periods = sorted([Week(int(period[0]), int(period[1])).monday() for period in periods])
+        
+        if period == 'Current':
+            period = periods[-1]
+        else:
+            period = period.split('-')
+            period = Week(int(period[0]), int(period[1])+1).monday()
+            print(period)
+            
         period_beg = period - timedelta(days = period.weekday())
         period_end = period_beg + timedelta(days = 6)
         period_beg = datetime(period_beg.year, period_beg.month, period_beg.day, 0, 0, 0, 0)
         period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59, 999999)
+        
+        periods = sorted([period.strftime("%Y-%W") for period in periods])
 
     elif groupby == 'Monthly':
         if period == 'Current':
@@ -480,11 +500,15 @@ def trial_balance(currency, groupby, period):
             totalCredits += subaccount[2]
 
     print(subaccounts)
+    print(period)
+    
     return render_template('bookkeeping/trial_balance.html',
         groupby=groupby,
         currency=currency,
         periods=periods,
         period=period,
+        period_beg=period_beg,
+        period_end=period_end,
         totalDebits=totalDebits,
         totalCredits=totalCredits,
         subaccounts=subaccounts)
