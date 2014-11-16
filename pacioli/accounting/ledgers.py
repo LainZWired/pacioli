@@ -11,160 +11,114 @@
 # 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
+from datetime import datetime, date, timedelta
 from collections import OrderedDict
 from sqlalchemy.sql import func
 from pacioli import db, models
 import pacioli.accounting.rates as rates
 from dateutil import parser
+from operator import itemgetter
+import calendar
+from isoweek import Week
 
-def query_entries(accountName, groupby, currency):
+def get_ledger(subaccount, currency, groupby, period_beg=None, period_end=None):
+    name = subaccount.name
+
+    if period_beg and period_end:
+        period_beg = datetime.strptime(period_beg, "%Y-%m-%d")
+        period_end = datetime.strptime(period_end, "%Y-%m-%d")
+        period_beg = datetime(period_beg.year, period_beg.month, period_beg.day, 0, 0, 0, 0)
+        period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59, 999999)
+
     if groupby == "All":
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .order_by(models.LedgerEntries.date.desc()) \
-            .order_by(models.LedgerEntries.tside.desc()) \
-            .all()
-        account = foot_account(accountName, ledger_entries, 'All')
-    elif groupby == "Daily":
-        debit_ledger_entries = db.session\
+        ledgers_query = db.session \
             .query( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.date_part('day', models.LedgerEntries.date), \
-                func.sum(models.LedgerEntries.amount)) \
-            .filter_by(ledger=accountName)\
-            .filter_by(tside='debit')\
-            .filter_by(currency=currency)\
-            .group_by( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.date_part('day', models.LedgerEntries.date)) \
-            .all()
-        credit_ledger_entries = db.session \
-            .query( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.date_part('day', models.LedgerEntries.date), \
-                func.sum(models.LedgerEntries.amount))\
+                models.LedgerEntries.ledger, \
+                models.LedgerEntries.debit, \
+                models.LedgerEntries.credit, \
+                models.LedgerEntries.date, \
+                models.LedgerEntries.journal_entry_id) \
             .filter_by(currency=currency) \
-            .filter_by(ledger=accountName) \
-            .filter_by(tside='credit') \
-            .group_by( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.date_part('day', models.LedgerEntries.date)) \
+            .filter_by(ledger=name) \
             .all()
-        ledger_entries = {}
-        for entry in debit_ledger_entries:
-            day = datetime.date(int(entry[0]), int(entry[1]), int(entry[2]))
-            if not day in ledger_entries:
-                ledger_entries[day] = {}
-            ledger_entries[day]['debit'] = int(entry[3])
-        for entry in credit_ledger_entries:
-            day = datetime.date(int(entry[0]), int(entry[1]), int(entry[2]))
-            if not day in ledger_entries:
-              ledger_entries[day] = {}
-            ledger_entries[day]['credit'] = int(entry[3])
-        ledger_entries = OrderedDict(sorted(ledger_entries.items()))
-        account = foot_account(accountName, ledger_entries, 'Summary')
-    elif groupby == "Monthly":
-        debit_ledger_entries = db.session \
-            .query( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.sum(models.LedgerEntries.amount)) \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter_by(tside='debit') \
-            .group_by( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date)) \
-            .all()
-        credit_ledger_entries = db.session\
-            .query( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date), \
-                func.sum(models.LedgerEntries.amount)) \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter_by(tside='credit') \
-            .group_by( \
-                func.date_part('year', models.LedgerEntries.date), \
-                func.date_part('month', models.LedgerEntries.date)) \
-            .all()
-        ledger_entries = {}
-        for entry in debit_ledger_entries:
-            month = datetime.date(int(entry[0]), int(entry[1]), 1)
-            if not month in ledger_entries:
-                ledger_entries[month] = {}
-            ledger_entries[month]['debit'] = int(entry[2])
-        for entry in credit_ledger_entries:
-            month = datetime.date(int(entry[0]), int(entry[1]), 1)
-            if not month in ledger_entries:
-                ledger_entries[month] = {}
-            ledger_entries[month]['credit'] = int(entry[2])
-        ledger_entries = OrderedDict(sorted(ledger_entries.items()))
-        account = foot_account(accountName, ledger_entries, 'Summary')
-    return [account, ledger_entries]
 
-def foot_account(accountName, entries, interval):
-  account = {}
-  account['accountName'] = accountName
-  account['totalDebit'] = 0
-  account['totalCredit'] = 0
-  account['debitBalance'] = 0
-  account['creditBalance'] = 0
-  if interval == 'All':
-    for entry in entries:
-      if entry.tside == 'debit' and entry.ledger == account['accountName']:
-        account['totalDebit'] += entry.amount
-      elif entry.tside == 'credit' and entry.ledger == account['accountName']:
-        account['totalCredit'] += entry.amount
-    if account['totalDebit'] > account['totalCredit']:
-      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
-    elif account['totalDebit'] < account['totalCredit']:
-      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
-    return account
-  elif interval == 'Summary':
-    for entry in entries:
-      if 'debit' in entries[entry]:
-        account['totalDebit'] += entries[entry]['debit']
-      if 'credit' in entries[entry]:
-        account['totalCredit'] += entries[entry]['credit']
-    if account['totalDebit'] > account['totalCredit']:
-      account['debitBalance'] = account['totalDebit'] - account['totalCredit']
-    elif account['totalDebit'] < account['totalCredit']:
-      account['creditBalance'] = account['totalCredit'] - account['totalDebit']
-    return account
+    elif groupby == "Daily":
+        ledgers_query = db.session \
+            .query( \
+                models.LedgerEntries.ledger, \
+                func.sum(models.LedgerEntries.debit), \
+                func.sum(models.LedgerEntries.credit), \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .filter_by(currency=currency) \
+            .filter_by(ledger=name) \
+            .group_by( \
+                models.LedgerEntries.ledger, \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .all()
+
+    elif groupby == "Weekly":
+        ledgers_query = db.session \
+            .query( \
+                models.LedgerEntries.ledger, \
+                func.sum(models.LedgerEntries.debit), \
+                func.sum(models.LedgerEntries.credit), \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .filter_by(currency=currency) \
+            .filter_by(ledger=name) \
+            .group_by( \
+                models.LedgerEntries.ledger, \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .all()
+
+    elif groupby == "Monthly":
+        ledgers_query = db.session \
+            .query( \
+                models.LedgerEntries.ledger, \
+                func.sum(models.LedgerEntries.debit), \
+                func.sum(models.LedgerEntries.credit), \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .filter_by(currency=currency) \
+            .filter_by(ledger=name) \
+            .group_by( \
+                models.LedgerEntries.ledger, \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .all()
     
-def get_balance(accountName, querydate):
-    if type(querydate) is not datetime.datetime:
-        querydate = parser.parse(querydate)
-    transactions = query = db.session.query(\
-      models.LedgerEntries.amount,\
-      models.LedgerEntries.date,\
-      models.LedgerEntries.tside).\
-      filter(models.LedgerEntries.ledger_name==accountName, models.LedgerEntries.date <= querydate).\
-      all()
-    balance = 0
-    for transaction in transactions:
-        if transaction[2] == 'debit':
-            balance += transaction[0]
-        elif transaction[2] == 'credit':
-            balance -= transaction[0]
-    if balance > 0:
-        debitBalance = balance
-        creditBalance = 0
-    elif balance < 0:
-        debitBalance = 0
-        creditBalance = balance
-    else:
-        debitBalance = 0
-        creditBalance = 0
-    balance = {'accountName': accountName,\
-     'debitBalance' : debitBalance,\
-     'creditBalance' : creditBalance}
-    return balance
+    subaccount.ledgers = []
+    subaccount.totalDebits = 0
+    subaccount.totalCredits = 0
+    subaccount.debitBalance = 0
+    subaccount.creditBalance = 0
+
+    for result in ledgers_query:
+        if result[0] == subaccount.name:
+            if groupby == "All":
+                ledger = result
+            elif groupby == "Daily":
+                ledger = [result[0], result[1], result[2], datetime(int(result[3]), int(result[4]), int(result[5]), 23, 59, 59, 999999)]
+            elif groupby == "Weekly":
+                ledger = [result[0], result[1], result[2],  datetime.combine(Week(int(result[3]), int(result[4])).monday(),datetime.min.time())]
+            elif groupby == "Monthly":
+                lastday = calendar.monthrange(int(result[3]), int(result[4]))[1]
+                ledger = [result[0], result[1], result[2], datetime(int(result[3]), int(result[4]), lastday, 23, 59, 59, 999999)]
+            if period_beg and period_end:
+                if period_beg <= ledger[3] <= period_end:
+                    subaccount.ledgers.append(ledger)
+            else:
+                subaccount.ledgers.append(ledger)
+            subaccount.totalDebits += ledger[1]
+            subaccount.totalCredits += ledger[2]
+    subaccount.ledgers = sorted(subaccount.ledgers, key=itemgetter(3))
+    if subaccount.totalDebits > subaccount.totalCredits:
+        subaccount.debitBalance = subaccount.totalDebits - subaccount.totalCredits
+    elif subaccount.totalDebits < subaccount.totalCredits:
+        subaccount.creditBalance = subaccount.totalCredits - subaccount.totalDebits
+    return subaccount

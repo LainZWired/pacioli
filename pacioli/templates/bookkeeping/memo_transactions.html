@@ -5,8 +5,8 @@
     Memo Transactions
   </h1>
   <p>
-    {% if fileName %}
-    <a href="{{ url_for('memo_file', fileName = fileName)}}">
+    {% if filename %}
+    <a href="{{ url_for('memo_file', filename = filename)}}">
       See Original File
     </a>
     {% endif %}

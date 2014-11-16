@@ -14,6 +14,9 @@
 from flask import Flask
 from flask.ext.babel import Babel
 from flask.ext.sqlalchemy import SQLAlchemy
+import calendar
+from isoweek import Week
+from datetime import datetime, date, timedelta
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -26,6 +29,52 @@ def utility_processor():
         return u'{:,}'.format(abs(amount)/100000000)
     def format_usd(amount):
         return u"${:,.2f}".format(abs(amount))
-    return dict(format_usd=format_usd, format_satoshis=format_satoshis)
+    def format_date(groupby, date):
+        if groupby == "All":
+            return date.strftime('%Y-%m-%d %X')                
+        elif groupby == "Daily":
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Weekly":
+            return date.strftime("%Y-%W")
+        elif groupby == "Monthly":
+            return date.strftime('%Y-%m')
+        elif groupby == "Annual":
+            return date.strftime('%Y')
+
+    def beg(groupby, date):
+        if groupby == "Daily":
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Weekly":
+            date = datetime(date.year, date.month, date.day, 0, 0, 0, 0)
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Monthly":
+            date = datetime(date.year, date.month, 1, 0, 0, 0, 0)
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Annual":
+            date = datetime.strptime(date, "%Y")
+            date = datetime(date.year, 1, 1, 0, 0, 0, 0)
+            return date.strftime('%Y-%m-%d')
+            
+    def end(groupby, date):
+        if groupby == "Daily":
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Weekly":
+            date = datetime(date.year, date.month, date.day,  23, 59, 59, 999999)
+            date = date + timedelta(days = 6)
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Monthly":
+            lastday = calendar.monthrange(date.year, date.month)[1]
+            date = datetime(date.year, date.month, lastday, 23, 59, 59, 999999)
+            return date.strftime('%Y-%m-%d')
+        elif groupby == "Annual":
+            date = datetime.strptime(date, "%Y")
+            date = datetime(date.year, 12, 31, 23, 59, 59, 999999)
+            return date.strftime('%Y-%m-%d')
+            
+    return dict(format_usd=format_usd, 
+                format_satoshis=format_satoshis,
+                format_date=format_date,
+                beg=beg,
+                end=end)
 
 from pacioli import views, models, forms

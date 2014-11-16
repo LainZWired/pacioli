@@ -19,12 +19,11 @@ import pacioli.accounting.rates as rates
 db.drop_all()
 db.create_all()
 
-assets_entry =  models.Elements(name = 'Assets')
-db.session.add(assets_entry)
-liabilities_entry =  models.Elements(name = 'Liabilities')
-db.session.add(liabilities_entry)
-equity_entry =  models.Elements(name = 'Equity')
-db.session.add(equity_entry)
+db.session.add(models.Elements(name = 'Assets'))
+db.session.add(models.Elements(name = 'Liabilities'))
+db.session.add(models.Elements(name = 'Revenues'))
+db.session.add(models.Elements(name = 'Expenses'))
+db.session.add(models.Elements(name = 'Capital'))
 db.session.commit()
 
 assets_entry =  models.Classifications(name = 'Current Assets', parent = 'Assets')

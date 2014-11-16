@@ -32,27 +32,27 @@
             {% endif %}
            </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=ledger_entry.ledger, currency=currency, groupby='All')}}">
+            <a href="{{ url_for('ledger', ledger_name =ledger_entry.ledger, currency=currency, groupby='All')}}">
             {{ledger_entry.ledger}}
           </td>
           <td align="right">
-            {% if ledger_entry.tside == 'debit' %}
+            {% if ledger_entry.debit > 0 %}
               <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
                {% if ledger_entry.currency == 'Satoshis' %}
-                {{format_satoshis(ledger_entry.amount)}}
+                {{format_satoshis(ledger_entry.debit)}}
                {% elif ledger_entry.currency == 'USD' %}
-                {{format_usd(ledger_entry.amount)}}
+                {{format_usd(ledger_entry.debit)}}
                {% endif %}
               </a>
             {% endif %}
           </td>
           <td align="right">
-            {% if ledger_entry.tside == 'credit' %}
+            {% if ledger_entry.credit > 0 %}
               <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
                 {% if ledger_entry.currency == 'Satoshis' %}
-                 {{format_satoshis(ledger_entry.amount)}}
+                 {{format_satoshis(ledger_entry.credit)}}
                 {% elif ledger_entry.currency == 'USD' %}
-                 {{format_usd(ledger_entry.amount)}}
+                 {{format_usd(ledger_entry.credit)}}
                 {% endif %} 
               </a>
             {% endif %}

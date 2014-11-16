@@ -46,15 +46,15 @@
     {{memo.date}}
   </td>
   <td>
-    <a href="{{ url_for('memo_file', fileName = memo.fileName)}}">
-      {{memo.fileName}}
+    <a href="{{ url_for('memo_file', filename = memo.filename)}}">
+      {{memo.filename}}
     </a>
   </td>
   <td>
-    {{memo.fileSize}}
+    {{memo.filesize}}
   </td>
   <td>
-    <a  href="{{ url_for('delete_memoranda', fileName = memo.fileName)}}">
+    <a  href="{{ url_for('delete_memoranda', filename = memo.filename)}}">
       Delete
     </a>
   </td>

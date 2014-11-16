@@ -28,12 +28,12 @@
             {{memo.date}}
           </td>
           <td>
-            <a href="{{ url_for('memo_file', fileName = memo.fileName)}}">
-              {{memo.fileName}}
+            <a href="{{ url_for('memo_file', filename = memo.filename)}}">
+              {{memo.filename}}
             </a>
           </td>
           <td align="center">
-            <a href="{{ url_for('memo_transactions', fileName = memo.fileName)}}">
+            <a href="{{ url_for('memo_transactions', filename = memo.filename)}}">
               {{memo.count}}
             </a>
           </td>

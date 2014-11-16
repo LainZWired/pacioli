@@ -90,8 +90,8 @@
   <br>
   {% if memo %}
     Memo file: 
-    <a href="{{ url_for('memo_file', fileName = memo.fileName)}}">
-      {{memo.fileName}}
+    <a href="{{ url_for('memo_file', filename = memo.filename)}}">
+      {{memo.filename}}
     </a>
   {% endif %}
 {% endblock %}

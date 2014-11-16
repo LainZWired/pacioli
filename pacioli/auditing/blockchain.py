@@ -1,7 +1,6 @@
 # Experiments going on here
 
 from bitcoinrpc.authproxy import AuthServiceProxy
-import json
 
 access = AuthServiceProxy("http://rpcusername:rpcpassword@127.0.0.1:8332")
 

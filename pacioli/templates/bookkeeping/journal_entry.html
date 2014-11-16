@@ -33,25 +33,25 @@
             {{entry.date}}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.ledger, groupby='All', currency='Satoshis')}}">
+            <a href="{{ url_for('ledger', ledger_name=entry.ledger, groupby='All', currency='Satoshis')}}">
               {{entry.ledger}}
             </a>
           </td>
           <td>
-            {% if entry.tside == 'debit' %}
+            {% if entry.debit > 0 %}
               {% if entry.currency == 'Satoshis' %}
-               {{format_satoshis(entry.amount)}}
+               {{format_satoshis(entry.debit)}}
               {% elif entry.currency == 'USD' %}
-               {{format_usd(entry.amount)}}
+               {{format_usd(entry.debit)}}
               {% endif %}
             {% endif %}
           </td>
           <td>
-            {% if entry.tside == 'credit' %}
+            {% if entry.credit > 0 %}
               {% if entry.currency == 'Satoshis' %}
-               {{format_satoshis(entry.amount)}}
+               {{format_satoshis(entry.credit)}}
               {% elif entry.currency == 'USD' %}
-               {{format_usd(entry.amount)}}
+               {{format_usd(entry.credit)}}
               {% endif %}
             {% endif %}
           </td>
@@ -97,20 +97,20 @@
             </a>
           </td>
           <td>
-            {% if entry.tside == 'debit' %}
+            {% if entry.debit > 0  %}
               {% if entry.currency == 'Satoshis' %}
-               {{format_satoshis(entry.amount)}}
+               {{format_satoshis(entry.debit)}}
               {% elif entry.currency == 'USD' %}
-               {{format_usd(entry.amount)}}
+               {{format_usd(entry.debit)}}
               {% endif %}
             {% endif %}
           </td>
           <td>
-            {% if entry.tside == 'credit' %}
+            {% if entry.credit > 0 %}
               {% if entry.currency == 'Satoshis' %}
-               {{format_satoshis(entry.amount)}}
+               {{format_satoshis(entry.credit)}}
               {% elif entry.currency == 'USD' %}
-               {{format_usd(entry.amount)}}
+               {{format_usd(entry.credit)}}
               {% endif %}
             {% endif %}
           </td>
@@ -131,8 +131,8 @@
   <br>
   {% if memo %}
     Memo file: 
-    <a href="{{ url_for('memo_file', fileName = memo.fileName)}}">
-      {{memo.fileName}}
+    <a href="{{ url_for('memo_file', filename = memo.filename)}}">
+      {{memo.filename}}
     </a>
   {% endif %}
 {% endblock %}
