@@ -290,15 +290,17 @@ def edit_journal_entry(id, currency):
         .filter_by(id=id) \
         .join(models.LedgerEntries) \
         .order_by(models.LedgerEntries.date.desc()) \
-        .order_by(models.LedgerEntries.tside.desc()) \
+        .order_by(models.LedgerEntries.debit.desc()) \
         .one()
-        
-    MyForm = model_form(models.LedgerEntries, Form, exclude_fk=False)
-    
+            
     for ledger_entry in journal_entry.ledgerentries:
         if ledger_entry.currency == currency:
-            ledger_entry.form = MyForm(request.form, ledger_entry)
-            print(ledger_entry.form.tside)
+            ledger_entry.form = forms.LedgerEntry()
+            ledger_entry.form.date.data = ledger_entry.date
+            ledger_entry.form.debit.data = ledger_entry.debit
+            ledger_entry.form.credit.data = ledger_entry.credit
+            ledger_entry.form.ledger.data = ledger_entry.subaccount
+
 
     transaction = models.MemorandaTransactions \
         .query \

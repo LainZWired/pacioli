@@ -92,7 +92,7 @@
             {{entry.date}}
           </td>
           <td>
-            <a href="{{ url_for('ledger', accountName=entry.ledger, groupby='All', currency='USD')}}">
+            <a href="{{ url_for('ledger', ledger_name=entry.ledger, groupby='All', currency='USD')}}">
               {{entry.ledger}}
             </a>
           </td>

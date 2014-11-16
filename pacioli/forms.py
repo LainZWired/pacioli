@@ -13,13 +13,13 @@
 
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, \
-SubmitField, SelectField, FloatField, validators, BooleanField
+SubmitField, SelectField, FloatField, validators, BooleanField, DateTimeField, DecimalField
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms.validators import Required, Length
 from wtforms.ext.sqlalchemy.orm import model_form
 from sqlalchemy.sql import func 
 from pacioli import models, db
-from pacioli.models import Elements, Classifications, Accounts, LedgerEntries
+from pacioli.models import Elements, Classifications, Accounts, Subaccounts, LedgerEntries
 
 def available_classification_parents():
     return Elements.query
@@ -29,6 +29,9 @@ def available_account_parents():
 
 def available_subaccount_parents():
     return Accounts.query
+
+def available_subaccounts():
+    return Subaccounts.query
 
 class NewClassification(Form):
     classification = TextField("Classification Name")
@@ -41,3 +44,9 @@ class NewAccount(Form):
 class NewSubAccount(Form):
     subaccount = TextField("Sub-Account Name")
     subaccountparent = QuerySelectField(query_factory=available_subaccount_parents, allow_blank=False)
+
+class LedgerEntry(Form):
+    date = DateTimeField("Ledger Entry Date")
+    debit = DecimalField("Debit Amount")
+    credit = DecimalField("Credit Amount")
+    ledger = QuerySelectField(query_factory=available_subaccounts, allow_blank=False)
