@@ -59,7 +59,7 @@
       
   {% for entry in journal_entry.ledgerentries %}
   {% if entry.currency == currency %}
-  <form  action="{{ url_for('edit_journal_entry', id=id, currency=currency)}}" method="POST">
+  <form  action="{{ url_for('edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency, ledger_entry_id=entry.id)}}" method="POST">
     Date: {{ entry.form.date() }}
     <br>
     Debit: {{ entry.form.debit() }}
@@ -72,11 +72,7 @@
   </form>
   {% endif %}
   {% endfor %}
-     
-     
-  <form  action="{{ url_for('edit_journal_entry', id=id, currency=currency)}}" method="POST">
-  <input type=submit value="Commit Journal Entry">
-</form>
+
   <br>
   {% if transaction %}
     <h2>

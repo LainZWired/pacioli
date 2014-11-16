@@ -278,16 +278,27 @@ def journal_entry(id):
         transaction=transaction,
         memo=memo)
 
-@app.route('/Bookkeeping/GeneralJournal/<id>/<currency>/Edit', methods=['POST','GET'])
-def edit_journal_entry(id, currency):
+@app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit', methods=['POST','GET'], defaults={'ledger_entry_id': None})
+@app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit/<ledger_entry_id>', methods=['POST','GET'])
+def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
     
     if request.method == 'POST':
-        print(request.form.copy())
-        return redirect(url_for('edit_journal_entry', id=id, currency=currency))
+        if ledger_entry_id:
+            print(request.form.copy())
+            form = request.form.copy().to_dict()
+            ledger_entry = models.LedgerEntries.query.filter_by(id=ledger_entry_id).one()
+            subaccount = models.Subaccounts.query.filter_by(id=form['ledger']).one()
+            ledger_entry.date = form['date']
+            ledger_entry.debit = form['debit']
+            ledger_entry.credit = form['credit']
+            ledger_entry.ledger = subaccount.name
+            print(form)
+            db.session.commit()
+        return redirect(url_for('edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency))
     
     journal_entry = models.JournalEntries \
         .query \
-        .filter_by(id=id) \
+        .filter_by(id=journal_entry_id) \
         .join(models.LedgerEntries) \
         .order_by(models.LedgerEntries.date.desc()) \
         .order_by(models.LedgerEntries.debit.desc()) \
@@ -296,6 +307,7 @@ def edit_journal_entry(id, currency):
     for ledger_entry in journal_entry.ledgerentries:
         if ledger_entry.currency == currency:
             ledger_entry.form = forms.LedgerEntry()
+            ledger_entry.form.date.id = ledger_entry.id
             ledger_entry.form.date.data = ledger_entry.date
             ledger_entry.form.debit.data = ledger_entry.debit
             ledger_entry.form.credit.data = ledger_entry.credit
@@ -314,7 +326,7 @@ def edit_journal_entry(id, currency):
     
     return render_template('bookkeeping/journal_entry_edit.html',
         title = 'Journal Entry',
-        id=id,
+        journal_entry_id=journal_entry_id,
         currency = currency, 
         journal_entry=journal_entry,
         transaction=transaction,

@@ -46,6 +46,7 @@ class NewSubAccount(Form):
     subaccountparent = QuerySelectField(query_factory=available_subaccount_parents, allow_blank=False)
 
 class LedgerEntry(Form):
+    id = TextField('id')
     date = DateTimeField("Ledger Entry Date")
     debit = DecimalField("Debit Amount")
     credit = DecimalField("Credit Amount")
