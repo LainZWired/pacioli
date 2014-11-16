@@ -1,7 +1,7 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('income_statement', currency='Satoshis', period=period)}}">Satoshis</a> - 
-<a href="{{ url_for('income_statement', currency='USD', period=period)}}">USD</a>
+<a href="{{ url_for('income_statement', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a> - 
+<a href="{{ url_for('income_statement', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
 <hr>
 Period 
 {% for period in periods %}

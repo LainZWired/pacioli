@@ -330,7 +330,7 @@ def ledger(ledger_name, currency, groupby, period_beg, period_end):
     for subaccount in subaccounts:
         subaccount = ledgers.get_ledger(subaccount, currency, groupby, period_beg, period_end)
     
-    return render_template('bookkeeping/general_ledger.html',
+    return render_template('bookkeeping/ledger.html',
         ledger_name = ledger_name,
         currency = currency,
         groupby = groupby,
@@ -518,12 +518,10 @@ def income_statement(currency, period):
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
                     for ledger_entry in subaccount.ledgerentries:
                         if ledger_entry.currency == currency:
-                            if ledger_entry.tside == 'credit':
-                                net_income += ledger_entry.amount
-                                subaccount.total += ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                net_income -= ledger_entry.amount
-                                subaccount.total -= ledger_entry.amount
+                            net_income += ledger_entry.credit
+                            subaccount.total += ledger_entry.credit
+                            net_income -= ledger_entry.debit
+                            subaccount.total -= ledger_entry.debit
     return render_template('financial_statements/income_statement.html',
             title = 'Income Statement',
             periods = periods,
@@ -574,19 +572,16 @@ def balance_sheet(currency, period):
                 for subaccount in account.subaccounts:
                     subaccount.balance = 0
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            
-                            if ledger_entry.tside == 'credit':
-                                element.balance -= ledger_entry.amount
-                                classification.balance -= ledger_entry.amount
-                                account.balance -= ledger_entry.amount
-                                subaccount.balance -= ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                element.balance += ledger_entry.amount
-                                classification.balance += ledger_entry.amount
-                                account.balance += ledger_entry.amount
-                                subaccount.balance += ledger_entry.amount
+                    for entry in subaccount.ledgerentries:
+                        if entry.currency == currency:
+                            element.balance -= entry.credit
+                            classification.balance -= entry.credit
+                            account.balance -= entry.credit
+                            subaccount.balance -= entry.credit
+                            element.balance += entry.debit
+                            classification.balance += entry.debit
+                            account.balance += entry.debit
+                            subaccount.balance += entry.debit
         if element.name == 'Equity':
             retained_earnings =  -element.balance
             print(retained_earnings)
@@ -635,17 +630,14 @@ def statement_of_cash_flows(currency, period):
                 for subaccount in account.subaccounts:
                     subaccount.balance = 0
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            
-                            if ledger_entry.tside == 'credit':
-                                classification.balance -= ledger_entry.amount
-                                account.balance -= ledger_entry.amount
-                                subaccount.balance -= ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                classification.balance += ledger_entry.amount
-                                account.balance += ledger_entry.amount
-                                subaccount.balance += ledger_entry.amount
+                    for entry in subaccount.ledgerentries:
+                        if entry.currency == currency:
+                            classification.balance -= entry.credit
+                            account.balance -= entry.credit
+                            subaccount.balance -= entry.credit
+                            classification.balance += entry.debit
+                            account.balance += entry.debit
+                            subaccount.balance += entry.debit
     return render_template('financial_statements/statement_of_cash_flows.html',
             period = period,
             periods = periods,
