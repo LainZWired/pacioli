@@ -25,7 +25,7 @@ from dateutil import parser
 
 from bitcoinrpc.authproxy import AuthServiceProxy
 
-access = AuthServiceProxy("http://rpcusername:rpcpassword@127.0.0.1:8332")
+access = AuthServiceProxy("http://%s:%s@127.0.0.1:8332" % (app.config['RPCUSERNAME'], app.config['RPCPASSWORD']))
 
 def allowed_file(filename):
   return '.' in filename and \
