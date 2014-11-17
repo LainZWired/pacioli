@@ -1,23 +1,28 @@
 {% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('trial_balance', currency='satoshis')}}">Satoshis</a>
-<a href="{{ url_for('trial_balance', currency='usd')}}">USD</a>
+<a href="{{ url_for('trial_balance', currency='Satoshis', groupby=groupby, period=period)}}">Satoshis</a> -
+<a href="{{ url_for('trial_balance', currency='USD', groupby=groupby, period=period)}}">USD</a>
 <hr>
-<a href="{{ url_for('trial_balance', currency=currency)}}">Current</a>
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Daily', period='Current')}}">Daily</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Weekly', period='Current')}}">Weekly</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Monthly', period='Current')}}">Monthly</a> -
+<a href="{{ url_for('trial_balance', currency=currency, groupby='Annual', period='Current')}}">Annual</a>
+<hr>
+Period 
 {% for period in periods %}
-<a href="{{ url_for('trial_balance_historical', currency=currency, groupby='Monthly', period=period[0])}}">{{period[0]}}</a>
+- <a href="{{ url_for('trial_balance', currency=currency, groupby=groupby, period=period)}}">{{period}}</a>
 {% endfor %}
 <hr>
   <h2>
    Unadjusted Trial Balance 
   </h2>
-  <h3>
-   As of {{period.strftime("%B %d, %Y")}}
-  </h3>
+  <h4>
+   {{period_beg.strftime("%A %m/%d/%Y")}} to {{period_end.strftime("%A %m/%d/%Y")}}
+  </h4>
     <table border="1">
       <tr>
         <th>
-          Account
+          Subaccount
         </th>
         <th>
           Debit
@@ -26,52 +31,54 @@
           Credit
         </th>
       </tr>
-      {% for account in accounts %}
+      {% for subaccount in subaccounts %}
         <tr>
          <td>
-          {{account['accountName']}}
+          {{subaccount[0]}}
          </td>
           <td align="right">
-           {% if account['debitBalance'] > 0 %}
-            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All', currency=currency)}}">
-             {% if currency == 'satoshis' %}
-            {{format_satoshis(account['debitBalance'])}}
-            {% elif currency == 'usd' %}
-            {{format_usd(account['debitBalance'])}}
+           {% if subaccount[1] > 0 %}
+            <a href="{{ url_for('ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
+             {% if currency == 'Satoshis' %}
+            {{format_satoshis(subaccount[1])}}
+            {% elif currency == 'USD' %}
+            {{format_usd(subaccount[1])}}
             {% endif %}
             </a>
             {% endif %}
           </td>
           <td align="right">
-           {% if account['creditBalance'] > 0 %}
-            <a href="{{ url_for('ledger', accountName=account.accountName, groupby='All', currency=currency)}}">
-            {% if currency == 'satoshis' %}
-           {{format_satoshis(account['creditBalance'])}}
-           {% elif currency == 'usd' %}
-           {{format_usd(account['creditBalance'])}}
+           {% if subaccount[2] > 0 %}
+            <a href="{{ url_for('ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
+            {% if currency == 'Satoshis' %}
+           {{format_satoshis(subaccount[2])}}
+           {% elif currency == 'USD' %}
+           {{format_usd(subaccount[2])}}
            {% endif %}
             </a>
            {% endif %}
           </td>
         </tr>
       {% endfor %}
+      <tfoot bgcolor="silver">
       <tr>
        <td>
        </td>
        <td>
-        {% if currency == 'satoshis' %}
+        {% if currency == 'Satoshis' %}
        {{format_satoshis(totalDebits)}}
-       {% elif currency == 'usd' %}
+       {% elif currency == 'USD' %}
        {{format_usd(totalDebits)}}
        {% endif %}
        </td>
        <td>
-        {% if currency == 'satoshis' %}
+        {% if currency == 'Satoshis' %}
        {{format_satoshis(totalCredits)}}
-       {% elif currency == 'usd' %}
+       {% elif currency == 'USD' %}
        {{format_usd(totalCredits)}}
        {% endif %}
        </td>
       </tr>
+     </tfoot>
     </table>
 {% endblock %}

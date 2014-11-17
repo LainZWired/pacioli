@@ -1,7 +1,7 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('statement_of_cash_flows', currency='satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a>
-<a href="{{ url_for('statement_of_cash_flows', currency='usd', period=period.strftime('%Y-%m'))}}">USD</a>
+<a href="{{ url_for('statement_of_cash_flows', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a>
+<a href="{{ url_for('statement_of_cash_flows', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
 <hr>
 <a href="{{ url_for('statement_of_cash_flows', currency=currency, period='Current')}}">Current</a>
 {% for period in periods %}
@@ -32,9 +32,9 @@
          {{classification.name}}
         </td>
         <td>
-         {% if currency == 'satoshis' %}
+         {% if currency == 'Satoshis' %}
         {{format_satoshis(classification.balance)}}
-        {% elif currency == 'usd' %}
+        {% elif currency == 'USD' %}
         {{format_usd(classification.balance)}}
         {% endif %}
         </td>
@@ -57,9 +57,9 @@
          {{classification.name}}
         </td>
         <td>
-        {% if currency == 'satoshis' %}
+        {% if currency == 'Satoshis' %}
        {{format_satoshis(classification.balance)}}
-       {% elif currency == 'usd' %}
+       {% elif currency == 'USD' %}
        {{format_usd(classification.balance)}}
        {% endif %}
         </td>

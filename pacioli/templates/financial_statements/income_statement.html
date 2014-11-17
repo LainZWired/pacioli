@@ -1,17 +1,20 @@
 {% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('income_statement', currency='satoshis')}}">Satoshis</a>
-<a href="{{ url_for('income_statement', currency='usd')}}">USD</a>
+<a href="{{ url_for('income_statement', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a> - 
+<a href="{{ url_for('income_statement', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
 <hr>
-<a href="{{ url_for('income_statement', currency=currency)}}">Current</a>
+Period 
 {% for period in periods %}
-<a href='{{ url_for("income_statement_historical", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
+- <a href='{{ url_for("income_statement", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 
 <hr>
-  <h1>
+  <h2>
     Income Statement
-  </h1>
+  </h2>
+  <h3>
+   As of {{period.strftime("%B %d, %Y")}}
+  </h3>
     <table border="1">
       <tbody>
         {% for element in elements %}
@@ -37,9 +40,9 @@
               {{subaccount.name}}
           </td>
           <td>
-           {% if currency == 'satoshis' %}
+           {% if currency == 'Satoshis' %}
           {{format_satoshis(subaccount.total)}}
-          {% elif currency == 'usd' %}
+          {% elif currency == 'USD' %}
           {{format_usd(subaccount.total)}}
           {% endif %}
          </tr>
@@ -53,9 +56,9 @@
         Net Income
        </td>
        <td>
-        {% if currency == 'satoshis' %}
+        {% if currency == 'Satoshis' %}
        {{format_satoshis(net_income)}}
-       {% elif currency == 'usd' %}
+       {% elif currency == 'USD' %}
        {{format_usd(net_income)}}
        {% endif %}
        </td>

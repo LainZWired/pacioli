@@ -82,13 +82,13 @@ class TestCase(unittest.TestCase):
                 matches.append(os.path.join(root,filename))
         for csvfile in matches:
             memoranda_id = str(uuid.uuid4())
-            fileName = csvfile.split("/")
-            fileName = fileName[-1]
-            fileType = fileName.rsplit('.', 1)[1]
-            fileSize = os.path.getsize(csvfile)
+            filename = csvfile.split("/")
+            filename = filename[-1]
+            filetype = filename.rsplit('.', 1)[1]
+            filesize = os.path.getsize(csvfile)
             with open(csvfile, 'rt') as csvfile:
                 fileText = csvfile.read()
-                pacioli.memoranda.process_memoranda(fileName, fileType, fileSize, fileText)
+                pacioli.memoranda.process_memoranda(filename, filetype, filesize, fileText)
         rv = self.app.get('/Bookkeeping/Upload')
         page = rv.data.decode("utf-8")
         assert '<a href="/Bookkeeping/Memoranda/MultiBit' in page

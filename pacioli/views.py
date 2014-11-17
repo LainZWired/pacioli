@@ -17,13 +17,16 @@ import uuid
 import ast
 import csv
 import calendar
+from isoweek import Week
+from datetime import datetime, date, timedelta
 from collections import OrderedDict
-from datetime import datetime,date
 from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file
 from pacioli import app, db, forms, models
+from flask_wtf import Form
 import sqlalchemy
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
+from wtforms.ext.sqlalchemy.orm import model_form
 from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
@@ -137,7 +140,6 @@ def upload_csv():
 
 @app.route('/Bookkeeping/Memoranda/ExchangeRates')
 def exchange_rates():
-    
     return render_template("bookkeeping/exchange_rates.html")
 
 @app.route('/Bookkeeping/Memoranda/DownloadRates')
@@ -177,39 +179,22 @@ def memoranda():
         title = 'Memoranda',
         memos=memos)
 
-@app.route('/Bookkeeping/Memoranda/Memos/Delete/<fileName>')
-def delete_memoranda(fileName):
+@app.route('/Bookkeeping/Memoranda/Memos/Delete/<filename>')
+def delete_memoranda(filename):
     memo = models.Memoranda \
         .query \
-        .filter_by(fileName=fileName) \
+        .filter_by(filename=filename) \
         .first()
-    transactions = models.MemorandaTransactions \
-        .query \
-        .filter_by(memoranda_id=memo.id) \
-        .all()
-    for transaction in transactions:
-        journal_entry = models.JournalEntries \
-            .query \
-            .filter_by(memoranda_transactions_id=transaction.id) \
-            .first()
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(journal_entry_id = journal_entry.id) \
-            .all()
-        for entry in ledger_entries:
-            db.session.delete(entry)
-            db.session.commit()
-        db.session.delete(journal_entry)
-        db.session.commit()
-        db.session.delete(transaction)
-        db.session.commit()
     db.session.delete(memo)
     db.session.commit()
     return redirect(url_for('upload_csv'))
 
-@app.route('/Bookkeeping/Memoranda/Memos/<fileName>')
-def memo_file(fileName):
-    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
+@app.route('/Bookkeeping/Memoranda/Memos/<filename>')
+def memo_file(filename):
+    memo = models.Memoranda \
+        .query \
+        .filter_by(filename=filename) \
+        .first()
     fileText = memo.fileText
     document = io.StringIO(fileText)
     reader = csv.reader(document)
@@ -217,7 +202,7 @@ def memo_file(fileName):
     return render_template('bookkeeping/memo_file.html',
         title = 'Memo',
         rows=rows,
-        fileName=fileName)
+        filename=filename)
   
 @app.route('/Bookkeeping/Memoranda/Memos/Transactions')
 def transactions():
@@ -231,18 +216,27 @@ def transactions():
         transactions=transactions)
 
 
-@app.route('/Bookkeeping/Memoranda/Memos/<fileName>/Transactions')
-def memo_transactions(fileName):
-    memo = models.Memoranda.query.filter_by(fileName=fileName).first()
-    transactions = models.MemorandaTransactions.query.filter_by(memoranda_id=memo.id).all()
+@app.route('/Bookkeeping/Memoranda/Memos/<filename>/Transactions')
+def memo_transactions(filename):
+    memo = models.Memoranda \
+        .query \
+        .filter_by(filename=filename) \
+        .first()
+    transactions = models.MemorandaTransactions \
+        .query \
+        .filter_by(memoranda_id=memo.id) \
+        .all()
     for transaction in transactions:
         transaction.details = ast.literal_eval(transaction.details)
-        journal_entry = models.JournalEntries.query.filter_by(memoranda_transactions_id=transaction.id).first()
+        journal_entry = models.JournalEntries \
+            .query \
+            .filter_by(memoranda_transactions_id=transaction.id) \
+            .first()
         transaction.journal_entry_id = journal_entry.id
     return render_template('bookkeeping/memo_transactions.html',
         title = 'Memo',
         transactions=transactions,
-        fileName=fileName)
+        filename=filename)
 
 @app.route('/Bookkeeping/GeneralJournal/<currency>')
 def general_journal(currency):
@@ -256,254 +250,318 @@ def general_journal(currency):
     for journal_entry in journal_entries:
         journal_entry.ledgerentries = [c for c in journal_entry.ledgerentries if c.currency == currency]
     return render_template('bookkeeping/general_journal.html',
-        title = 'General Journal',
         journal_entries=journal_entries,
         currency=currency)
 
-@app.route('/Bookkeeping/GeneralJournal/Entry/<id>')
-def journal_entry(id):
-    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
-    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
-    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
-    transaction.details = ast.literal_eval(transaction.details)
-    print(ledger_entries)
-    return render_template('bookkeeping/journal_entry.html',
-        title = 'Journal Entry',
-        journal_entry=journal_entry,
-        ledger_entries=ledger_entries,
-        transaction=transaction,
-        memo=memo)
+@app.route('/Bookkeeping/JournalEntry/<journal_entry_id>')
+def journal_entry(journal_entry_id):
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=journal_entry_id) \
+        .join(models.LedgerEntries) \
+        .order_by(models.LedgerEntries.date.desc()) \
+        .order_by(models.LedgerEntries.debit.desc()) \
+        .one()
+    try:
+        transaction = models.MemorandaTransactions \
+            .query \
+            .filter_by(id=journal_entry.memoranda_transactions_id) \
+            .first()
+        memo = models.Memoranda \
+            .query \
+            .filter_by(id=transaction.memoranda_id) \
+            .first()
+        transaction.details = ast.literal_eval(transaction.details)
+    except:
+        transaction = None
+        memo = None
 
-@app.route('/Bookkeeping/GeneralJournal/<id>/Edit', methods=['POST','GET'])
-def edit_journal_entry(id):
-    journal_entry = models.JournalEntries.query.filter_by(id = id).first()
-    ledger_entries = models.LedgerEntries.query.filter_by(journal_entry_id = id).order_by(models.LedgerEntries.date.desc()).order_by(models.LedgerEntries.tside.desc()).all()
-    transaction = models.MemorandaTransactions.query.filter_by(id=journal_entry.memoranda_transactions_id).first()
-    memo = models.Memoranda.query.filter_by(id=transaction.memoranda_id).first()
-    transaction.details = ast.literal_eval(transaction.details)
+    return render_template('bookkeeping/journal_entry.html',
+        journal_entry=journal_entry,
+        transaction=transaction,
+        memo=memo,
+        journal_entry_id=journal_entry_id)
+
+@app.route('/Bookkeeping/JournalEntry/Delete/<journal_entry_id>')
+def delete_journal_entry(journal_entry_id):
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=journal_entry_id) \
+        .first()
+    db.session.delete(journal_entry)
+    db.session.commit()
+    return redirect(url_for('general_journal', currency='Satoshis'))
+
+@app.route('/Bookkeeping/JournalEntry/New', methods=['POST','GET'])
+def new_journal_entry():
+    
+    je_form = forms.JournalEntry()
+    
+    if request.method == 'POST':
+        print(request.form.copy())
+        form = request.form.copy().to_dict()
+        debit_subaccount = models.Subaccounts.query.filter_by(id=form['debit_ledger']).one()
+        credit_subaccount = models.Subaccounts.query.filter_by(id=form['credit_ledger']).one()
+        debit_subaccount = debit_subaccount.name
+        credit_subaccount = credit_subaccount.name
+        date = form['date']
+        amount = form['amount']
+        currency = form['currency']
+        
+        journal_entry_id = str(uuid.uuid4())
+        debit_ledger_entry_id = str(uuid.uuid4())
+        credit_ledger_entry_id = str(uuid.uuid4())
+        
+        journal_entry = models.JournalEntries(
+            id = journal_entry_id)
+        db.session.add(journal_entry)
+        db.session.commit()
+        
+        debit_ledger_entry = models.LedgerEntries(
+            id = debit_ledger_entry_id,
+            date = date,
+            debit = amount,
+            credit = 0, 
+            ledger = debit_subaccount, 
+            currency = currency, 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(debit_ledger_entry)
+        
+        credit_ledger_entry = models.LedgerEntries(
+            id = credit_ledger_entry_id,
+            date = date, 
+            debit = 0, 
+            credit = amount, 
+            ledger = credit_subaccount, 
+            currency = currency, 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(credit_ledger_entry)
+        db.session.commit()
+        
+        
+    return render_template('bookkeeping/journal_entry_new.html',
+        form=je_form)
+
+@app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit', methods=['POST','GET'], defaults={'ledger_entry_id': None})
+@app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit/<ledger_entry_id>', methods=['POST','GET'])
+def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
+    
+    if request.method == 'POST':
+        if ledger_entry_id:
+            print(request.form.copy())
+            form = request.form.copy().to_dict()
+            ledger_entry = models.LedgerEntries.query.filter_by(id=ledger_entry_id).one()
+            debit_subaccount = models.Subaccounts.query.filter_by(id=form['ledger']).one()
+            ledger_entry.date = form['date']
+            ledger_entry.debit = form['debit']
+            ledger_entry.credit = form['credit']
+            ledger_entry.ledger = subaccount.name
+            print(form)
+            db.session.commit()
+        return redirect(url_for('edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency))
+    
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=journal_entry_id) \
+        .join(models.LedgerEntries) \
+        .order_by(models.LedgerEntries.date.desc()) \
+        .order_by(models.LedgerEntries.debit.desc()) \
+        .one()
+            
+    for ledger_entry in journal_entry.ledgerentries:
+        if ledger_entry.currency == currency:
+            ledger_entry.form = forms.EditLedgerEntry()
+            ledger_entry.form.date.id = ledger_entry.id
+            ledger_entry.form.date.data = ledger_entry.date
+            ledger_entry.form.debit.data = ledger_entry.debit
+            ledger_entry.form.credit.data = ledger_entry.credit
+            ledger_entry.form.ledger.data = ledger_entry.subaccount
+
+    try:
+        transaction = models.MemorandaTransactions \
+            .query \
+            .filter_by(id=journal_entry.memoranda_transactions_id) \
+            .first()
+        memo = models.Memoranda \
+            .query \
+            .filter_by(id=transaction.memoranda_id) \
+            .first()
+        transaction.details = ast.literal_eval(transaction.details)
+    except:
+        transaction = None
+        memo = None
+    
     return render_template('bookkeeping/journal_entry_edit.html',
         title = 'Journal Entry',
+        journal_entry_id=journal_entry_id,
+        currency = currency, 
         journal_entry=journal_entry,
-        ledger_entries=ledger_entries,
         transaction=transaction,
         memo=memo)
 
-@app.route('/Bookkeeping/GeneralLedger/<currency>')
-def general_ledger(currency):
-    accountsQuery = db.session\
-        .query(models.LedgerEntries.ledger)\
-        .group_by(models.LedgerEntries.ledger).all()
-    accounts = []
-    for accountResult in accountsQuery: 
-        accountName = accountResult[0]
-        query = ledgers.query_entries(accountName, 'Monthly', currency)
-        accounts.append(query)
-    return render_template('bookkeeping/general_ledger.html',
-        title = 'General Ledger',
-        accounts=accounts,
-        currency=currency)
-
-@app.route('/Bookkeeping/Ledger/<accountName>/<currency>/<groupby>')
-def ledger(accountName, currency, groupby):
-    query = ledgers.query_entries(accountName, groupby, currency)
+@app.route('/Bookkeeping/<ledger_name>/<currency>/<groupby>',
+    defaults={'period_beg': None, 'period_end': None})
+@app.route('/Bookkeeping/<ledger_name>/<currency>/<groupby>/<period_beg>/<period_end>')
+def ledger(ledger_name, currency, groupby, period_beg, period_end):
+    if ledger_name == 'GeneralLedger':
+        subaccounts = models.Subaccounts.query.all()
+    else:
+        subaccounts = [models.Subaccounts \
+            .query.filter_by(name=ledger_name).one()]
+    for subaccount in subaccounts:
+        subaccount = ledgers.get_ledger(subaccount, currency, groupby, period_beg, period_end)
+    
     return render_template('bookkeeping/ledger.html',
-        title = 'Ledger',
-        currency=currency,
-        account=query[0],
-        ledger_entries=query[1],
+        ledger_name = ledger_name,
+        currency = currency,
         groupby = groupby,
-        accountName=accountName)
+        period_beg=period_beg,
+        period_end=period_end,
+        subaccounts = subaccounts)
 
-@app.route('/Bookkeeping/Ledger/<accountName>/<currency>/<groupby>/<interval>')
-def ledger_page(accountName, currency, groupby, interval):
-    if groupby == "Daily":
-        interval = datetime.strptime(interval, "%m-%d-%Y")
-        year = interval.year
-        month = interval.month
-        day = interval.day
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter( \
-                func.date_part('year', models.LedgerEntries.date)==year, \
-                func.date_part('month', models.LedgerEntries.date)==month, \
-                func.date_part('day', models.LedgerEntries.date)==day) \
-            .order_by(models.LedgerEntries.date) \
-            .order_by(models.LedgerEntries.tside.asc()) \
-            .all()
-        account = ledgers.foot_account(accountName, ledger_entries, 'All')
-    if groupby == "Monthly":
-        interval = datetime.strptime(interval, "%m-%Y")
-        year = interval.year
-        month = interval.month
-        ledger_entries = models.LedgerEntries\
-            .query\
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter( \
-                func.date_part('year', models.LedgerEntries.date)==year, \
-                func.date_part('month', models.LedgerEntries.date)==month)\
-            .order_by(models.LedgerEntries.date) \
-            .order_by(models.LedgerEntries.tside.desc()) \
-            .all()
-        account = ledgers.foot_account(accountName, ledger_entries, 'All')
-    return render_template('bookkeeping/ledger.html',
-        title = 'Ledger',
-        account=account,
-        ledger_entries=ledger_entries,
-        groupby2 = groupby,
-        groupby = 'All',
-        accountName=accountName,
-        interval=interval,
-        currency=currency)
-
-@app.route('/Bookkeeping/TrialBalance/<currency>')
-def trial_balance(currency):
-    accountsQuery = db.session \
-        .query(models.LedgerEntries.ledger) \
-        .group_by(models.LedgerEntries.ledger) \
-        .filter(models.LedgerEntries.currency==currency) \
-        .all()
-    periods = db.session \
-        .query(\
-            func.date_part('year', models.LedgerEntries.date) + '-'+
-            func.date_part('month', models.LedgerEntries.date)) \
-        .filter(models.LedgerEntries.currency==currency) \
-        .group_by(\
-            func.date_part('year', models.LedgerEntries.date), \
-            func.date_part('month', models.LedgerEntries.date)) \
-        .all()
-    period = datetime.now()    
-    year = period.year
-    month = period.month
-    accounts = []
-    totalDebits = 0
-    totalCredits = 0
-    for accountResult in accountsQuery:
-        accountName = accountResult[0]
-        ledger_entries = models.LedgerEntries \
-            .query \
-                .filter_by(ledger=accountName)\
-                .filter_by(currency=currency) \
-                .filter( \
-                    func.date_part('year', models.LedgerEntries.date)==year,
-                    func.date_part('month', models.LedgerEntries.date)==month) \
-                .order_by(models.LedgerEntries.date) \
-                .order_by(models.LedgerEntries.tside.desc()) \
-                .all()
-        query = ledgers.foot_account(accountName, ledger_entries, 'All')
-        totalDebits += query['debitBalance']
-        totalCredits += query['creditBalance']
-        accounts.append(query)
-    return render_template('bookkeeping/trial_balance.html',
-        currency=currency,
-        periods=periods,
-        period=period,
-        accounts=accounts,
-        totalDebits=totalDebits,
-        totalCredits=totalCredits)
-
+@app.route('/Bookkeeping/TrialBalance/<currency>',
+    defaults={'groupby':None, 'period':'Current'})
 @app.route('/Bookkeeping/TrialBalance/<currency>/<groupby>/<period>')
-def trial_balance_historical(currency, groupby, period):
-    accountsQuery = db.session \
-        .query(models.LedgerEntries.ledger) \
+def trial_balance(currency, groupby, period):
+    if groupby == None:
+        period = datetime.now()
+        lastday = calendar.monthrange(period.year, period.month)[1]
+        year = period.year
+        month = period.month        
+        period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0).strftime('%Y-%m-%d')
+        period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999).strftime('%Y-%m-%d')
+        return redirect(
+            url_for('trial_balance',
+            currency='Satoshis',
+            groupby='Monthly',
+            period='Current'))
+            
+    if groupby == 'Daily':
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .order_by( \
+                func.date_part('year', models.LedgerEntries.date).desc(), \
+                func.date_part('month', models.LedgerEntries.date).desc(), \
+                func.date_part('day', models.LedgerEntries.date).desc()) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date), \
+                func.date_part('day', models.LedgerEntries.date)) \
+            .limit(7)
+
+        periods = sorted([date(int(period[0]), int(period[1]), int(period[2])) for period in periods])
+        if period == 'Current':
+            period = periods[-1]
+        else:
+            period = datetime.strptime(period, "%Y-%m-%d")
+        
+        period_beg = datetime(period.year, period.month, period.day, 0, 0, 0, 0)
+        period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
+        
+        periods = sorted([period.strftime("%Y-%m-%d") for period in periods])
+        period = period.strftime("%Y-%m-%d") 
+
+    elif groupby == 'Weekly':
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .order_by( \
+                func.date_part('year', models.LedgerEntries.date).desc(), \
+                func.date_part('week', models.LedgerEntries.date).desc()) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('week', models.LedgerEntries.date)) \
+            .limit(7)
+        periods = sorted([Week(int(period[0]), int(period[1])).monday() for period in periods])
+        
+        if period == 'Current':
+            period = periods[-1]
+        else:
+            period = period.split('-')
+            period = Week(int(period[0]), int(period[1])+1).monday()
+            
+        period_beg = period - timedelta(days = period.weekday())
+        period_end = period_beg + timedelta(days = 6)
+        period_beg = datetime(period_beg.year, period_beg.month, period_beg.day, 0, 0, 0, 0)
+        period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59, 999999)
+        periods = sorted([period.strftime("%Y-%W") for period in periods])
+        period = period.strftime("%Y-%W") 
+
+    elif groupby == 'Monthly':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y-%m")
+        lastday = calendar.monthrange(period.year, period.month)[1]
+        period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
+        period_end = period = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
+
+        periods = db.session \
+            .query(\
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .group_by( \
+                func.date_part('year', models.LedgerEntries.date), \
+                func.date_part('month', models.LedgerEntries.date)) \
+            .all()
+        periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
+        periods = sorted([period.strftime("%Y-%m") for period in periods])
+        period = period.strftime("%Y-%m")
+        
+    elif groupby == 'Annual':
+        if period == 'Current':
+            period = datetime.now()
+        else:
+            period = datetime.strptime(period, "%Y")
+        period_beg = datetime(period.year, 1, 1, 0, 0, 0, 0)
+        period_end = datetime(period.year, 12, 31, 23, 59, 59, 999999)
+        
+        periods = db.session \
+            .query(func.date_part('year', models.LedgerEntries.date)) \
+            .group_by(func.date_part('year', models.LedgerEntries.date)) \
+            .all()
+        periods = sorted([date(int(period[0]), 12, 31) for period in periods])
+        periods = sorted([period.strftime("%Y") for period in periods])
+        period = period.strftime("%Y")
+    
+    subaccounts = db.session \
+        .query( \
+            models.LedgerEntries.ledger, \
+            func.sum(models.LedgerEntries.debit), \
+            func.sum(models.LedgerEntries.credit)) \
+        .filter(models.LedgerEntries.currency==currency) \
+        .filter( models.LedgerEntries.date.between(period_beg, period_end)) \
         .group_by(models.LedgerEntries.ledger) \
-        .filter(models.LedgerEntries.currency==currency) \
         .all()
-    periods = db.session \
-        .query(\
-            func.date_part('year', models.LedgerEntries.date) + '-'+
-            func.date_part('month', models.LedgerEntries.date)) \
-        .group_by(\
-            func.date_part('year', models.LedgerEntries.date),\
-            func.date_part('month', models.LedgerEntries.date)) \
-        .filter(models.LedgerEntries.currency==currency) \
-        .all()
-    period = datetime.strptime(period, "%Y-%m")
-    year = period.year
-    month = period.month
-    day = calendar.monthrange(year, month)[1]
-    period = datetime(year, month, day, 23, 59, 59)
-    accounts = []
     totalDebits = 0
     totalCredits = 0
-    for accountResult in accountsQuery:
-        accountName = accountResult[0]
-        ledger_entries = models.LedgerEntries \
-            .query \
-            .filter_by(ledger=accountName) \
-            .filter_by(currency=currency) \
-            .filter( \
-                func.date_part('year', models.LedgerEntries.date)==year, \
-                func.date_part('month', models.LedgerEntries.date)==month) \
-            .order_by(models.LedgerEntries.date) \
-            .order_by(models.LedgerEntries.tside.desc()) \
-            .all()
-        query = ledgers.foot_account(accountName, ledger_entries, 'All')
-        totalDebits += query['debitBalance']
-        totalCredits += query['creditBalance']
-        accounts.append(query)
+    for subaccount in subaccounts:
+            totalDebits += subaccount[1]
+            totalCredits += subaccount[2]
+    
     return render_template('bookkeeping/trial_balance.html',
+        groupby=groupby,
         currency=currency,
         periods=periods,
         period=period,
-        accounts=accounts,
+        period_beg=period_beg,
+        period_end=period_end,
         totalDebits=totalDebits,
-        totalCredits=totalCredits)
+        totalCredits=totalCredits,
+        subaccounts=subaccounts)
 
 @app.route('/FinancialStatements')
 def financial_statements():
-    return redirect(url_for('income_statement', currency='satoshis'))
+    return redirect(url_for('income_statement', currency='Satoshis', period='Current'))
 
-@app.route('/FinancialStatements/IncomeStatement/<currency>')
-def income_statement(currency):
-    periods = db.session \
-        .query(\
-            func.date_part('year', models.LedgerEntries.date),\
-            func.date_part('month', models.LedgerEntries.date)) \
-        .group_by( \
-            func.date_part('year', models.LedgerEntries.date),\
-            func.date_part('month', models.LedgerEntries.date)) \
-        .all()
-    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    period = datetime.now()
-    period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
-    period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
-
-    elements = db.session \
-        .query(models.Elements) \
-        .join(models.Classifications) \
-        .filter(models.Classifications.name.in_(['Revenues', 'Expenses', 'Gains', 'Losses']))\
-        .join(models.Accounts) \
-        .join(models.Subaccounts) \
-        .all()
-    net_income = 0
-    for element in elements:
-        element.classifications = [c for c in element.classifications if c.name in ['Revenues', 'Expenses', 'Gains', 'Losses']]
-        for classification in element.classifications:
-            for account in classification.accounts:
-                for subaccount in account.subaccounts:
-                    subaccount.total = 0
-                    subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            if ledger_entry.tside == 'credit':
-                                subaccount.total += ledger_entry.amount
-                                net_income += ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                net_income -= ledger_entry.amount
-                                subaccount.total -= ledger_entry.amount
-    return render_template('financial_statements/income_statement.html',
-            title = 'Income Statement',
-            periods = periods,
-            currency = currency,
-            elements = elements,
-            net_income = net_income)
-    
 @app.route('/FinancialStatements/IncomeStatement/<currency>/<period>')
-def income_statement_historical(currency, period):
+def income_statement(currency, period):
     periods = db.session \
         .query(\
             func.date_part('year', models.LedgerEntries.date), \
@@ -513,8 +571,16 @@ def income_statement_historical(currency, period):
             func.date_part('month', models.LedgerEntries.date)) \
         .all()
     periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    period = datetime.strptime(period, "%Y-%m")
+    
+    if period == 'Current':
+        period = datetime.now()
+    else:
+        period = datetime.strptime(period, "%Y-%m")
     lastday = calendar.monthrange(period.year, period.month)[1]
+    year = period.year
+    month = period.month
+    period = datetime(year, month, lastday, 23, 59, 59)
+    
     period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
     period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
 
@@ -535,78 +601,20 @@ def income_statement_historical(currency, period):
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
                     for ledger_entry in subaccount.ledgerentries:
                         if ledger_entry.currency == currency:
-                            if ledger_entry.tside == 'credit':
-                                net_income += ledger_entry.amount
-                                subaccount.total += ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                net_income -= ledger_entry.amount
-                                subaccount.total -= ledger_entry.amount
+                            net_income += ledger_entry.credit
+                            subaccount.total += ledger_entry.credit
+                            net_income -= ledger_entry.debit
+                            subaccount.total -= ledger_entry.debit
     return render_template('financial_statements/income_statement.html',
             title = 'Income Statement',
             periods = periods,
             currency = currency,
             elements = elements,
-            net_income = net_income)
-    
-@app.route('/FinancialStatements/BalanceSheet/<currency>')
-def balance_sheet(currency):
-    periods = db.session \
-        .query(\
-            func.date_part('year', models.LedgerEntries.date), \
-            func.date_part('month', models.LedgerEntries.date)) \
-        .group_by( \
-            func.date_part('year', models.LedgerEntries.date), \
-            func.date_part('month', models.LedgerEntries.date)) \
-        .all()
-    periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    period = datetime.now()
-    period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
-    period_end = datetime(period.year, period.month, period.day, 23, 59, 59, 999999)
+            net_income = net_income,
+            period=period)
 
-    elements = db.session \
-        .query(models.Elements) \
-        .join(models.Classifications) \
-        .join(models.Accounts) \
-        .join(models.Subaccounts) \
-        .all()
-
-    retained_earnings = 0
-    
-    for element in elements:
-        element.balance = 0
-        for classification in element.classifications:
-            classification.balance = 0
-            for account in classification.accounts:
-                account.balance = 0
-                for subaccount in account.subaccounts:
-                    subaccount.balance = 0
-                    subaccount.ledgerentries = [c for c in subaccount.ledgerentries if c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            
-                            if ledger_entry.tside == 'credit':
-                                element.balance -= ledger_entry.amount
-                                classification.balance -= ledger_entry.amount
-                                account.balance -= ledger_entry.amount
-                                subaccount.balance -= ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                element.balance += ledger_entry.amount
-                                classification.balance += ledger_entry.amount
-                                account.balance += ledger_entry.amount
-                                subaccount.balance += ledger_entry.amount
-        if element.name == 'Equity':
-            retained_earnings =  -element.balance
-            print(retained_earnings)
-    elements = [c for c in elements if c.name in ['Assets', 'Liabilities']]
-    return render_template('financial_statements/balance_sheet.html', 
-    periods=periods,
-    currency=currency,
-    elements=elements,
-    retained_earnings=retained_earnings,
-    period=period_end)
-    
 @app.route('/FinancialStatements/BalanceSheet/<currency>/<period>')
-def balance_sheet_historical(currency, period):
+def balance_sheet(currency, period):
     periods = db.session \
         .query(\
             func.date_part('year', models.LedgerEntries.date), \
@@ -616,8 +624,16 @@ def balance_sheet_historical(currency, period):
             func.date_part('month', models.LedgerEntries.date)) \
         .all()
     periods = sorted([date(int(period[0]), int(period[1]), 1) for period in periods])
-    period = datetime.strptime(period, "%Y-%m")
+    
+    if period == 'Current':
+        period = datetime.now()
+    else:
+        period = datetime.strptime(period, "%Y-%m")
     lastday = calendar.monthrange(period.year, period.month)[1]
+    year = period.year
+    month = period.month
+    period = datetime(year, month, lastday, 23, 59, 59)
+    
     period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0)
     period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999)
 
@@ -639,19 +655,16 @@ def balance_sheet_historical(currency, period):
                 for subaccount in account.subaccounts:
                     subaccount.balance = 0
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            
-                            if ledger_entry.tside == 'credit':
-                                element.balance -= ledger_entry.amount
-                                classification.balance -= ledger_entry.amount
-                                account.balance -= ledger_entry.amount
-                                subaccount.balance -= ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                element.balance += ledger_entry.amount
-                                classification.balance += ledger_entry.amount
-                                account.balance += ledger_entry.amount
-                                subaccount.balance += ledger_entry.amount
+                    for entry in subaccount.ledgerentries:
+                        if entry.currency == currency:
+                            element.balance -= entry.credit
+                            classification.balance -= entry.credit
+                            account.balance -= entry.credit
+                            subaccount.balance -= entry.credit
+                            element.balance += entry.debit
+                            classification.balance += entry.debit
+                            account.balance += entry.debit
+                            subaccount.balance += entry.debit
         if element.name == 'Equity':
             retained_earnings =  -element.balance
             print(retained_earnings)
@@ -663,8 +676,6 @@ def balance_sheet_historical(currency, period):
     retained_earnings=retained_earnings,
     period=period_end)
 
-
-    
 @app.route('/FinancialStatements/StatementOfCashFlows/<currency>/<period>')
 def statement_of_cash_flows(currency, period):
     periods = db.session \
@@ -702,17 +713,14 @@ def statement_of_cash_flows(currency, period):
                 for subaccount in account.subaccounts:
                     subaccount.balance = 0
                     subaccount.ledgerentries = [c for c in subaccount.ledgerentries if period_beg <= c.date <= period_end ]
-                    for ledger_entry in subaccount.ledgerentries:
-                        if ledger_entry.currency == currency:
-                            
-                            if ledger_entry.tside == 'credit':
-                                classification.balance -= ledger_entry.amount
-                                account.balance -= ledger_entry.amount
-                                subaccount.balance -= ledger_entry.amount
-                            elif ledger_entry.tside == 'debit':
-                                classification.balance += ledger_entry.amount
-                                account.balance += ledger_entry.amount
-                                subaccount.balance += ledger_entry.amount
+                    for entry in subaccount.ledgerentries:
+                        if entry.currency == currency:
+                            classification.balance -= entry.credit
+                            account.balance -= entry.credit
+                            subaccount.balance -= entry.credit
+                            classification.balance += entry.debit
+                            account.balance += entry.debit
+                            subaccount.balance += entry.debit
     return render_template('financial_statements/statement_of_cash_flows.html',
             period = period,
             periods = periods,
