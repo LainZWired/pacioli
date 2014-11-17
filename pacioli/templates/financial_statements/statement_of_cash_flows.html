@@ -1,4 +1,4 @@
-{% extends "header_financial_statements.html" %}
+{% extends "financial_statements/header_financial_statements.html" %}
 {% block financial_statements %}
 <a href="{{ url_for('statement_of_cash_flows', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a>
 <a href="{{ url_for('statement_of_cash_flows', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
