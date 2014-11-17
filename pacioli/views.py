@@ -253,30 +253,96 @@ def general_journal(currency):
         journal_entries=journal_entries,
         currency=currency)
 
-@app.route('/Bookkeeping/GeneralJournal/Entry/<id>')
-def journal_entry(id):
+@app.route('/Bookkeeping/JournalEntry/<journal_entry_id>')
+def journal_entry(journal_entry_id):
     journal_entry = models.JournalEntries \
         .query \
-        .filter_by(id=id) \
+        .filter_by(id=journal_entry_id) \
         .join(models.LedgerEntries) \
         .order_by(models.LedgerEntries.date.desc()) \
         .order_by(models.LedgerEntries.debit.desc()) \
         .one()
-    
-    transaction = models.MemorandaTransactions \
-        .query \
-        .filter_by(id=journal_entry.memoranda_transactions_id) \
-        .first()
-    memo = models.Memoranda \
-        .query \
-        .filter_by(id=transaction.memoranda_id) \
-        .first()
-    transaction.details = ast.literal_eval(transaction.details)
+    try:
+        transaction = models.MemorandaTransactions \
+            .query \
+            .filter_by(id=journal_entry.memoranda_transactions_id) \
+            .first()
+        memo = models.Memoranda \
+            .query \
+            .filter_by(id=transaction.memoranda_id) \
+            .first()
+        transaction.details = ast.literal_eval(transaction.details)
+    except:
+        transaction = None
+        memo = None
 
     return render_template('bookkeeping/journal_entry.html',
         journal_entry=journal_entry,
         transaction=transaction,
-        memo=memo)
+        memo=memo,
+        journal_entry_id=journal_entry_id)
+
+@app.route('/Bookkeeping/JournalEntry/Delete/<journal_entry_id>')
+def delete_journal_entry(journal_entry_id):
+    journal_entry = models.JournalEntries \
+        .query \
+        .filter_by(id=journal_entry_id) \
+        .first()
+    db.session.delete(journal_entry)
+    db.session.commit()
+    return redirect(url_for('general_journal', currency='Satoshis'))
+
+@app.route('/Bookkeeping/JournalEntry/New', methods=['POST','GET'])
+def new_journal_entry():
+    
+    je_form = forms.JournalEntry()
+    
+    if request.method == 'POST':
+        print(request.form.copy())
+        form = request.form.copy().to_dict()
+        debit_subaccount = models.Subaccounts.query.filter_by(id=form['debit_ledger']).one()
+        credit_subaccount = models.Subaccounts.query.filter_by(id=form['credit_ledger']).one()
+        debit_subaccount = debit_subaccount.name
+        credit_subaccount = credit_subaccount.name
+        date = form['date']
+        amount = form['amount']
+        currency = form['currency']
+        
+        journal_entry_id = str(uuid.uuid4())
+        debit_ledger_entry_id = str(uuid.uuid4())
+        credit_ledger_entry_id = str(uuid.uuid4())
+        
+        journal_entry = models.JournalEntries(
+            id = journal_entry_id)
+        db.session.add(journal_entry)
+        db.session.commit()
+        
+        debit_ledger_entry = models.LedgerEntries(
+            id = debit_ledger_entry_id,
+            date = date,
+            debit = amount,
+            credit = 0, 
+            ledger = debit_subaccount, 
+            currency = currency, 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(debit_ledger_entry)
+        
+        credit_ledger_entry = models.LedgerEntries(
+            id = credit_ledger_entry_id,
+            date = date, 
+            debit = 0, 
+            credit = amount, 
+            ledger = credit_subaccount, 
+            currency = currency, 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(credit_ledger_entry)
+        db.session.commit()
+        
+        
+    return render_template('bookkeeping/journal_entry_new.html',
+        form=je_form)
 
 @app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit', methods=['POST','GET'], defaults={'ledger_entry_id': None})
 @app.route('/Bookkeeping/GeneralJournal/<journal_entry_id>/<currency>/Edit/<ledger_entry_id>', methods=['POST','GET'])
@@ -287,7 +353,7 @@ def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
             print(request.form.copy())
             form = request.form.copy().to_dict()
             ledger_entry = models.LedgerEntries.query.filter_by(id=ledger_entry_id).one()
-            subaccount = models.Subaccounts.query.filter_by(id=form['ledger']).one()
+            debit_subaccount = models.Subaccounts.query.filter_by(id=form['ledger']).one()
             ledger_entry.date = form['date']
             ledger_entry.debit = form['debit']
             ledger_entry.credit = form['credit']
@@ -306,23 +372,26 @@ def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
             
     for ledger_entry in journal_entry.ledgerentries:
         if ledger_entry.currency == currency:
-            ledger_entry.form = forms.LedgerEntry()
+            ledger_entry.form = forms.EditLedgerEntry()
             ledger_entry.form.date.id = ledger_entry.id
             ledger_entry.form.date.data = ledger_entry.date
             ledger_entry.form.debit.data = ledger_entry.debit
             ledger_entry.form.credit.data = ledger_entry.credit
             ledger_entry.form.ledger.data = ledger_entry.subaccount
 
-
-    transaction = models.MemorandaTransactions \
-        .query \
-        .filter_by(id=journal_entry.memoranda_transactions_id) \
-        .first()
-    memo = models.Memoranda \
-        .query \
-        .filter_by(id=transaction.memoranda_id) \
-        .first()
-    transaction.details = ast.literal_eval(transaction.details)
+    try:
+        transaction = models.MemorandaTransactions \
+            .query \
+            .filter_by(id=journal_entry.memoranda_transactions_id) \
+            .first()
+        memo = models.Memoranda \
+            .query \
+            .filter_by(id=transaction.memoranda_id) \
+            .first()
+        transaction.details = ast.literal_eval(transaction.details)
+    except:
+        transaction = None
+        memo = None
     
     return render_template('bookkeeping/journal_entry_edit.html',
         title = 'Journal Entry',

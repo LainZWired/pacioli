@@ -45,9 +45,19 @@ class NewSubAccount(Form):
     subaccount = TextField("Sub-Account Name")
     subaccountparent = QuerySelectField(query_factory=available_subaccount_parents, allow_blank=False)
 
-class LedgerEntry(Form):
+class EditLedgerEntry(Form):
     id = TextField('id')
     date = DateTimeField("Ledger Entry Date")
     debit = DecimalField("Debit Amount")
     credit = DecimalField("Credit Amount")
     ledger = QuerySelectField(query_factory=available_subaccounts, allow_blank=False)
+
+class JournalEntry(Form):
+    id = TextField('id')
+    date = DateTimeField("Ledger Entry Date")
+    amount = DecimalField("Amount")
+    debit_ledger = QuerySelectField(query_factory=available_subaccounts, allow_blank=False)
+    credit_ledger = QuerySelectField(query_factory=available_subaccounts, allow_blank=False)
+    currency = SelectField(
+                choices=[('Satoshis', 'Satoshis'),
+                         ('USD', 'USD')])

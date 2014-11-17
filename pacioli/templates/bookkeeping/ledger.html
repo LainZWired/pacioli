@@ -43,7 +43,7 @@
               {% if entry[1] > 0 %}
               <td align="right">
                {% if groupby == 'All' %}
-               <a href="{{ url_for('journal_entry',id=entry[4])}}">
+               <a href="{{ url_for('journal_entry',journal_entry_id=entry[4])}}">
                {% if currency == 'Satoshis' %}
                 {{format_satoshis(entry[1])}}
                {% elif currency == 'USD' %}
@@ -68,7 +68,7 @@
             {% if entry[2] > 0 %}
               <td align="right">
                {% if groupby == 'All' %}
-               <a href="{{ url_for('journal_entry',id=entry[4])}}">
+               <a href="{{ url_for('journal_entry',journal_entry_id=entry[4])}}">
                {% if currency == 'Satoshis' %}
                {{format_satoshis(entry[2])}}
                {% elif currency == 'USD' %}

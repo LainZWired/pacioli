@@ -37,7 +37,7 @@
           </td>
           <td align="right">
             {% if ledger_entry.debit > 0 %}
-              <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
+              <a href="{{ url_for('journal_entry', journal_entry_id=ledger_entry.journal_entry_id)}}">
                {% if ledger_entry.currency == 'Satoshis' %}
                 {{format_satoshis(ledger_entry.debit)}}
                {% elif ledger_entry.currency == 'USD' %}
@@ -48,7 +48,7 @@
           </td>
           <td align="right">
             {% if ledger_entry.credit > 0 %}
-              <a href="{{ url_for('journal_entry', id=ledger_entry.journal_entry_id)}}">
+              <a href="{{ url_for('journal_entry', journal_entry_id=ledger_entry.journal_entry_id)}}">
                 {% if ledger_entry.currency == 'Satoshis' %}
                  {{format_satoshis(ledger_entry.credit)}}
                 {% elif ledger_entry.currency == 'USD' %}
