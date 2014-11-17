@@ -24,5 +24,5 @@ CSRF_ENABLED = True
 SECRET_KEY = 'eaoR2CMuUKp1'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'pdf','tiff', 'xlsx','xls','csv'])
 SQLALCHEMY_DATABASE_URI = "postgresql://pacioli@localhost/pacioli"
-RPCUSERNAME = 'pierre'
-RPCPASSWORD = 'EF4nFg7thvvhCKds2XvwDGoVHczRko6tDs76MaLi7f1a'
+RPCUSERNAME = 'username'
+RPCPASSWORD = 'password'
