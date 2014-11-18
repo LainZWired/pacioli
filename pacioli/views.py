@@ -31,6 +31,8 @@ from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
 import pacioli.accounting.valuations as valuations
+import pacioli.treasury.treasury as treasury_functions
+from decimal import Decimal
 
 @app.route('/')
 def index():
@@ -298,7 +300,6 @@ def new_journal_entry():
     je_form = forms.JournalEntry()
     
     if request.method == 'POST':
-        print(request.form.copy())
         form = request.form.copy().to_dict()
         debit_subaccount = models.Subaccounts.query.filter_by(id=form['debit_ledger']).one()
         credit_subaccount = models.Subaccounts.query.filter_by(id=form['credit_ledger']).one()
@@ -350,7 +351,6 @@ def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
     
     if request.method == 'POST':
         if ledger_entry_id:
-            print(request.form.copy())
             form = request.form.copy().to_dict()
             ledger_entry = models.LedgerEntries.query.filter_by(id=ledger_entry_id).one()
             debit_subaccount = models.Subaccounts.query.filter_by(id=form['ledger']).one()
@@ -358,7 +358,6 @@ def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
             ledger_entry.debit = form['debit']
             ledger_entry.credit = form['credit']
             ledger_entry.ledger = subaccount.name
-            print(form)
             db.session.commit()
         return redirect(url_for('edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency))
     
@@ -667,7 +666,6 @@ def balance_sheet(currency, period):
                             subaccount.balance += entry.debit
         if element.name == 'Equity':
             retained_earnings =  -element.balance
-            print(retained_earnings)
     elements = [c for c in elements if c.name in ['Assets', 'Liabilities']]
     return render_template('financial_statements/balance_sheet.html', 
     periods=periods,
@@ -727,3 +725,131 @@ def statement_of_cash_flows(currency, period):
             currency = currency,
             elements = elements,
             net_income = net_income)
+
+@app.route('/Treasury')
+def treasury():
+    return redirect(url_for('accounts_receivable'))
+
+@app.route('/Treasury/AccountsReceivable')
+def accounts_receivable():
+    outstanding_invoices = models.Invoices.query.all()
+    return render_template("treasury/accounts_receivable.html",
+        outstanding_invoices=outstanding_invoices)
+
+@app.route('/Treasury/AccountsReceivable/Customers')
+def customers():
+    customers = models.Customers.query.all()
+    customer_form = forms.NewCustomer()
+    return render_template("treasury/customers.html",
+        customer_form=customer_form,
+        customers=customers)
+
+@app.route('/Treasury/AccountsReceivable/AddCustomer', methods=['POST','GET'])
+def add_customer():
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        customer_id = str(uuid.uuid4())
+        name = form['name']
+        email = form['email']
+        fingerprint = treasury_functions.get_fingerprint(email)
+        customer = models.Customers(id=customer_id, name=name, email=email, fingerprint=fingerprint)
+        db.session.add(customer)
+        db.session.commit()
+    return redirect(url_for('customers'))
+
+@app.route('/Treasury/AccountsReceivable/InvoiceCustomer/<id>', methods=['POST','GET'])
+def new_invoice(id):
+    customer = models.Customers.query.filter_by(id=id).first()
+    invoice_form = forms.NewInvoice()
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        amount = form['amount']
+        order_id = str(uuid.uuid4())
+        customer_order = models.CustomerOrders(id=order_id, amount=amount, credit_approval=True, shipped=True, customer_name=customer.name)
+        db.session.add(customer_order)
+        db.session.commit()
+        date_sent = treasury_functions.send_invoice(customer.email, amount, order_id)
+        
+        amount = Decimal(amount)*100000000
+        print(amount)
+        journal_entry_id = str(uuid.uuid4())
+        debit_ledger_entry_id = str(uuid.uuid4())
+        credit_ledger_entry_id = str(uuid.uuid4())
+        
+        journal_entry = models.JournalEntries(
+            id = journal_entry_id)
+        db.session.add(journal_entry)
+        db.session.commit()
+        
+        debit_ledger_entry = models.LedgerEntries(
+            id = debit_ledger_entry_id,
+            date = date_sent,
+            debit = amount,
+            credit = 0, 
+            ledger = 'Accounts Receivable', 
+            currency = 'Satoshis', 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(debit_ledger_entry)
+        
+        credit_ledger_entry = models.LedgerEntries(
+            id = credit_ledger_entry_id,
+            date = date_sent, 
+            debit = 0, 
+            credit = amount, 
+            ledger = 'Revenues', 
+            currency = 'Satoshis', 
+            journal_entry_id = journal_entry_id)
+            
+        db.session.add(credit_ledger_entry)
+        db.session.commit()
+        return redirect(url_for('accounts_receivable'))
+    return render_template("treasury/new_invoice.html",
+        invoice_form=invoice_form,
+        customer=customer)
+        
+@app.route('/Treasury/AccountsReceivable/DeleteInvoice/<invoice_id>')
+def delete_invoice(invoice_id):
+    invoice = models.Invoices.query.filter_by(id=invoice_id).first()
+    db.session.delete(invoice)
+    db.session.commit()
+    return redirect(url_for('accounts_receivable'))
+
+@app.route('/Treasury/AccountsReceivable/DeleteCustomer/<id>')
+def delete_customer(id):
+    customer = models.Customers.query.filter_by(id=id).first()
+    db.session.delete(customer)
+    db.session.commit()
+    return redirect(url_for('customers'))
+
+@app.route('/Treasury/AccountsReceivable/OpenOrders')
+def open_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/open_orders.html")
+
+@app.route('/Treasury/AccountsPayable')
+def accounts_payable():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/accounts_payable.html")
+
+@app.route('/Treasury/AccountsPayable/Vendors')
+def vendors():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/vendors.html")
+
+@app.route('/Treasury/AccountsPayable/PurchaseOrders')
+def purchase_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/purchase_orders.html")

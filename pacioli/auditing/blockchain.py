@@ -1,8 +1,8 @@
 # Experiments going on here
-
+from pacioli import app
 from bitcoinrpc.authproxy import AuthServiceProxy
 
-access = AuthServiceProxy("http://rpcusername:rpcpassword@127.0.0.1:8332")
+access = AuthServiceProxy("http://%s:%s@127.0.0.1:8332" % (app.config['RPCUSERNAME'], app.config['RPCPASSWORD']))
 
 def reconcile_transaction(txid, amount, type):
     raw_transaction = access.getrawtransaction(txid, 1)

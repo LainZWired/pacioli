@@ -98,17 +98,26 @@ class LedgerEntries(db.Model):
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
-class Customer(db.Model):
-    nick = db.Column(db.Text, primary_key=True)
+class Customers(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    name = db.Column(db.Text, unique=True)
     email = db.Column(db.Text)
     fingerprint = db.Column(db.Text)
+    orders = db.relationship('CustomerOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
 
-class CustomerOrder(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class CustomerOrders(db.Model):
+    id = db.Column(db.Text, primary_key=True)
     amount = db.Column(db.Numeric)
-    credit = db.Column(db.Boolean)
+    credit_approval = db.Column(db.Boolean)
     shipped = db.Column(db.Boolean)
-    invoiced = db.Column(db.Boolean)
+    invoices = db.relationship('Invoices', backref='CustomerOrder', lazy='select', cascade="save-update, merge, delete")
+    customer_name = db.Column(db.Text, db.ForeignKey('customers.name'))
+
+class Invoices(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    sent = db.Column(db.DateTime)
+    bitcoin_address = db.Column(db.Text)
+    customer_order_id = db.Column(db.Text, db.ForeignKey('customer_orders.id'))
 
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)

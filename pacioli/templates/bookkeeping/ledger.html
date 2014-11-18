@@ -1,4 +1,4 @@
-{% extends "header_bookkeeping.html" %}
+{% extends "bookkeeping/header_bookkeeping.html" %}
 {% block bookkeeping %}
 <a href="{{ url_for('ledger', ledger_name=ledger_name, currency='Satoshis', groupby=groupby, period_beg=period_beg, period_end=period_end)}}">Satoshis</a> -
 <a href="{{ url_for('ledger', ledger_name=ledger_name, currency='USD', groupby=groupby, period_beg=period_beg, period_end=period_end)}}">USD</a>

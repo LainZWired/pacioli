@@ -1,0 +1,14 @@
+{% extends "treasury/header_accounts_receivable.html" %}
+{% block accounts_receivable %}
+<h2>
+  Send invoice to {{customer.name}}
+</h2>
+
+<form  action="{{ url_for('new_invoice', id=customer.id)}}" method="POST">
+ Amount: {{ invoice_form.amount() }}
+    <br>
+    <input type=submit value="Send Invoice">
+</form>
+
+
+{% endblock %}

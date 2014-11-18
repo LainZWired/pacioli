@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{url_for('accounts_receivable')}}">Accounts Receivable</a> - 
+<a href="{{url_for('accounts_payable')}}">Accounts Payable</a>
+<hr>
+{% block treasury %}{% endblock %}
+{% endblock %}
