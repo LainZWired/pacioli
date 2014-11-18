@@ -15,7 +15,6 @@ def get_contacts():
     return public_keys
 
 def get_fingerprint(email):
-    print(email)
     public_keys = gpg.list_keys()
     for public_key in public_keys:
         uids = public_key['uids']
@@ -37,7 +36,6 @@ def send_invoice(email_to, amount, customer_order_id):
         uids = public_key['uids']
         if any(email_to in s for s in uids):
             recipient_fingerprint = public_key['fingerprint']
-            print(recipient_fingerprint)
 
     data = "address:%s, amount:%s, id:%s" % (bitcoin_address, amount, invoice_id)
     encrypted_ascii_data = gpg.encrypt(data, recipient_fingerprint)
@@ -52,10 +50,14 @@ def send_invoice(email_to, amount, customer_order_id):
     mail.sendmail(app.config['SMTP_USERNAME'], email_to, msg.as_string())
     mail.quit()
     
+    date_sent = datetime.now()
+    
     invoice = models.Invoices(
         id = invoice_id,
-        sent = datetime.now(),
+        sent = date_sent,
         bitcoin_address = str(bitcoin_address),
         customer_order_id = customer_order_id)
     db.session.add(invoice)
     db.session.commit()
+    
+    return date_sent
