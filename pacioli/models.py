@@ -106,7 +106,7 @@ class Customers(db.Model):
     orders = db.relationship('CustomerOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
 
 class CustomerOrders(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Text, primary_key=True)
     amount = db.Column(db.Numeric)
     credit_approval = db.Column(db.Boolean)
     shipped = db.Column(db.Boolean)
@@ -117,7 +117,7 @@ class Invoices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     sent = db.Column(db.DateTime)
     bitcoin_address = db.Column(db.Text)
-    customer_order_id = db.Column(db.Integer, db.ForeignKey('customer_orders.id'))
+    customer_order_id = db.Column(db.Text, db.ForeignKey('customer_orders.id'))
 
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)

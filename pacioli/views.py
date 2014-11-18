@@ -762,9 +762,26 @@ def add_customer():
         db.session.commit()
     return redirect(url_for('customers'))
 
+@app.route('/Treasury/AccountsReceivable/InvoiceCustomer/<id>', methods=['POST','GET'])
+def new_invoice(id):
+    customer = models.Customers.query.filter_by(id=id).first()
+    invoice_form = forms.NewInvoice()
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        amount = form['amount']
+        order_id = str(uuid.uuid4())
+        customer_order = models.CustomerOrders(id=order_id, amount=amount, credit_approval=True, shipped=True, customer_name=customer.name)
+        db.session.add(customer_order)
+        db.session.commit()
+        treasury_functions.send_invoice(customer.email, amount, order_id)
+        return redirect(url_for('accounts_receivable'))
+    return render_template("treasury/new_invoice.html",
+        invoice_form=invoice_form,
+        customer=customer)
+
 @app.route('/Treasury/AccountsReceivable/DeleteCustomer/<id>')
 def delete_customer(id):
-    customer = models.Accounts.query.filter_by(id=id).first()
+    customer = models.Customers.query.filter_by(id=id).first()
     db.session.delete(customer)
     db.session.commit()
     return redirect(url_for('customers'))

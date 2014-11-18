@@ -65,3 +65,6 @@ class JournalEntry(Form):
 class NewCustomer(Form):
     name = TextField("Name")
     email = TextField("Email")
+    
+class NewInvoice(Form):
+    amount = DecimalField("Amount")
