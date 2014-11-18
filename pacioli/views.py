@@ -735,11 +735,9 @@ def treasury():
 
 @app.route('/Treasury/AccountsReceivable')
 def accounts_receivable():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    return render_template("treasury/accounts_receivable.html")
+    outstanding_invoices = models.Invoices.query.all()
+    return render_template("treasury/accounts_receivable.html",
+    outstanding_invoices=outstanding_invoices)
 
 @app.route('/Treasury/AccountsReceivable/Customers')
 def customers():

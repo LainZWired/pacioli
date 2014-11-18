@@ -55,7 +55,7 @@ def send_invoice(email_to, amount, customer_order_id):
     invoice = models.Invoices(
         id = invoice_id,
         sent = datetime.now(),
-        bitcoin_address = bitcoin_address,
+        bitcoin_address = str(bitcoin_address),
         customer_order_id = customer_order_id)
     db.session.add(invoice)
     db.session.commit()
