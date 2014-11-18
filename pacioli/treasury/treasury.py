@@ -5,8 +5,26 @@ import smtplib
 from pacioli import app
 from email.mime.text import MIMEText
 
+gpg = gnupg.GPG(gnupghome=app.config['GNUPGHOME'])
+
+def get_contacts():
+    
+    public_keys = gpg.list_keys()
+    return public_keys
+
+def get_fingerprint(email):
+    print(email)
+    public_keys = gpg.list_keys()
+    for public_key in public_keys:
+        uids = public_key['uids']
+        if any(email in s for s in uids):
+            fingerprint = public_key['fingerprint']
+            if fingerprint:
+                return fingerprint
+            else:
+                return None
+
 def send_invoice(email_to, amount, customer_order_id):
-    gpg = gnupg.GPG(gnupghome=app.config['GNUPGHOME'])
     proxy = bitcoin.rpc.Proxy()
     invoice_id = str(uuid.uuid4())
     bitcoin_address = proxy.getnewaddress()

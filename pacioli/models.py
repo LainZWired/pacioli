@@ -99,9 +99,11 @@ class LedgerEntries(db.Model):
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
 class Customers(db.Model):
-    nick = db.Column(db.Text, primary_key=True)
+    id = db.Column(db.Text, primary_key=True)
+    name = db.Column(db.Text, unique=True)
     email = db.Column(db.Text)
     fingerprint = db.Column(db.Text)
+    orders = db.relationship('CustomerOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
 
 class CustomerOrders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -109,12 +111,13 @@ class CustomerOrders(db.Model):
     credit_approval = db.Column(db.Boolean)
     shipped = db.Column(db.Boolean)
     invoices = db.relationship('Invoices', backref='CustomerOrder', lazy='select', cascade="save-update, merge, delete")
+    customer_name = db.Column(db.Text, db.ForeignKey('customers.name'))
 
 class Invoices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     sent = db.Column(db.DateTime)
     bitcoin_address = db.Column(db.Text)
-    customer_order_id = db.Column(db.Text, db.ForeignKey('customer_orders.id'))
+    customer_order_id = db.Column(db.Integer, db.ForeignKey('customer_orders.id'))
 
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)

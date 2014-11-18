@@ -1,0 +1,8 @@
+{% extends "treasury/header_treasury.html" %}
+{% block treasury %}
+<a href="{{url_for('accounts_receivable')}}">Accounts Receivable</a> - 
+<a href="{{url_for('customers')}}">Customers</a> - 
+<a href="{{url_for('open_orders')}}">Open Orders</a>
+<hr>
+{% block accounts_receivable %}{% endblock %}
+{% endblock %}

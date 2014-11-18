@@ -1,0 +1,32 @@
+{% extends "treasury/header_accounts_receivable.html" %}
+{% block accounts_receivable %}
+<h2>
+  Customers
+</h2>
+
+<form  action="/Treasury/AccountsReceivable/AddCustomer" method="POST">
+ Name: {{ customer_form.name() }}
+    <br>
+ Email: {{ customer_form.email() }}
+    <br>
+    <input type=submit value="Add Customer">
+</form>
+
+<table border="1">
+ {% for customer in customers %}
+ <tr>
+  <td>
+  {{customer.name}}
+ </td>
+  <td>
+  {{customer.email}}
+ </td>
+  <td>
+  {{customer.fingerprint}}
+ </td>
+ </tr>
+ {% endfor %}
+</table>
+
+
+{% endblock %}

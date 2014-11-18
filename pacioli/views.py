@@ -31,6 +31,7 @@ from pacioli.accounting.memoranda import process_filestorage
 import pacioli.accounting.ledgers as ledgers
 import pacioli.accounting.rates as rates
 import pacioli.accounting.valuations as valuations
+import pacioli.treasury.treasury as treasury_functions
 
 @app.route('/')
 def index():
@@ -727,3 +728,75 @@ def statement_of_cash_flows(currency, period):
             currency = currency,
             elements = elements,
             net_income = net_income)
+
+@app.route('/Treasury')
+def treasury():
+    return redirect(url_for('accounts_receivable'))
+
+@app.route('/Treasury/AccountsReceivable')
+def accounts_receivable():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/accounts_receivable.html")
+
+@app.route('/Treasury/AccountsReceivable/Customers')
+def customers():
+    customers = models.Customers.query.all()
+    customer_form = forms.NewCustomer()
+    return render_template("treasury/customers.html",
+        customer_form=customer_form,
+        customers=customers)
+
+@app.route('/Treasury/AccountsReceivable/AddCustomer', methods=['POST','GET'])
+def add_customer():
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        customer_id = str(uuid.uuid4())
+        name = form['name']
+        email = form['email']
+        fingerprint = treasury_functions.get_fingerprint(email)
+        customer = models.Customers(id=customer_id, name=name, email=email, fingerprint=fingerprint)
+        db.session.add(customer)
+        db.session.commit()
+    return redirect(url_for('customers'))
+
+@app.route('/Treasury/AccountsReceivable/DeleteCustomer/<id>')
+def delete_customer(id):
+    customer = models.Accounts.query.filter_by(id=id).first()
+    db.session.delete(customer)
+    db.session.commit()
+    return redirect(url_for('customers'))
+
+@app.route('/Treasury/AccountsReceivable/OpenOrders')
+def open_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/open_orders.html")
+
+@app.route('/Treasury/AccountsPayable')
+def accounts_payable():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/accounts_payable.html")
+
+@app.route('/Treasury/AccountsPayable/Vendors')
+def vendors():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/vendors.html")
+
+@app.route('/Treasury/AccountsPayable/PurchaseOrders')
+def purchase_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("treasury/purchase_orders.html")

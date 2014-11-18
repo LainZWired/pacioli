@@ -3,11 +3,11 @@
     <title>Pacioli</title>
   </head>
   <body>
-    <a href="/">Pacioli</a> α - 
-    <a href="/Configure">Configure</a> - 
-    <a href="/Bookkeeping">Bookkeeping</a> - 
-    <a href="/FinancialStatements">Financial Statements</a> -
-    <a href="/Treasury">Treasury</a> 
+    <a href="{{url_for('index')}}">Pacioli</a> α - 
+    <a href="{{url_for('configure')}}">Configure</a> - 
+    <a href="{{url_for('bookkeeping')}}">Bookkeeping</a> - 
+    <a href="{{url_for('financial_statements')}}">Financial Statements</a> -
+    <a href="{{url_for('treasury')}}">Treasury</a> 
     <hr>
     {% block content %}
     {% endblock %}
