@@ -14,7 +14,7 @@
 
 from pacioli import db
 from pacioli import models
-import pacioli.accounting.rates as rates
+import pacioli.bookkeeping.rates as rates
 
 db.drop_all()
 db.create_all()

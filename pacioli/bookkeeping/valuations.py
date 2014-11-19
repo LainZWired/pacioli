@@ -17,7 +17,7 @@ from dateutil import parser
 from collections import OrderedDict
 from sqlalchemy.sql import func
 from pacioli import db, models
-import pacioli.accounting.rates as rates
+import pacioli.bookkeeping.rates as rates
 
 class Partial:
     def __init__(self, date, debit, credit, currency, ledger, journal_entry_id, rate):

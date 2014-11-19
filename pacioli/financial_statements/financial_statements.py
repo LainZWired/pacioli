@@ -27,18 +27,18 @@ import sqlalchemy
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
 from wtforms.ext.sqlalchemy.orm import model_form
-from pacioli.accounting.memoranda import process_filestorage
-import pacioli.accounting.ledgers as ledgers
-import pacioli.accounting.rates as rates
-import pacioli.accounting.valuations as valuations
-import pacioli.treasury.treasury as treasury_functions
+from pacioli.bookkeeping.memoranda import process_filestorage
+import pacioli.bookkeeping.ledgers as ledgers
+import pacioli.bookkeeping.rates as rates
+import pacioli.bookkeeping.valuations as valuations
+import pacioli.treasury.treasury_utilities as treasury_utilities
 from decimal import Decimal
 
-bookkeeping_blueprint = Blueprint('financial_statements', __name__,
+financial_statements_blueprint = Blueprint('financial_statements', __name__,
 template_folder='templates')
 
 @financial_statements_blueprint.route('/')
-def financial_statements():
+def index():
     return redirect(url_for('financial_statements.income_statement', currency='Satoshis', period='Current'))
 
 @financial_statements_blueprint.route('/IncomeStatement/<currency>/<period>')

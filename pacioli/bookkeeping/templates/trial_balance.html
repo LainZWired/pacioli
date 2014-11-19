@@ -1,16 +1,16 @@
-{% extends "bookkeeping/header_bookkeeping.html" %}
+{% extends "header_bookkeeping.html" %}
 {% block bookkeeping %}
-<a href="{{ url_for('trial_balance', currency='Satoshis', groupby=groupby, period=period)}}">Satoshis</a> -
-<a href="{{ url_for('trial_balance', currency='USD', groupby=groupby, period=period)}}">USD</a>
+<a href="{{ url_for('bookkeeping.trial_balance', currency='Satoshis', groupby=groupby, period=period)}}">Satoshis</a> -
+<a href="{{ url_for('bookkeeping.trial_balance', currency='USD', groupby=groupby, period=period)}}">USD</a>
 <hr>
-<a href="{{ url_for('trial_balance', currency=currency, groupby='Daily', period='Current')}}">Daily</a> -
-<a href="{{ url_for('trial_balance', currency=currency, groupby='Weekly', period='Current')}}">Weekly</a> -
-<a href="{{ url_for('trial_balance', currency=currency, groupby='Monthly', period='Current')}}">Monthly</a> -
-<a href="{{ url_for('trial_balance', currency=currency, groupby='Annual', period='Current')}}">Annual</a>
+<a href="{{ url_for('bookkeeping.trial_balance', currency=currency, groupby='Daily', period='Current')}}">Daily</a> -
+<a href="{{ url_for('bookkeeping.trial_balance', currency=currency, groupby='Weekly', period='Current')}}">Weekly</a> -
+<a href="{{ url_for('bookkeeping.trial_balance', currency=currency, groupby='Monthly', period='Current')}}">Monthly</a> -
+<a href="{{ url_for('bookkeeping.trial_balance', currency=currency, groupby='Annual', period='Current')}}">Annual</a>
 <hr>
 Period 
 {% for period in periods %}
-- <a href="{{ url_for('trial_balance', currency=currency, groupby=groupby, period=period)}}">{{period}}</a>
+- <a href="{{ url_for('bookkeeping.trial_balance', currency=currency, groupby=groupby, period=period)}}">{{period}}</a>
 {% endfor %}
 <hr>
   <h2>
@@ -38,7 +38,7 @@ Period
          </td>
           <td align="right">
            {% if subaccount[1] > 0 %}
-            <a href="{{ url_for('ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
+            <a href="{{ url_for('bookkeeping.ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
              {% if currency == 'Satoshis' %}
             {{format_satoshis(subaccount[1])}}
             {% elif currency == 'USD' %}
@@ -49,7 +49,7 @@ Period
           </td>
           <td align="right">
            {% if subaccount[2] > 0 %}
-            <a href="{{ url_for('ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
+            <a href="{{ url_for('bookkeeping.ledger', ledger_name=subaccount[0], groupby='All', currency=currency)}}">
             {% if currency == 'Satoshis' %}
            {{format_satoshis(subaccount[2])}}
            {% elif currency == 'USD' %}

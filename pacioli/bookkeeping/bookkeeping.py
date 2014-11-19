@@ -27,11 +27,11 @@ import sqlalchemy
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
 from wtforms.ext.sqlalchemy.orm import model_form
-from pacioli.accounting.memoranda import process_filestorage
-import pacioli.accounting.ledgers as ledgers
-import pacioli.accounting.rates as rates
-import pacioli.accounting.valuations as valuations
-import pacioli.treasury.treasury as treasury_functions
+from pacioli.bookkeeping.memoranda import process_filestorage
+import pacioli.bookkeeping.ledgers as ledgers
+import pacioli.bookkeeping.rates as rates
+import pacioli.bookkeeping.valuations as valuations
+import pacioli.treasury.treasury_utilities as treasury_utilities
 from decimal import Decimal
 
 bookkeeping_blueprint = Blueprint('bookkeeping', __name__,
@@ -63,22 +63,22 @@ def exchange_rates():
 @bookkeeping_blueprint.route('/Memoranda/DownloadRates')
 def download_rates():
     rates.download_rates()
-    return redirect(url_for('boookkeeping.exchange_rates'))
+    return redirect(url_for('bookkeeping.exchange_rates'))
   
 @bookkeeping_blueprint.route('/Memoranda/ExchangeRates/Summarize')
 def summarize_rates():
     rates.summarize_rates("pacioli")
-    return redirect(url_for('boookkeeping.exchange_rates'))
+    return redirect(url_for('bookkeeping.exchange_rates'))
   
 @bookkeeping_blueprint.route('/Memoranda/ExchangeRates/Import')
 def import_rates():
     rates.import_rates("pacioli")
-    return redirect(url_for('boookkeeping.exchange_rates'))
+    return redirect(url_for('bookkeeping.exchange_rates'))
 
 @bookkeeping_blueprint.route('/Memoranda/ExchangeRates/CalculateGains/<method>')
 def calc_gains(method):
     valuations.calculate_bitcoin_gains(method)
-    return redirect(url_for('boookkeeping.exchange_rates'))
+    return redirect(url_for('bookkeeping.exchange_rates'))
     
 
 @bookkeeping_blueprint.route('/Memoranda/Memos', methods=['POST','GET'])
@@ -105,7 +105,7 @@ def delete_memoranda(filename):
         .first()
     db.session.delete(memo)
     db.session.commit()
-    return url_for('boookkeeping.upload_csv'))
+    return redirect(url_for('bookkeeping.upload_csv'))
 
 @bookkeeping_blueprint.route('/Memoranda/Memos/<filename>')
 def memo_file(filename):
@@ -205,7 +205,7 @@ def delete_journal_entry(journal_entry_id):
         .first()
     db.session.delete(journal_entry)
     db.session.commit()
-    return redirect(url_for('boookkeeping.general_journal', currency='Satoshis'))
+    return redirect(url_for('bookkeeping.general_journal', currency='Satoshis'))
 
 @bookkeeping_blueprint.route('/JournalEntry/New', methods=['POST','GET'])
 def new_journal_entry():
@@ -272,7 +272,7 @@ def edit_journal_entry(journal_entry_id, currency, ledger_entry_id):
             ledger_entry.credit = form['credit']
             ledger_entry.ledger = subaccount.name
             db.session.commit()
-        return redirect(url_for('boookkeeping.edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency))
+        return redirect(url_for('bookkeeping.edit_journal_entry', journal_entry_id=journal_entry_id, currency=currency))
     
     journal_entry = models.JournalEntries \
         .query \
@@ -344,7 +344,7 @@ def trial_balance(currency, groupby, period):
         period_beg = datetime(period.year, period.month, 1, 0, 0, 0, 0).strftime('%Y-%m-%d')
         period_end = datetime(period.year, period.month, lastday, 23, 59, 59, 999999).strftime('%Y-%m-%d')
         return redirect(
-            url_for('trial_balance',
+            url_for('bookkeeping.trial_balance',
             currency='Satoshis',
             groupby='Monthly',
             period='Current'))

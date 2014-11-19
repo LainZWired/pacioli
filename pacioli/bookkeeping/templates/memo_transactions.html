@@ -1,4 +1,4 @@
-{% extends "bookkeeping/header_memoranda.html" %}
+{% extends "header_memoranda.html" %}
 {% block memoranda %}
 
   <h1>
@@ -6,7 +6,7 @@
   </h1>
   <p>
     {% if filename %}
-    <a href="{{ url_for('memo_file', filename = filename)}}">
+    <a href="{{ url_for('bookkeeping.memo_file', filename = filename)}}">
       See Original File
     </a>
     {% endif %}
@@ -39,7 +39,7 @@
          {{transaction.txid}}
         </td>
         <td>
-          <a href="{{ url_for('journal_entry', id = transaction.journal_entry_id)}}">
+          <a href="{{ url_for('bookkeeping.journal_entry', id = transaction.journal_entry_id)}}">
             Journal Entry
           </a>
         </td>

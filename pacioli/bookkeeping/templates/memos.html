@@ -1,4 +1,4 @@
-{% extends "bookkeeping/header_memoranda.html" %}
+{% extends "header_memoranda.html" %}
 {% block memoranda %}
   <h1>
     Memos
@@ -6,7 +6,7 @@
 
   {% if memos %}
   <p>
-    <a href="{{ url_for('transactions')}}">
+    <a href="{{ url_for('bookkeeping.transactions')}}">
       All Transactions
     </a>
   </p>
@@ -28,12 +28,12 @@
             {{memo.date}}
           </td>
           <td>
-            <a href="{{ url_for('memo_file', filename = memo.filename)}}">
+            <a href="{{ url_for('bookkeeping.memo_file', filename = memo.filename)}}">
               {{memo.filename}}
             </a>
           </td>
           <td align="center">
-            <a href="{{ url_for('memo_transactions', filename = memo.filename)}}">
+            <a href="{{ url_for('bookkeeping.memo_transactions', filename = memo.filename)}}">
               {{memo.count}}
             </a>
           </td>

@@ -14,11 +14,11 @@ import sqlalchemy
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
 from wtforms.ext.sqlalchemy.orm import model_form
-from pacioli.accounting.memoranda import process_filestorage
-import pacioli.accounting.ledgers as ledgers
-import pacioli.accounting.rates as rates
-import pacioli.accounting.valuations as valuations
-import pacioli.treasury.treasury as treasury_functions
+from pacioli.bookkeeping.memoranda import process_filestorage
+import pacioli.bookkeeping.ledgers as ledgers
+import pacioli.bookkeeping.rates as rates
+import pacioli.bookkeeping.valuations as valuations
+import pacioli.treasury.treasury_utilities as treasury_utilities
 from decimal import Decimal
 
 treasury_blueprint = Blueprint('treasury', __name__,
@@ -47,7 +47,7 @@ def new_customer():
         customer_id = str(uuid.uuid4())
         name = form['name']
         email = form['email']
-        fingerprint = treasury_functions.get_fingerprint(email)
+        fingerprint = treasury_utilities.get_fingerprint(email)
         customer = models.Customers(id=customer_id, name=name, email=email, fingerprint=fingerprint)
         db.session.add(customer)
         db.session.commit()
@@ -99,7 +99,7 @@ def invoice_customer(customer_id):
         customer_order = models.CustomerOrders(id=order_id, amount=amount, credit_approval=True, shipped=True, customer_name=customer.name)
         db.session.add(customer_order)
         db.session.commit()
-        date_sent = treasury_functions.send_invoice(customer.email, amount, order_id)
+        date_sent = treasury_utilities.send_invoice(customer.email, amount, order_id)
         
         amount = Decimal(amount)*100000000
         print(amount)
@@ -148,7 +148,7 @@ def delete_invoice(invoice_id):
     
 @treasury_blueprint.route('/RevenueCycle/CashReceipts')
 def cash_receipts():
-    cash_receipts = treasury_functions.get_cash_receipts()
+    cash_receipts = treasury_utilities.get_cash_receipts()
     returnrender_template("revenue_cycle/cash_receipts.html",
     cash_receipts=cash_receipts)
 

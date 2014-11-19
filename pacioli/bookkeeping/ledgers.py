@@ -15,7 +15,7 @@ from datetime import datetime, date, timedelta
 from collections import OrderedDict
 from sqlalchemy.sql import func
 from pacioli import db, models
-import pacioli.accounting.rates as rates
+import pacioli.bookkeeping.rates as rates
 from dateutil import parser
 from operator import itemgetter
 import calendar

@@ -18,8 +18,8 @@ import calendar
 import csv
 import uuid
 from pacioli import app, db, models
-import pacioli.auditing.blockchain as blockchain
-import pacioli.accounting.rates as rates
+import pacioli.treasury.blockchain as blockchain
+import pacioli.bookkeeping.rates as rates
 from werkzeug import secure_filename
 from dateutil import parser
 
