@@ -72,12 +72,17 @@ def delete_customer(customer_id):
 
 @treasury_blueprint.route('/RevenueCycle/NewSalesOrders')
 def new_sales_orders():
-    # Filter for orders that are new
+    
     sales_orders = models.SalesOrders.query.all()
     # Create a form for approval of new sales orders
     return render_template("revenue_cycle/new_sales_orders.html",
     sales_orders=sales_orders)
 
+@treasury_blueprint.route('/RevenueCycle/NewSalesOrders/Retrieve')
+def retrieve_new_sales_orders():
+    new_orders = treasury_utilities.fetch_email()
+    return redirect(url_for('treasury.new_sales_orders'))
+    
 @treasury_blueprint.route('/RevenueCycle/OpenSalesOrders')
 def open_sales_orders():
     # Filter for orders that are open
