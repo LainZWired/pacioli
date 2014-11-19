@@ -1,4 +1,4 @@
-{% extends "configure/header_configure.html" %}
+{% extends "header_configure.html" %}
 {% block configure %}
 
 <h2>
@@ -63,7 +63,7 @@
       {{subaccount.account.classification.name}}
     </td>
     <td>
-      <a  href="{{ url_for('delete_classification', classification = subaccount.account.classification.name)}}">
+      <a  href="{{ url_for('configure.delete_classification', classification = subaccount.account.classification.name)}}">
     Delete
       </a>
     </td>
@@ -71,7 +71,7 @@
       {{subaccount.account.name}}
     </td>
     <td>
-      <a  href="{{ url_for('delete_account', account = subaccount.account.name)}}">
+      <a  href="{{ url_for('configure.delete_account', account = subaccount.account.name)}}">
     Delete
       </a>
     </td>
@@ -79,7 +79,7 @@
       {{subaccount.name}}
     </td>
     <td>
-      <a  href="{{ url_for('delete_account', account = subaccounts.name)}}">
+      <a  href="{{ url_for('configure.delete_account', account = subaccounts.name)}}">
     Delete
       </a>
     </td>

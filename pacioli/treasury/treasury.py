@@ -36,7 +36,7 @@ def revenue_cycle():
 def customers():
     customers = models.Customers.query.all()
     customer_form = forms.NewCustomer()
-    returnrender_template("revenue_cycle/customers.html",
+    return render_template("revenue_cycle/customers.html",
         customer_form=customer_form,
         customers=customers)
 
@@ -65,21 +65,21 @@ def new_sales_orders():
     # Filter for orders that are new
     sales_orders = models.SalesOrders.query.all()
     # Create a form for approval of new sales orders
-    returnrender_template("revenue_cycle/new_sales_orders.html",
+    return render_template("revenue_cycle/new_sales_orders.html",
     sales_orders=sales_orders)
 
 @treasury_blueprint.route('/RevenueCycle/OpenSalesOrders')
 def open_sales_orders():
     # Filter for orders that are open
     sales_orders = models.SalesOrders.query.all()
-    returnrender_template("revenue_cycle/open_sales_orders.html",
+    return render_template("revenue_cycle/open_sales_orders.html",
     sales_orders=sales_orders)
 
     
 @treasury_blueprint.route('/RevenueCycle/AccountsReceivable')
 def accounts_receivable():
     outstanding_invoices = models.Invoices.query.all()
-    returnrender_template("revenue_cycle/accounts_receivable.html",
+    return render_template("revenue_cycle/accounts_receivable.html",
         outstanding_invoices=outstanding_invoices)
     
     # invoice_customer is a short cut for sending an invoice
@@ -135,7 +135,7 @@ def invoice_customer(customer_id):
         db.session.add(credit_ledger_entry)
         db.session.commit()
         return redirect(url_for('treasury.accounts_receivable'))
-    returnrender_template("revenue_cycle/new_invoice.html",
+    return render_template("revenue_cycle/new_invoice.html",
     invoice_form=invoice_form,
     customer=customer)
             
@@ -149,7 +149,7 @@ def delete_invoice(invoice_id):
 @treasury_blueprint.route('/RevenueCycle/CashReceipts')
 def cash_receipts():
     cash_receipts = treasury_utilities.get_cash_receipts()
-    returnrender_template("revenue_cycle/cash_receipts.html",
+    return render_template("revenue_cycle/cash_receipts.html",
     cash_receipts=cash_receipts)
 
     
@@ -157,37 +157,56 @@ def cash_receipts():
 def closed_sales_orders():
     # Filter for orders that are closed
     sales_orders = models.SalesOrders.query.all()
-    returnrender_template("revenue_cycle/closed_sales_orders.html",
+    return render_template("revenue_cycle/closed_sales_orders.html",
     sales_orders=sales_orders)
     
 @treasury_blueprint.route('/RevenueCycle/SalesRefunds')
 def sales_refunds():
     # Filter for refund requests
     sales_orders = models.SalesOrders.query.all()
-    returnrender_template("revenue_cycle/sales_refunds.html",
+    return render_template("revenue_cycle/sales_refunds.html",
     sales_orders=sales_orders)
 
-    
-@treasury_blueprint.route('/AccountsPayable')
-def accounts_payable():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    returnrender_template("accounts_payable.html")
+@treasury_blueprint.route('/ExpenditureCycle')
+def expenditure_cycle():
+    return redirect(url_for('treasury.vendors'))
 
-@treasury_blueprint.route('/AccountsPayable/Vendors')
+@treasury_blueprint.route('/ExpenditureCycle/Vendors')
 def vendors():
     classificationform = forms.NewClassification()
     accountform = forms.NewAccount()
     subaccountform = forms.NewSubAccount()
     subaccounts = models.Subaccounts.query.all()
-    returnrender_template("vendors.html")
+    return render_template("expenditure_cycle/vendors.html")
 
-@treasury_blueprint.route('/AccountsPayable/PurchaseOrders')
-def purchase_orders():
+@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder')
+def new_purchase_order():
     classificationform = forms.NewClassification()
     accountform = forms.NewAccount()
     subaccountform = forms.NewSubAccount()
     subaccounts = models.Subaccounts.query.all()
-    returnrender_template("purchase_orders.html")
+    return render_template("expenditure_cycle/new_purchase_order.html")
+
+@treasury_blueprint.route('/ExpenditureCycle/OpenPurchaseOrders')
+def open_purchase_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("expenditure_cycle/open_purchase_orders.html")
+
+@treasury_blueprint.route('/ExpenditureCycle/AccountsPayable')
+def accounts_payable():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("expenditure_cycle/accounts_payable.html")
+
+@treasury_blueprint.route('/ExpenditureCycle/ClosedPurchaseOrders')
+def closed_purchase_orders():
+    classificationform = forms.NewClassification()
+    accountform = forms.NewAccount()
+    subaccountform = forms.NewSubAccount()
+    subaccounts = models.Subaccounts.query.all()
+    return render_template("expenditure_cycle/closed_purchase_orders.html")

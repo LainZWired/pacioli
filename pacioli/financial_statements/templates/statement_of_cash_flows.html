@@ -1,11 +1,11 @@
-{% extends "financial_statements/header_financial_statements.html" %}
+{% extends "header_financial_statements.html" %}
 {% block financial_statements %}
-<a href="{{ url_for('statement_of_cash_flows', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a>
-<a href="{{ url_for('statement_of_cash_flows', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
+<a href="{{ url_for('financial_statements.statement_of_cash_flows', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a>
+<a href="{{ url_for('financial_statements.statement_of_cash_flows', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
 <hr>
-<a href="{{ url_for('statement_of_cash_flows', currency=currency, period='Current')}}">Current</a>
+<a href="{{ url_for('financial_statements.statement_of_cash_flows', currency=currency, period='Current')}}">Current</a>
 {% for period in periods %}
-<a href='{{ url_for("statement_of_cash_flows", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
+<a href='{{ url_for("financial_statements.statement_of_cash_flows", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
 {% endfor %}
 
   <h1>
