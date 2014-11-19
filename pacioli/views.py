@@ -197,8 +197,8 @@ def memo_file(filename):
         .query \
         .filter_by(filename=filename) \
         .first()
-    fileText = memo.fileText
-    document = io.StringIO(fileText)
+    filetext = memo.filetext
+    document = io.StringIO(filetext)
     reader = csv.reader(document)
     rows = [pair for pair in reader]
     return render_template('bookkeeping/memo_file.html',
@@ -827,8 +827,9 @@ def open_orders():
     classificationform = forms.NewClassification()
     accountform = forms.NewAccount()
     subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    return render_template("treasury/open_orders.html")
+    sales_orders = models.SalesOrders.query.all()
+    return render_template("treasury/open_orders.html",
+    sales_orders=sales_orders)
 
 @app.route('/Treasury/AccountsPayable')
 def accounts_payable():

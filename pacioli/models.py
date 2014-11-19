@@ -88,7 +88,8 @@ class JournalEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     memoranda_transactions_id = db.Column(db.Text, db.ForeignKey('memoranda_transactions.id'))
     ledgerentries = db.relationship('LedgerEntries', backref='journalentry', lazy='select', cascade="save-update, merge, delete", order_by="desc(LedgerEntries.debit), desc(LedgerEntries.credit)")
-
+    sales_invoices = db.relationship('SalesInvoices', backref='JournalEntry', lazy='select', cascade="save-update, merge, delete")
+    
 class LedgerEntries(db.Model):
     id = db.Column(db.Text, primary_key=True)
     date = db.Column(db.DateTime)
@@ -100,24 +101,44 @@ class LedgerEntries(db.Model):
 
 class Customers(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    name = db.Column(db.Text, unique=True)
+    first_name = db.Column(db.Text)
+    last_name = db.Column(db.Text)
+    irc_nick = db.Column(db.Text, unique=True)
     email = db.Column(db.Text)
     fingerprint = db.Column(db.Text)
+    rating = db.Column(db.Numeric)
+    rating_comment = db.Column(db.Text)
+    credit_limit = db.Column(db.Numeric)
     orders = db.relationship('CustomerOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
 
-class CustomerOrders(db.Model):
+class SalesOrders(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    amount = db.Column(db.Numeric)
-    credit_approval = db.Column(db.Boolean)
-    shipped = db.Column(db.Boolean)
-    invoices = db.relationship('Invoices', backref='CustomerOrder', lazy='select', cascade="save-update, merge, delete")
+    received_date = db.Column(db.DateTime)
+    approved_date = db.Column(db.DateTime)
+    shipped_date = db.Column(db.DateTime)
+    sales_invoices = db.relationship('SalesInvoices', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
+    items = db.relationship('SalesOrderItems', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
     customer_name = db.Column(db.Text, db.ForeignKey('customers.name'))
 
-class Invoices(db.Model):
+class SalesOrderItems(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    unit_price = db.Column(db.Numeric)
+    quantity_shipped = db.Column(db.Numeric)
+    quantity_ordered = db.Column(db.Numeric)
+    currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
+    item = db.Column(db.Text, db.ForeignKey('items.name'))
+    
+class Items(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    description = db.Column(db.Text, unique=True)
+    
+class SalesInvoices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     sent = db.Column(db.DateTime)
     bitcoin_address = db.Column(db.Text)
     customer_order_id = db.Column(db.Text, db.ForeignKey('customer_orders.id'))
+    journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)

@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from decimal import Decimal
 
 gpg = gnupg.GPG(gnupghome=app.config['GNUPGHOME'])
+bitcoind = bitcoin.rpc.Proxy()
 
 def get_contacts():
     
@@ -26,9 +27,8 @@ def get_fingerprint(email):
                 return None
 
 def send_invoice(email_to, amount, customer_order_id):
-    proxy = bitcoin.rpc.Proxy()
     invoice_id = str(uuid.uuid4())
-    bitcoin_address = proxy.getnewaddress()
+    bitcoin_address = bitcoind.getnewaddress()
 
     public_keys = gpg.list_keys()
 
@@ -61,3 +61,7 @@ def send_invoice(email_to, amount, customer_order_id):
     db.session.commit()
     
     return date_sent
+
+def get_cash_receipts():
+    cash_receipts = bitcoind.listreceivedbyaddress(0)
+    print(cash_receipts)

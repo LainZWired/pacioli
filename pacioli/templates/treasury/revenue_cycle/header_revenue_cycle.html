@@ -1,0 +1,12 @@
+{% extends "treasury/header_treasury.html" %}
+{% block treasury %}
+<a href="{{url_for('customers')}}">Customers</a> - 
+<a href="{{url_for('new_sales_orders')}}">New Orders</a> - 
+<a href="{{url_for('open_sales_orders')}}">Open Orders</a> - 
+<a href="{{url_for('accounts_receivable')}}">Accounts Receivable</a> - 
+<a href="{{url_for('cash_receipts')}}">Cash Receipts</a> - 
+<a href="{{url_for('closed_sales_orders')}}">Closed Orders</a> - 
+<a href="{{url_for('sales_refunds')}}">Refunds</a>
+<hr>
+{% block revenue_cycle %}{% endblock %}
+{% endblock %}

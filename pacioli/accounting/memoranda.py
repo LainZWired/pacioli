@@ -202,29 +202,29 @@ def process_csv(document, memoranda_id):
         db.session.commit()
         
         
-        raw_transaction = access.getrawtransaction(txid, 1)
-        vector_out = raw_transaction['vout']
-        tx_time = raw_transaction['time']
-        tx_time = datetime.fromtimestamp(tx_time)
-
-        for utxo in vector_out:
-            output_address = utxo['scriptPubKey']['addresses'][0]
-            output_index = utxo['n']
-            amount_sent = utxo['value']*100000000
-            utxo_detail = access.gettxout(txid, output_index)
-            if utxo_detail:
-                unspent = True
-            else:
-                unspent = False
-            btc_transaction = models.BitcoinTransactions( \
-                txid = txid,
-                vout_index = output_index,
-                vout_address = output_address,
-                amount = amount_sent,
-                unspent = unspent,
-                last_updated = datetime.now(),
-                time = tx_time,
-                memoranda_transactions_id = memoranda_transactions_id
-                )
-            db.session.add(btc_transaction)
-            db.session.commit()
+        # raw_transaction = access.getrawtransaction(txid, 1)
+        # vector_out = raw_transaction['vout']
+        # tx_time = raw_transaction['time']
+        # tx_time = datetime.fromtimestamp(tx_time)
+        # 
+        # for utxo in vector_out:
+        #     output_address = utxo['scriptPubKey']['addresses'][0]
+        #     output_index = utxo['n']
+        #     amount_sent = utxo['value']*100000000
+        #     utxo_detail = access.gettxout(txid, output_index)
+        #     if utxo_detail:
+        #         unspent = True
+        #     else:
+        #         unspent = False
+        #     btc_transaction = models.BitcoinTransactions( \
+        #         txid = txid,
+        #         vout_index = output_index,
+        #         vout_address = output_address,
+        #         amount = amount_sent,
+        #         unspent = unspent,
+        #         last_updated = datetime.now(),
+        #         time = tx_time,
+        #         memoranda_transactions_id = memoranda_transactions_id
+        #         )
+        #     db.session.add(btc_transaction)
+        #     db.session.commit()
