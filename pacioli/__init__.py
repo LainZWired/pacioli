@@ -78,5 +78,11 @@ def utility_processor():
                 end=end)
 
 from pacioli import views, models, forms
+from pacioli.configure.configure import configure_blueprint
 from pacioli.bookkeeping.bookkeeping import bookkeeping_blueprint
+from pacioli.financial_statements.financial_statements import financial_statements_blueprint
+from pacioli.treasury.treasury import treasury_blueprint
+app.register_blueprint(configure_blueprint, url_prefix='/Configure')
 app.register_blueprint(bookkeeping_blueprint, url_prefix='/Bookkeeping')
+app.register_blueprint(financial_statements_blueprint, url_prefix='/FinancialStatements')
+app.register_blueprint(treasury_blueprint, url_prefix='/Treasury')

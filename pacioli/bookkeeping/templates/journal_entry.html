@@ -25,7 +25,7 @@
           Credit
         </th>
         <td>
-         <a href="{{ url_for('edit_journal_entry', journal_entry_id=journal_entry.id, currency='Satoshis')}}">
+         <a href="{{ url_for('boookkeeping.edit_journal_entry', journal_entry_id=journal_entry.id, currency='Satoshis')}}">
           Edit
          </a>
         </td>
@@ -83,7 +83,7 @@
             Credit
           </th>
           <td>
-           <a href="{{ url_for('edit_journal_entry', journal_entry_id=journal_entry.id, currency='USD')}}">
+           <a href="{{ url_for('boookkeeping.edit_journal_entry', journal_entry_id=journal_entry.id, currency='USD')}}">
             Edit
            </a>
           </td>

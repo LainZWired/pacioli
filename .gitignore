@@ -60,9 +60,9 @@ docs/_build/
 
 CSV_Import_Module_Log.csv
 
-pacioli/accounting/data_rates/raw/*.csv
-pacioli/accounting/data_rates/*.csv
-pacioli/accounting/data_rates/summary/*.csv
-pacioli/accounting/data_wallets/private/
+pacioli/bookkeeping/data_rates/raw/*.csv
+pacioli/bookkeeping/data_rates/*.csv
+pacioli/bookkeeping/data_rates/summary/*.csv
+pacioli/bookkeeping/data_wallets/private/
 
 migrations/*
