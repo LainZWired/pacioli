@@ -1,4 +1,4 @@
-{% extends "header_revenue_cycle.html" %}
+{% extends "revenue_cycle/header_revenue_cycle.html" %}
 {% block revenue_cycle %}
 <h2>
   Accounts Receivable
@@ -13,6 +13,9 @@
   Sent On
  </th>
  <th>
+  Paid On
+ </th>
+ <th>
   Receiving Address
  </th>
  <th>
@@ -22,19 +25,19 @@
  {% for invoice in outstanding_invoices %}
  <tr>
   <td>
-  {{invoice.CustomerOrder.Customer.name}}
+  {{invoice.SalesOrder.Customer.email}}
  </td>
   <td>
-  {{invoice.sent}}
+  {{format_date('Daily',invoice.sent_date)}}
+ </td>
+  <td>
+  {{format_date('Daily',invoice.paid_date)}}
  </td>
   <td>
   {{invoice.bitcoin_address}}
  </td>
-  <td>
-  {{invoice.CustomerOrder.amount}}
- </td>
 <td>
- <a href="{{ url_for('delete_invoice', invoice_id=invoice.id)}}">Delete</a>
+ <a href="{{ url_for('treasury.delete_invoice', invoice_id=invoice.id)}}">Delete</a>
  </td>
  </tr>
  {% endfor %}

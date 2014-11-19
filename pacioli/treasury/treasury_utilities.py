@@ -26,7 +26,7 @@ def get_fingerprint(email):
             else:
                 return None
 
-def send_invoice(email_to, amount, customer_order_id):
+def send_invoice(email_to, amount, sales_order_id):
     invoice_id = str(uuid.uuid4())
     bitcoin_address = bitcoind.getnewaddress()
 
@@ -50,18 +50,31 @@ def send_invoice(email_to, amount, customer_order_id):
     mail.sendmail(app.config['SMTP_USERNAME'], email_to, msg.as_string())
     mail.quit()
     
-    date_sent = datetime.now()
+    sent_date = datetime.now()
     
-    invoice = models.Invoices(
+    invoice = models.SalesInvoices(
         id = invoice_id,
-        sent = date_sent,
+        sent_date = sent_date,
         bitcoin_address = str(bitcoin_address),
-        customer_order_id = customer_order_id)
+        sales_order_id = sales_order_id)
     db.session.add(invoice)
     db.session.commit()
     
-    return date_sent
+    return sent_date
 
 def get_cash_receipts():
     cash_receipts = bitcoind.listreceivedbyaddress(0)
-    print(cash_receipts)
+    
+    return cash_receipts
+
+def reconcile_transaction(txid, amount, type):
+    raw_transaction = bitcoind.getrawtransaction(txid, 1)
+    vector_out = raw_transaction['vout']
+    for utxo in vector_out:
+        index = utxo['n']
+        utxo_detail = bitcoind.gettxout(txid, index)
+        if utxo_detail == "None":
+            unspent = False
+        elif 'bestblock' in utxo_detail:
+            unspent = True
+        print(utxo_detail)

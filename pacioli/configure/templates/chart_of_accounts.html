@@ -5,7 +5,7 @@
   New Account
 </h2>
 
-<form  action="/Configure/ChartOfAccounts/AddClassification" method="POST">
+<form  action="{{url_for('configure.add_classification')}}" method="POST">
   {{ classificationform.classification() }}
     <br>
   {{ classificationform.classificationparent() }}
@@ -13,7 +13,7 @@
     <input type=submit value="Add Classification">
 </form>
 
-<form  action="/Configure/ChartOfAccounts/AddAccount" method="POST">
+<form  action="{{url_for('configure.add_account')}}" method="POST">
   {{ accountform.account() }}
     <br>
   {{ accountform.accountparent() }}
@@ -21,7 +21,7 @@
     <input type=submit value="Add Account">
 </form>
 
-<form  action="/Configure/ChartOfAccounts/AddSubAccount" method="POST">
+<form  action="{{url_for('configure.add_subaccount')}}" method="POST">
   {{ subaccountform.subaccount() }}
     <br>
   {{ subaccountform.subaccountparent() }}

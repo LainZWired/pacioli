@@ -4,11 +4,13 @@
   Customers
 </h2>
 
-<form  action="/Treasury/AccountsReceivable/AddCustomer" method="POST">
- Name: {{ customer_form.name() }}
-    <br>
+<form  action="{{ url_for('treasury.new_customer')}}" method="POST">
  Email: {{ customer_form.email() }}
-    <br>
+    <br><br>
+ First name: {{ customer_form.first_name() }}
+ Last name: {{ customer_form.last_name() }}
+ IRC nick: {{ customer_form.irc_nick() }}
+    <br><br>
     <input type=submit value="Add Customer">
 </form>
 
@@ -30,13 +32,13 @@
   {{customer.name}}
  </td>
   <td>
-   <a href="{{ url_for('new_invoice', id=customer.id)}}">{{customer.email}}</a>
+   <a href="{{ url_for('treasury.invoice_customer', customer_id=customer.id)}}">{{customer.email}}</a>
  </td>
   <td>
   {{customer.fingerprint}}
  </td>
  <td>
-  <a href="{{ url_for('delete_customer', id=customer.id)}}">Delete</a>
+  <a href="{{ url_for('treasury.delete_customer', customer_id=customer.id)}}">Delete</a>
   </td>
   
  </tr>

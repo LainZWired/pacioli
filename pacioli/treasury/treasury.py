@@ -45,17 +45,27 @@ def new_customer():
     if request.method == 'POST':
         form = request.form.copy().to_dict()
         customer_id = str(uuid.uuid4())
-        name = form['name']
+        first_name = form['first_name']
+        last_name = form['last_name']
+        irc_nick = form['irc_nick']
         email = form['email']
         fingerprint = treasury_utilities.get_fingerprint(email)
-        customer = models.Customers(id=customer_id, name=name, email=email, fingerprint=fingerprint)
+        customer = models.Customers(id=customer_id,
+            first_name=first_name, 
+            last_name=last_name, 
+            irc_nick=irc_nick, 
+            email=email,
+            fingerprint=fingerprint)
         db.session.add(customer)
         db.session.commit()
     return redirect(url_for('treasury.customers'))
 
-@treasury_blueprint.route('/RevenueCycle/DeleteCustomer/<id>')
-def delete_customer(id):
-    customer = models.Customers.query.filter_by(id=id).first()
+@treasury_blueprint.route('/RevenueCycle/DeleteCustomer/<customer_id>')
+def delete_customer(customer_id):
+    customer = models.Customers \
+        .query \
+        .filter_by(id=customer_id) \
+        .first()
     db.session.delete(customer)
     db.session.commit()
     return redirect(url_for('treasury.customers'))
@@ -78,7 +88,7 @@ def open_sales_orders():
     
 @treasury_blueprint.route('/RevenueCycle/AccountsReceivable')
 def accounts_receivable():
-    outstanding_invoices = models.Invoices.query.all()
+    outstanding_invoices = models.SalesInvoices.query.all()
     return render_template("revenue_cycle/accounts_receivable.html",
         outstanding_invoices=outstanding_invoices)
     
@@ -95,11 +105,16 @@ def invoice_customer(customer_id):
     if request.method == 'POST':
         form = request.form.copy().to_dict()
         amount = form['amount']
-        order_id = str(uuid.uuid4())
-        customer_order = models.CustomerOrders(id=order_id, amount=amount, credit_approval=True, shipped=True, customer_name=customer.name)
+        sales_order_id = str(uuid.uuid4())
+        now = datetime.now()
+        customer_order = models.SalesOrders(id=sales_order_id,
+            received_date=now,
+            approved_date=now,
+            shipped_date=now,
+            customer_id=customer.id)
         db.session.add(customer_order)
         db.session.commit()
-        date_sent = treasury_utilities.send_invoice(customer.email, amount, order_id)
+        date_sent = treasury_utilities.send_invoice(customer.email, amount, sales_order_id)
         
         amount = Decimal(amount)*100000000
         print(amount)
@@ -141,7 +156,7 @@ def invoice_customer(customer_id):
             
 @treasury_blueprint.route('/RevenueCycle/AccountsReceivable/DeleteInvoice/<invoice_id>')
 def delete_invoice(invoice_id):
-    invoice = models.Invoices.query.filter_by(id=invoice_id).first()
+    invoice = models.SalesInvoices.query.filter_by(id=invoice_id).first()
     db.session.delete(invoice)
     db.session.commit()
     return redirect(url_for('treasury.accounts_receivable'))
@@ -150,9 +165,8 @@ def delete_invoice(invoice_id):
 def cash_receipts():
     cash_receipts = treasury_utilities.get_cash_receipts()
     return render_template("revenue_cycle/cash_receipts.html",
-    cash_receipts=cash_receipts)
+        cash_receipts=cash_receipts)
 
-    
 @treasury_blueprint.route('/RevenueCycle/ClosedSalesOrders')
 def closed_sales_orders():
     # Filter for orders that are closed

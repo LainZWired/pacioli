@@ -1,25 +1,20 @@
-import os
-import io
-import uuid
-import ast
-import csv
-import calendar
-from isoweek import Week
-from datetime import datetime, date, timedelta
-from collections import OrderedDict
-from flask import flash, render_template, request, redirect, url_for, send_from_directory, send_file, Blueprint, abort
-from pacioli import app, db, forms, models
+# Copyright (c) 2014, Satoshi Nakamoto Institute
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+# 
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+from flask import render_template, request, redirect, url_for, Blueprint
 from flask_wtf import Form
-import sqlalchemy
-from sqlalchemy.sql import func
-from sqlalchemy.orm import aliased
-from wtforms.ext.sqlalchemy.orm import model_form
-from pacioli.bookkeeping.memoranda import process_filestorage
-import pacioli.bookkeeping.ledgers as ledgers
-import pacioli.bookkeeping.rates as rates
-import pacioli.bookkeeping.valuations as valuations
-import pacioli.treasury.treasury_utilities as treasury_utilities
-from decimal import Decimal
+from pacioli import app, db, forms, models
 
 configure_blueprint = Blueprint('configure', __name__,
 template_folder='templates')
@@ -34,7 +29,7 @@ def chart_of_accounts():
     accountform = forms.NewAccount()
     subaccountform = forms.NewSubAccount()
     subaccounts = models.Subaccounts.query.all()
-    returnrender_template("chart_of_accounts.html",
+    return render_template("chart_of_accounts.html",
         subaccounts=subaccounts,
         classificationform=classificationform,
         accountform=accountform,

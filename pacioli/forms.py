@@ -63,7 +63,9 @@ class JournalEntry(Form):
                          ('USD', 'USD')])
 
 class NewCustomer(Form):
-    name = TextField("Name")
+    first_name = TextField("First name")
+    last_name = TextField("Last name")
+    irc_nick = TextField("IRC Nick")
     email = TextField("Email")
     
 class NewInvoice(Form):

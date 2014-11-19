@@ -33,6 +33,8 @@ def utility_processor():
         if groupby == "All":
             return date.strftime('%Y-%m-%d %X')                
         elif groupby == "Daily":
+            if date == None:
+                return '-'
             return date.strftime('%Y-%m-%d')
         elif groupby == "Weekly":
             return date.strftime("%Y-%W")

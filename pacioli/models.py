@@ -104,7 +104,7 @@ class Customers(db.Model):
     first_name = db.Column(db.Text)
     last_name = db.Column(db.Text)
     irc_nick = db.Column(db.Text, unique=True)
-    email = db.Column(db.Text)
+    email = db.Column(db.Text, unique=True)
     fingerprint = db.Column(db.Text)
     rating = db.Column(db.Numeric)
     rating_comment = db.Column(db.Text)
