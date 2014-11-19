@@ -1,0 +1,11 @@
+{% extends "revenue_cycle/header_revenue_cycle.html" %}
+{% block revenue_cycle %}
+<h2>
+  New Sales Orders
+</h2>
+
+<a href="{{ url_for('treasury.retrieve_new_sales_orders')}}">
+Retrieve new sales orders
+</a>
+
+{% endblock %}

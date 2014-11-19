@@ -1,0 +1,69 @@
+{% extends "header_financial_statements.html" %}
+{% block financial_statements %}
+<a href="{{ url_for('financial_statements.income_statement', currency='Satoshis', period=period.strftime('%Y-%m'))}}">Satoshis</a> - 
+<a href="{{ url_for('financial_statements.income_statement', currency='USD', period=period.strftime('%Y-%m'))}}">USD</a>
+<hr>
+Period 
+{% for period in periods %}
+- <a href='{{ url_for("financial_statements.income_statement", period=period.strftime("%Y-%m"), currency=currency)}}'>{{period.strftime("%Y-%m")}}</a>
+{% endfor %}
+
+<hr>
+  <h2>
+    Income Statement
+  </h2>
+  <h3>
+   As of {{period.strftime("%B %d, %Y")}}
+  </h3>
+    <table border="1">
+      <tbody>
+        {% for element in elements %}
+          {% for classification in element.classifications %}
+          <tr>
+           <td>
+            <b>
+              {{classification.name}}
+             </b>
+          </td>
+         </tr>
+           {% for account in classification.accounts %}
+           <tr>
+            <td>
+             <i>
+               {{account.name}}
+              </i>
+           </td>
+          </tr>
+          {% for subaccount in account.subaccounts %}
+          <tr>
+           <td>
+              {{subaccount.name}}
+          </td>
+          <td>
+           {% if currency == 'Satoshis' %}
+          {{format_satoshis(subaccount.total)}}
+          {% elif currency == 'USD' %}
+          {{format_usd(subaccount.total)}}
+          {% endif %}
+         </tr>
+          {% endfor %}
+          {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+      <tr>
+       <td>
+        Net Income
+       </td>
+       <td>
+        {% if currency == 'Satoshis' %}
+       {{format_satoshis(net_income)}}
+       {% elif currency == 'USD' %}
+       {{format_usd(net_income)}}
+       {% endif %}
+       </td>
+      </tr>
+    </table>
+    
+{{response}}
+{% endblock %}

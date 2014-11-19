@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{url_for('bookkeeping.upload_csv')}}">Memoranda</a> - 
+<a href="{{url_for('bookkeeping.general_journal', currency='Satoshis')}}">General Journal</a> - 
+<a href="{{url_for('bookkeeping.ledger', ledger_name='GeneralLedger', currency='Satoshis', groupby='Monthly')}}">General Ledger</a> - 
+<a href="{{url_for('bookkeeping.trial_balance', currency='Satoshis')}}">Trial Balance</a>
+<hr>
+{% block bookkeeping %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "header_bookkeeping.html" %}
+{% block bookkeeping %}
+<a href="{{url_for('bookkeeping.new_journal_entry')}}">New Journal Entry</a> - 
+<a href="{{url_for('bookkeeping.upload_csv')}}">Upload Files</a> - 
+<a href="{{url_for('bookkeeping.exchange_rates')}}">Exchange Rates</a> -
+<a href="{{url_for('bookkeeping.memoranda')}}">Memos</a> - 
+<a href="{{url_for('bookkeeping.transactions')}}">Memo Transactions</a>
+<hr>
+{% block memoranda %}{% endblock %}
+{% endblock %}

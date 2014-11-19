@@ -1,0 +1,24 @@
+{% extends "header_bookkeeping.html" %}
+{% block bookkeeping %}
+  <h2>
+    New Journal Entry
+  </h2>
+  <h3>
+   {{currency}}
+  </h3>
+
+  <form  action="{{ url_for('bookkeeping.new_journal_entry')}}" method="POST">
+    Date: {{ form.date() }}
+    <br>
+    Amount: {{ form.amount() }}
+    <br>
+    Currency: {{ form.currency() }}
+    <br>
+    Debit Ledger: {{ form.debit_ledger() }}
+    <br>
+    Credit Ledger: {{ form.credit_ledger() }}
+      <br>
+      <input type=submit value="Create Journal Entry">
+  </form>
+
+{% endblock %}

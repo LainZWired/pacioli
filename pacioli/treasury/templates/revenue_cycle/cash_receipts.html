@@ -1,0 +1,42 @@
+{% extends "revenue_cycle/header_revenue_cycle.html" %}
+{% block revenue_cycle %}
+<h2>
+  Cash Receipts
+</h2>
+
+<table border="1">
+  <tr>
+    <th>
+     Transaction ID
+    </th>
+    <th>
+     Confirmations
+    </th>
+    <th>
+     Receiving Address
+    </th>
+    <th>
+     Amount
+    </th>
+   </tr>
+   <tbody>
+     {% for cash_receipt in cash_receipts %}
+     <tr>
+       <td>
+        {{cash_receipt['txids'][0]}}
+       </td>
+       <td>
+        {{cash_receipt['confirmations']}}
+       </td>
+       <td>
+        {{cash_receipt['address']}}
+       </td>
+       <td>
+        {{cash_receipt['amount']}}
+       </td>
+      </tr>
+      {% endfor %}
+     </tbody>
+    </table>
+
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "header_treasury.html" %}
+{% block treasury %}
+<a href="{{url_for('treasury.vendors')}}">Vendors</a> - 
+<a href="{{url_for('treasury.new_purchase_order')}}">New Purchase Order</a> - 
+<a href="{{url_for('treasury.open_purchase_orders')}}">Open Purchase Orders</a> - 
+<a href="{{url_for('treasury.accounts_payable')}}">Accounts Payable</a> - 
+<a href="{{url_for('treasury.closed_purchase_orders')}}">Closed Purchase Orders</a>
+<hr>
+{% block expenditure_cycle %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "revenue_cycle/header_revenue_cycle.html" %}
+{% block revenue_cycle %}
+<h2>
+  Send invoice to {{customer.name}}
+</h2>
+
+<form  action="{{ url_for('treasury.invoice_customer', customer_id=customer.id)}}" method="POST">
+ Amount: {{ invoice_form.amount() }}
+    <br>
+    <input type=submit value="Send Invoice">
+</form>
+
+
+{% endblock %}

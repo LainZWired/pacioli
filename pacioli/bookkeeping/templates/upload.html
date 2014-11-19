@@ -1,0 +1,68 @@
+{% extends "header_memoranda.html" %}
+{% block memoranda %}
+
+<h1>Upload</h1>
+
+<form action="Upload" method="post" enctype="multipart/form-data">
+  <input type="file" multiple="" name="file[]">
+  <br>
+  <br>
+  <input type="submit" value="Upload">
+</form>
+
+<br>
+{% if filenames %}
+<h4>
+  List of the files you just uploaded:
+</h3>
+<ul>
+  {% for filename in filenames %}
+    <li>{{filename}}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+
+
+<hr>
+<br>
+
+{% if memos %}
+<table border="1">
+  <caption>Files Already Uploaded</caption>
+  <tr>
+    <th>
+      Date Uploaded
+    </th>
+    <th>
+      File Name
+    </th>
+    <th>
+      Bytes
+    </th>
+  {% for memo in memos %}
+  <tr>
+  <td>
+    {{memo.date}}
+  </td>
+  <td>
+    <a href="{{ url_for('bookkeeping.memo_file', filename = memo.filename)}}">
+      {{memo.filename}}
+    </a>
+  </td>
+  <td>
+    {{memo.filesize}}
+  </td>
+  <td>
+    <a  href="{{ url_for('bookkeeping.delete_memoranda', filename = memo.filename)}}">
+      Delete
+    </a>
+  </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+No files have been uploaded.
+{% endif %}
+
+{% endblock %}
