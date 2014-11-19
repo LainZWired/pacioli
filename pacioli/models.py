@@ -109,7 +109,7 @@ class Customers(db.Model):
     rating = db.Column(db.Numeric)
     rating_comment = db.Column(db.Text)
     credit_limit = db.Column(db.Numeric)
-    orders = db.relationship('CustomerOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
+    sales_orders = db.relationship('SalesOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
 
 class SalesOrders(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -118,7 +118,7 @@ class SalesOrders(db.Model):
     shipped_date = db.Column(db.DateTime)
     sales_invoices = db.relationship('SalesInvoices', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
     items = db.relationship('SalesOrderItems', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
-    customer_name = db.Column(db.Text, db.ForeignKey('customers.name'))
+    customer_id = db.Column(db.Text, db.ForeignKey('customers.id'))
 
 class SalesOrderItems(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -127,17 +127,20 @@ class SalesOrderItems(db.Model):
     quantity_ordered = db.Column(db.Numeric)
     currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
     item = db.Column(db.Text, db.ForeignKey('items.name'))
+    sales_order_id = db.Column(db.Text, db.ForeignKey('sales_orders.id'))
     
 class Items(db.Model):
     id = db.Column(db.Text, primary_key=True)
     name = db.Column(db.Text, unique=True)
     description = db.Column(db.Text, unique=True)
+    items_sold = db.relationship('SalesOrderItems', backref='Item', lazy='select', cascade="save-update, merge, delete")
     
 class SalesInvoices(db.Model):
     id = db.Column(db.Text, primary_key=True)
-    sent = db.Column(db.DateTime)
+    sent_date = db.Column(db.DateTime)
+    paid_date = db.Column(db.DateTime)
     bitcoin_address = db.Column(db.Text)
-    customer_order_id = db.Column(db.Text, db.ForeignKey('customer_orders.id'))
+    sales_order_id = db.Column(db.Text, db.ForeignKey('sales_orders.id'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
 class Currencies(db.Model):

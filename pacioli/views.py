@@ -120,25 +120,25 @@ def delete_subaccount(subaccount):
     db.session.commit()
     return redirect(url_for('chart_of_accounts'))
 
-@app.route('/Bookkeeping')
-def bookkeeping():
-    return redirect(url_for('upload_csv'))
-
-@app.route('/Bookkeeping/Memoranda/Upload', methods=['POST','GET'])
-def upload_csv():
-    filenames = ''
-    if request.method == 'POST':
-        uploaded_files = request.files.getlist("file[]")
-        for file in uploaded_files:
-            process_filestorage(file)
-        return redirect(url_for('upload_csv'))
-    memos = models.Memoranda \
-        .query \
-        .order_by(models.Memoranda.date.desc()) \
-        .all()
-    return render_template('bookkeeping/upload.html',
-        title = 'Upload',
-        memos=memos)
+# @app.route('/Bookkeeping')
+# def bookkeeping():
+#     return redirect(url_for('upload_csv'))
+# 
+# @app.route('/Bookkeeping/Memoranda/Upload', methods=['POST','GET'])
+# def upload_csv():
+#     filenames = ''
+#     if request.method == 'POST':
+#         uploaded_files = request.files.getlist("file[]")
+#         for file in uploaded_files:
+#             process_filestorage(file)
+#         return redirect(url_for('upload_csv'))
+#     memos = models.Memoranda \
+#         .query \
+#         .order_by(models.Memoranda.date.desc()) \
+#         .all()
+#     return render_template('bookkeeping/upload.html',
+#         title = 'Upload',
+#         memos=memos)
 
 @app.route('/Bookkeeping/Memoranda/ExchangeRates')
 def exchange_rates():
@@ -728,24 +728,22 @@ def statement_of_cash_flows(currency, period):
 
 @app.route('/Treasury')
 def treasury():
-    return redirect(url_for('accounts_receivable'))
+    return redirect(url_for('customers'))
 
-@app.route('/Treasury/AccountsReceivable')
-def accounts_receivable():
-    outstanding_invoices = models.Invoices.query.all()
-    return render_template("treasury/accounts_receivable.html",
-        outstanding_invoices=outstanding_invoices)
+@app.route('/Treasury/RevenueCycle')
+def revenue_cycle():
+    return redirect(url_for('customers'))
 
-@app.route('/Treasury/AccountsReceivable/Customers')
+@app.route('/Treasury/RevenueCycle/Customers')
 def customers():
     customers = models.Customers.query.all()
     customer_form = forms.NewCustomer()
-    return render_template("treasury/customers.html",
+    return render_template("treasury/revenue_cycle/customers.html",
         customer_form=customer_form,
         customers=customers)
 
-@app.route('/Treasury/AccountsReceivable/AddCustomer', methods=['POST','GET'])
-def add_customer():
+@app.route('/Treasury/RevenueCycle/NewCustomer', methods=['POST','GET'])
+def new_customer():
     if request.method == 'POST':
         form = request.form.copy().to_dict()
         customer_id = str(uuid.uuid4())
@@ -757,9 +755,44 @@ def add_customer():
         db.session.commit()
     return redirect(url_for('customers'))
 
-@app.route('/Treasury/AccountsReceivable/InvoiceCustomer/<id>', methods=['POST','GET'])
-def new_invoice(id):
+@app.route('/Treasury/RevenueCycle/DeleteCustomer/<id>')
+def delete_customer(id):
     customer = models.Customers.query.filter_by(id=id).first()
+    db.session.delete(customer)
+    db.session.commit()
+    return redirect(url_for('customers'))
+
+@app.route('/Treasury/RevenueCycle/NewSalesOrders')
+def new_sales_orders():
+    # Filter for orders that are new
+    sales_orders = models.SalesOrders.query.all()
+    # Create a form for approval of new sales orders
+    return render_template("treasury/revenue_cycle/new_sales_orders.html",
+    sales_orders=sales_orders)
+
+@app.route('/Treasury/RevenueCycle/OpenSalesOrders')
+def open_sales_orders():
+    # Filter for orders that are open
+    sales_orders = models.SalesOrders.query.all()
+    return render_template("treasury/revenue_cycle/open_sales_orders.html",
+    sales_orders=sales_orders)
+
+    
+@app.route('/Treasury/RevenueCycle/AccountsReceivable')
+def accounts_receivable():
+    outstanding_invoices = models.Invoices.query.all()
+    return render_template("treasury/revenue_cycle/accounts_receivable.html",
+        outstanding_invoices=outstanding_invoices)
+    
+    # invoice_customer is a short cut for sending an invoice
+    # to someone who has not sent you a sales order
+    
+@app.route('/Treasury/RevenueCycle/InvoiceCustomer/<customer_id>', methods=['POST','GET'])
+def invoice_customer(customer_id):
+    customer = models.Customers \
+    .query \
+    .filter_by(id=customer_id) \
+    .first()
     invoice_form = forms.NewInvoice()
     if request.method == 'POST':
         form = request.form.copy().to_dict()
@@ -777,60 +810,66 @@ def new_invoice(id):
         credit_ledger_entry_id = str(uuid.uuid4())
         
         journal_entry = models.JournalEntries(
-            id = journal_entry_id)
+        id = journal_entry_id)
         db.session.add(journal_entry)
         db.session.commit()
         
         debit_ledger_entry = models.LedgerEntries(
-            id = debit_ledger_entry_id,
-            date = date_sent,
-            debit = amount,
-            credit = 0, 
-            ledger = 'Accounts Receivable', 
-            currency = 'Satoshis', 
-            journal_entry_id = journal_entry_id)
-            
+        id = debit_ledger_entry_id,
+        date = date_sent,
+        debit = amount,
+        credit = 0, 
+        ledger = 'Accounts Receivable', 
+        currency = 'Satoshis', 
+        journal_entry_id = journal_entry_id)
+        
         db.session.add(debit_ledger_entry)
         
         credit_ledger_entry = models.LedgerEntries(
-            id = credit_ledger_entry_id,
-            date = date_sent, 
-            debit = 0, 
-            credit = amount, 
-            ledger = 'Revenues', 
-            currency = 'Satoshis', 
-            journal_entry_id = journal_entry_id)
-            
+        id = credit_ledger_entry_id,
+        date = date_sent, 
+        debit = 0, 
+        credit = amount, 
+        ledger = 'Revenues', 
+        currency = 'Satoshis', 
+        journal_entry_id = journal_entry_id)
+        
         db.session.add(credit_ledger_entry)
         db.session.commit()
         return redirect(url_for('accounts_receivable'))
-    return render_template("treasury/new_invoice.html",
-        invoice_form=invoice_form,
-        customer=customer)
-        
-@app.route('/Treasury/AccountsReceivable/DeleteInvoice/<invoice_id>')
+    return render_template("treasury/revenue_cycle/new_invoice.html",
+    invoice_form=invoice_form,
+    customer=customer)
+            
+@app.route('/Treasury/RevenueCycle/AccountsReceivable/DeleteInvoice/<invoice_id>')
 def delete_invoice(invoice_id):
     invoice = models.Invoices.query.filter_by(id=invoice_id).first()
     db.session.delete(invoice)
     db.session.commit()
     return redirect(url_for('accounts_receivable'))
+    
+@app.route('/Treasury/RevenueCycle/CashReceipts')
+def cash_receipts():
+    cash_receipts = treasury_functions.get_cash_receipts()
+    return render_template("treasury/revenue_cycle/cash_receipts.html",
+    cash_receipts=cash_receipts)
 
-@app.route('/Treasury/AccountsReceivable/DeleteCustomer/<id>')
-def delete_customer(id):
-    customer = models.Customers.query.filter_by(id=id).first()
-    db.session.delete(customer)
-    db.session.commit()
-    return redirect(url_for('customers'))
-
-@app.route('/Treasury/AccountsReceivable/OpenOrders')
-def open_orders():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
+    
+@app.route('/Treasury/RevenueCycle/ClosedSalesOrders')
+def closed_sales_orders():
+    # Filter for orders that are closed
     sales_orders = models.SalesOrders.query.all()
-    return render_template("treasury/open_orders.html",
+    return render_template("treasury/revenue_cycle/closed_sales_orders.html",
+    sales_orders=sales_orders)
+    
+@app.route('/Treasury/RevenueCycle/SalesRefunds')
+def sales_refunds():
+    # Filter for refund requests
+    sales_orders = models.SalesOrders.query.all()
+    return render_template("treasury/revenue_cycle/sales_refunds.html",
     sales_orders=sales_orders)
 
+    
 @app.route('/Treasury/AccountsPayable')
 def accounts_payable():
     classificationform = forms.NewClassification()

@@ -78,3 +78,5 @@ def utility_processor():
                 end=end)
 
 from pacioli import views, models, forms
+from pacioli.bookkeeping.bookkeeping import bookkeeping_blueprint
+app.register_blueprint(bookkeeping_blueprint, url_prefix='/Bookkeeping')
