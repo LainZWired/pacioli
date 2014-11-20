@@ -19,7 +19,7 @@ from wtforms.validators import Required, Length
 from wtforms.ext.sqlalchemy.orm import model_form
 from sqlalchemy.sql import func 
 from pacioli import models, db
-from pacioli.models import Elements, Classifications, Accounts, Subaccounts, LedgerEntries
+from pacioli.models import Elements, Classifications, Accounts, Subaccounts, LedgerEntries, Items
 
 def available_classification_parents():
     return Elements.query
@@ -33,6 +33,9 @@ def available_subaccount_parents():
 def available_subaccounts():
     return Subaccounts.query
 
+def available_items():
+    return Items.query
+    
 class NewClassification(Form):
     classification = TextField("Classification Name")
     classificationparent = QuerySelectField(query_factory=available_classification_parents, allow_blank=False)
@@ -62,7 +65,7 @@ class JournalEntry(Form):
                 choices=[('Satoshis', 'Satoshis'),
                          ('USD', 'USD')])
 
-class NewCustomer(Form):
+class NewIdentity(Form):
     first_name = TextField("First name")
     last_name = TextField("Last name")
     irc_nick = TextField("IRC Nick")
@@ -70,3 +73,12 @@ class NewCustomer(Form):
     
 class NewInvoice(Form):
     amount = DecimalField("Amount")
+    
+
+class NewPurchaseOrderItem(Form):
+    item = QuerySelectField(query_factory=available_items, allow_blank=False)
+    unit_price = DecimalField("Unit Price")
+    currency = SelectField(
+                choices=[('Satoshis', 'Satoshis'),
+                         ('USD', 'USD')])
+    quantity_ordered = DecimalField("Quantity")

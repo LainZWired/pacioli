@@ -1,9 +1,26 @@
 {% extends "expenditure_cycle/header_expenditure_cycle.html" %}
 {% block expenditure_cycle %}
 <h2>
-  New Purchase Order
+  New Purchase Order to {{purchase_order.Identity.email}}
 </h2>
 
+<form  action="{{ url_for('treasury.new_purchase_order_items', purchase_order_id=purchase_order.id)}}" method="POST">
+ Item: {{ purchase_order_item.item() }}
+    <br><br>
+ Unit price: {{ purchase_order_item.unit_price() }}
+  {{ purchase_order_item.currency() }}
+ Quantity: {{ purchase_order_item.quantity_ordered() }}
+    <br><br>
+    <input type=submit value="Add Item">
+</form>
 
+{% if purchase_order.items %}
+{% for order_item in purchase_order.items %}
+{{order_item}}
+{% endfor %}
+{% endif %}
+
+<br><br><br>
+<a href="{{ url_for('treasury.send_purchase_order', purchase_order_id=purchase_order.id)}}">Send the Purchase Order</a>
 
 {% endblock %}

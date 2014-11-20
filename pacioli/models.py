@@ -99,7 +99,7 @@ class LedgerEntries(db.Model):
     ledger = db.Column(db.Text, db.ForeignKey('subaccounts.name'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
-class Customers(db.Model):
+class Identities(db.Model):
     id = db.Column(db.Text, primary_key=True)
     first_name = db.Column(db.Text)
     last_name = db.Column(db.Text)
@@ -109,16 +109,17 @@ class Customers(db.Model):
     rating = db.Column(db.Numeric)
     rating_comment = db.Column(db.Text)
     credit_limit = db.Column(db.Numeric)
-    sales_orders = db.relationship('SalesOrders', backref='Customer', lazy='select', cascade="save-update, merge, delete")
+    sales_orders = db.relationship('SalesOrders', backref='Identity', lazy='select', cascade="save-update, merge, delete")
+    purchase_orders = db.relationship('PurchaseOrders', backref='Identity', lazy='select', cascade="save-update, merge, delete")
 
 class SalesOrders(db.Model):
     id = db.Column(db.Text, primary_key=True)
     received_date = db.Column(db.DateTime)
     approved_date = db.Column(db.DateTime)
-    shipped_date = db.Column(db.DateTime)
+    items_shipped_date = db.Column(db.DateTime)
     sales_invoices = db.relationship('SalesInvoices', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
     items = db.relationship('SalesOrderItems', backref='SalesOrder', lazy='select', cascade="save-update, merge, delete")
-    customer_id = db.Column(db.Text, db.ForeignKey('customers.id'))
+    customer_id = db.Column(db.Text, db.ForeignKey('identities.id'))
 
 class SalesOrderItems(db.Model):
     id = db.Column(db.Text, primary_key=True)
@@ -128,13 +129,7 @@ class SalesOrderItems(db.Model):
     currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
     item = db.Column(db.Text, db.ForeignKey('items.name'))
     sales_order_id = db.Column(db.Text, db.ForeignKey('sales_orders.id'))
-    
-class Items(db.Model):
-    id = db.Column(db.Text, primary_key=True)
-    name = db.Column(db.Text, unique=True)
-    description = db.Column(db.Text, unique=True)
-    items_sold = db.relationship('SalesOrderItems', backref='Item', lazy='select', cascade="save-update, merge, delete")
-    
+
 class SalesInvoices(db.Model):
     id = db.Column(db.Text, primary_key=True)
     sent_date = db.Column(db.DateTime)
@@ -143,6 +138,41 @@ class SalesInvoices(db.Model):
     sales_order_id = db.Column(db.Text, db.ForeignKey('sales_orders.id'))
     journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
 
+class PurchaseOrders(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    sent_date = db.Column(db.DateTime)
+    approved_date = db.Column(db.DateTime)
+    items_received_date = db.Column(db.DateTime)
+    purchase_invoices = db.relationship('PurchaseInvoices', backref='PurchaseOrder', lazy='select', cascade="save-update, merge, delete")
+    items = db.relationship('PurchaseOrderItems', backref='PurchaseOrder', lazy='select', cascade="save-update, merge, delete")
+    vendor_id = db.Column(db.Text, db.ForeignKey('identities.id'))
+
+class PurchaseOrderItems(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    unit_price = db.Column(db.Numeric)
+    quantity_ordered = db.Column(db.Numeric)
+    quantity_received = db.Column(db.Numeric)
+    currency = db.Column(db.Text, db.ForeignKey('currencies.currency'))
+    item = db.Column(db.Text, db.ForeignKey('items.name'))
+    purchase_order_id = db.Column(db.Text, db.ForeignKey('purchase_orders.id'))
+
+class PurchaseInvoices(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    received_date = db.Column(db.DateTime)
+    paid_date = db.Column(db.DateTime)
+    bitcoin_address = db.Column(db.Text)
+    purchase_order_id = db.Column(db.Text, db.ForeignKey('purchase_orders.id'))
+    journal_entry_id = db.Column(db.Text, db.ForeignKey('journal_entries.id'))
+
+class Items(db.Model):
+    id = db.Column(db.Text, primary_key=True)
+    name = db.Column(db.Text, unique=True)
+    description = db.Column(db.Text, unique=True)
+    items_sold = db.relationship('SalesOrderItems', backref='Item', lazy='select', cascade="save-update, merge, delete")
+    def __repr__(self):
+        return self.name
+
+    
 class Currencies(db.Model):
     currency = db.Column(db.Text, primary_key=True)
 

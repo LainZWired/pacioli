@@ -13,6 +13,24 @@ from pacioli import app, models, db
 gpg = gnupg.GPG(gnupghome=app.config['GNUPGHOME'])
 bitcoind = bitcoin.rpc.Proxy()
 
+
+def send_gpg_email(email_to, data):
+    public_keys = gpg.list_keys()
+    for public_key in public_keys:
+        uids = public_key['uids']
+        if any(email_to in s for s in uids):
+            recipient_fingerprint = public_key['fingerprint']
+    encrypted_ascii_data = gpg.encrypt(data, recipient_fingerprint)
+    msg = MIMEText(str(encrypted_ascii_data))
+    msg['Subject'] = 'pacioli'
+    msg['To'] = email_to
+    msg['From'] = app.config['SMTP_USERNAME']
+    mail = smtplib.SMTP_SSL(app.config['SMTP_SERVER'], app.config['SMTP_PORT'])
+    mail.login(app.config['SMTP_USERNAME'], app.config['SMTP_PASSWORD'])
+    mail.sendmail(app.config['SMTP_USERNAME'], email_to, msg.as_string())
+    mail.quit()
+    
+
 def fetch_email():
     mail = imaplib.IMAP4_SSL(app.config['IMAP_SERVER'])
     mail.login(app.config['IMAP_USERNAME'], app.config['IMAP_PASSWORD'])
@@ -55,29 +73,15 @@ def get_fingerprint(email):
             else:
                 return None
 
+def send_purchase_order(purchase_order):
+    return True
+                
 def send_invoice(email_to, amount, sales_order_id):
     invoice_id = str(uuid.uuid4())
     bitcoin_address = bitcoind.getnewaddress()
-
-    public_keys = gpg.list_keys()
-
-    for public_key in public_keys:
-        uids = public_key['uids']
-        if any(email_to in s for s in uids):
-            recipient_fingerprint = public_key['fingerprint']
-
     data = "address:%s, amount:%s, id:%s" % (bitcoin_address, amount, invoice_id)
-    encrypted_ascii_data = gpg.encrypt(data, recipient_fingerprint)
-
-    msg = MIMEText(str(encrypted_ascii_data))
-    msg['Subject'] = 'pacioli'
-    msg['To'] = email_to
-    msg['From'] = app.config['SMTP_USERNAME']
-    mail = smtplib.SMTP_SSL(app.config['SMTP_SERVER'], app.config['SMTP_PORT'])
-    mail.login(app.config['SMTP_USERNAME'], app.config['SMTP_PASSWORD'])
-    mail.sendmail(app.config['SMTP_USERNAME'], email_to, msg.as_string())
-    mail.quit()
     
+    send_gpg_email(email_to, data)
     sent_date = datetime.now()
     
     invoice = models.SalesInvoices(
@@ -87,9 +91,9 @@ def send_invoice(email_to, amount, sales_order_id):
         sales_order_id = sales_order_id)
     db.session.add(invoice)
     db.session.commit()
-    
     return sent_date
 
+    
 def get_cash_receipts():
     cash_receipts = bitcoind.listreceivedbyaddress(0)
     

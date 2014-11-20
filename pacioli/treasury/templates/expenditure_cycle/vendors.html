@@ -1,9 +1,49 @@
 {% extends "expenditure_cycle/header_expenditure_cycle.html" %}
 {% block expenditure_cycle %}
+
 <h2>
   Vendors
 </h2>
 
+<form  action="{{ url_for('treasury.new_identity')}}" method="POST">
+ Email: {{ identity_form.email() }}
+    <br><br>
+ First name: {{ identity_form.first_name() }}
+ Last name: {{ identity_form.last_name() }}
+ IRC nick: {{ identity_form.irc_nick() }}
+    <br><br>
+    <input type=submit value="Add Vendor">
+</form>
 
+<table border="1">
+ <tr>
+ <th>
+  Name
+ </th>
+ <th>
+  Email
+ </th>
+ <th>
+  Fingerprint
+ </tr>
+</hr>
+ {% for vendor in vendors %}
+ <tr>
+  <td>
+  {{vendor.name}}
+ </td>
+  <td>
+   <a href="{{ url_for('treasury.new_purchase_order', vendor_id=vendor.id)}}">{{vendor.email}}</a>
+ </td>
+  <td>
+  {{vendor.fingerprint}}
+ </td>
+ <td>
+  <a href="{{ url_for('treasury.delete_identity', identity_id=vendor.id)}}">Delete</a>
+  </td>
+  
+ </tr>
+ {% endfor %}
+</table>
 
 {% endblock %}

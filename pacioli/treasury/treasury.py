@@ -24,55 +24,59 @@ from decimal import Decimal
 treasury_blueprint = Blueprint('treasury', __name__,
 template_folder='templates')
 
+def redirect_url(default='index'):
+    return request.args.get('next') or \
+           request.referrer or \
+           url_for(default)
+
 @treasury_blueprint.route('/')
 def index():
     return redirect(url_for('treasury.customers'))
 
-@treasury_blueprint.route('/RevenueCycle')
-def revenue_cycle():
-    return redirect(url_for('treasury.customers'))
-
-@treasury_blueprint.route('/RevenueCycle/Customers')
-def customers():
-    customers = models.Customers.query.all()
-    customer_form = forms.NewCustomer()
-    return render_template("revenue_cycle/customers.html",
-        customer_form=customer_form,
-        customers=customers)
-
-@treasury_blueprint.route('/RevenueCycle/NewCustomer', methods=['POST','GET'])
-def new_customer():
+@treasury_blueprint.route('/NewIdentity', methods=['POST','GET'])
+def new_identity():
     if request.method == 'POST':
         form = request.form.copy().to_dict()
-        customer_id = str(uuid.uuid4())
+        identity_id = str(uuid.uuid4())
         first_name = form['first_name']
         last_name = form['last_name']
         irc_nick = form['irc_nick']
         email = form['email']
         fingerprint = treasury_utilities.get_fingerprint(email)
-        customer = models.Customers(id=customer_id,
+        identity = models.Identities(id=identity_id,
             first_name=first_name, 
             last_name=last_name, 
             irc_nick=irc_nick, 
             email=email,
             fingerprint=fingerprint)
-        db.session.add(customer)
+        db.session.add(identity)
         db.session.commit()
+    return redirect(redirect_url())
+
+@treasury_blueprint.route('/DeleteIdentity/<identity_id>')
+def delete_identity(customer_id):
+    identity = models.Identities \
+        .query \
+        .filter_by(id=identity_id) \
+        .first()
+    db.session.delete(identity)
+    db.session.commit()
+    return redirect(redirect_url())
+    
+@treasury_blueprint.route('/RevenueCycle')
+def revenue_cycle():
     return redirect(url_for('treasury.customers'))
 
-@treasury_blueprint.route('/RevenueCycle/DeleteCustomer/<customer_id>')
-def delete_customer(customer_id):
-    customer = models.Customers \
-        .query \
-        .filter_by(id=customer_id) \
-        .first()
-    db.session.delete(customer)
-    db.session.commit()
-    return redirect(url_for('treasury.customers'))
+@treasury_blueprint.route('/RevenueCycle/Identities')
+def customers():
+    customers = models.Identities.query.all()
+    identity_form = forms.NewIdentity()
+    return render_template("revenue_cycle/customers.html",
+        identity_form=identity_form,
+        customers=customers)
 
 @treasury_blueprint.route('/RevenueCycle/NewSalesOrders')
 def new_sales_orders():
-    
     sales_orders = models.SalesOrders.query.all()
     # Create a form for approval of new sales orders
     return render_template("revenue_cycle/new_sales_orders.html",
@@ -102,7 +106,7 @@ def accounts_receivable():
     
 @treasury_blueprint.route('/RevenueCycle/InvoiceCustomer/<customer_id>', methods=['POST','GET'])
 def invoice_customer(customer_id):
-    customer = models.Customers \
+    customer = models.Identities \
     .query \
     .filter_by(id=customer_id) \
     .first()
@@ -192,19 +196,54 @@ def expenditure_cycle():
 
 @treasury_blueprint.route('/ExpenditureCycle/Vendors')
 def vendors():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    return render_template("expenditure_cycle/vendors.html")
+    vendors = models.Identities.query.all()
+    identity_form = forms.NewIdentity()
+    return render_template("expenditure_cycle/vendors.html",
+        identity_form=identity_form,
+        vendors=vendors)
 
-@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder')
-def new_purchase_order():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    return render_template("expenditure_cycle/new_purchase_order.html")
+@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder/<vendor_id>')
+def new_purchase_order(vendor_id):
+    vendor = models.Identities.query.filter_by(id=vendor_id).one()
+    purchase_order_id = str(uuid.uuid4())
+    purchase_order = models.PurchaseOrders(
+        id=purchase_order_id,
+        vendor_id=vendor_id)
+    db.session.add(purchase_order)
+    db.session.commit()
+    return redirect(url_for('treasury.new_purchase_order_items', purchase_order_id=purchase_order_id))
+    
+@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder/Items/<purchase_order_id>', methods=['POST','GET'])
+def new_purchase_order_items(purchase_order_id):
+    purchase_order = models.PurchaseOrders.query.filter_by(id=purchase_order_id).one()
+    purchase_order_item = forms.NewPurchaseOrderItem()
+    if request.method == 'POST':
+        form = request.form.copy().to_dict()
+        order_item_id = str(uuid.uuid4())
+        item_id = form['item']
+        item = models.Items.query.filter_by(id=item_id).one()
+        item = item.name
+        unit_price = form['unit_price']
+        currency = form['currency']
+        quantity_ordered = form['quantity_ordered']
+        order_item = models.PurchaseOrderItems(id=order_item_id,
+            unit_price=unit_price,
+            quantity_ordered=quantity_ordered,
+            quantity_received=quantity_ordered,
+            currency=currency,
+            item=item,
+            purchase_order_id=purchase_order_id)
+        db.session.add(order_item)
+        db.session.commit()
+        return redirect(url_for('treasury.new_purchase_order_items', purchase_order_id=purchase_order_id))
+    return render_template("expenditure_cycle/new_purchase_order.html",
+        purchase_order=purchase_order,
+        purchase_order_item=purchase_order_item)
+
+@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder/Send/<purchase_order_id>')
+def send_purchase_order(purchase_order_id):
+    purchase_order = models.PurchaseOrders.query.filter_by(id=purchase_order_id).one()
+    return redirect(url_for('treasury.open_purchase_orders'))
 
 @treasury_blueprint.route('/ExpenditureCycle/OpenPurchaseOrders')
 def open_purchase_orders():
