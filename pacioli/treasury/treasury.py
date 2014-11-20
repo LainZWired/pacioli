@@ -243,6 +243,7 @@ def new_purchase_order_items(purchase_order_id):
 @treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder/Send/<purchase_order_id>')
 def send_purchase_order(purchase_order_id):
     purchase_order = models.PurchaseOrders.query.filter_by(id=purchase_order_id).one()
+    treasury_utilities.send_purchase_order(purchase_order)
     return redirect(url_for('treasury.open_purchase_orders'))
 
 @treasury_blueprint.route('/ExpenditureCycle/OpenPurchaseOrders')

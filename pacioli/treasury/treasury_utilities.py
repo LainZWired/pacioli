@@ -74,7 +74,14 @@ def get_fingerprint(email):
                 return None
 
 def send_purchase_order(purchase_order):
-    return True
+    total = 0
+    data = "document:purchase_order, id:%s \r\n" % purchase_order.id
+    for item in purchase_order.items:
+        total += item.unit_price * item.quantity_ordered
+        data += "item_name:%s, item_description:%s, quantity:%s, price:%s, currency:%s \r\n" % (item.Item.name, item.Item.description, item.quantity_ordered, item.unit_price, item.currency)
+    data += "Total:%s" % total
+    email_to = purchase_order.Identity.email
+    send_gpg_email(email_to, data)
                 
 def send_invoice(email_to, amount, sales_order_id):
     invoice_id = str(uuid.uuid4())

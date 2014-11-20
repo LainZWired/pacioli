@@ -169,6 +169,7 @@ class Items(db.Model):
     name = db.Column(db.Text, unique=True)
     description = db.Column(db.Text, unique=True)
     items_sold = db.relationship('SalesOrderItems', backref='Item', lazy='select', cascade="save-update, merge, delete")
+    items_purchased = db.relationship('PurchaseOrderItems', backref='Item', lazy='select', cascade="save-update, merge, delete")
     def __repr__(self):
         return self.name
 
