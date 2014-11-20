@@ -4,6 +4,36 @@
   Open Purchase Orders
 </h2>
 
+<table border="1">
+ <tr>
+  <th>
+   Vendor
+  </th>
+ <th>
+  Sent On
+ </th>
+ <th>
+  Approved On
+ </th>
+</tr>
+ {% for purchase_order in purchase_orders %}
+ <tr>
+  <td>
+  {{purchase_order.Identity.email}}
+ </td>
+  <td>
+  {{format_date('Daily',purchase_order.sent_date)}}
+ </td>
+  <td>
+  {{format_date('Daily',purchase_order.approved_date)}}
+ </td>
+<td>
+ <a href="{{ url_for('treasury.delete_purchase_order', purchase_order_id=purchase_order.id)}}">Delete</a>
+ </td>
+ </tr>
+ {% endfor %}
+</table>
+
 
 
 {% endblock %}

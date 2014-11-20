@@ -86,7 +86,8 @@ def send_purchase_order(purchase_order):
 def send_invoice(email_to, amount, sales_order_id):
     invoice_id = str(uuid.uuid4())
     bitcoin_address = bitcoind.getnewaddress()
-    data = "address:%s, amount:%s, id:%s" % (bitcoin_address, amount, invoice_id)
+    data = "document:sales_invoice, id:%s \r\n" % invoice_id
+    data += "address:%s, amount:%s \r\n" % (bitcoin_address, amount)
     
     send_gpg_email(email_to, data)
     sent_date = datetime.now()

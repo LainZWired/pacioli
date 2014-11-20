@@ -246,13 +246,18 @@ def send_purchase_order(purchase_order_id):
     treasury_utilities.send_purchase_order(purchase_order)
     return redirect(url_for('treasury.open_purchase_orders'))
 
+@treasury_blueprint.route('/ExpenditureCycle/NewPurchaseOrder/Delete/<purchase_order_id>')
+def delete_purchase_order(purchase_order_id):
+    purchase_order = models.PurchaseOrders.query.filter_by(id=purchase_order_id).one()
+    db.session.delete(purchase_order)
+    db.session.commit()
+    return redirect(url_for('treasury.open_purchase_orders'))
+
 @treasury_blueprint.route('/ExpenditureCycle/OpenPurchaseOrders')
 def open_purchase_orders():
-    classificationform = forms.NewClassification()
-    accountform = forms.NewAccount()
-    subaccountform = forms.NewSubAccount()
-    subaccounts = models.Subaccounts.query.all()
-    return render_template("expenditure_cycle/open_purchase_orders.html")
+    purchase_orders = models.PurchaseOrders.query.all()
+    return render_template("expenditure_cycle/open_purchase_orders.html",
+        purchase_orders=purchase_orders)
 
 @treasury_blueprint.route('/ExpenditureCycle/AccountsPayable')
 def accounts_payable():
